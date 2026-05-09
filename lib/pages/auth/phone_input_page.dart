@@ -1,0 +1,451 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../providers/auth_provider.dart';
+import '../../config/routes.dart';
+
+class PhoneAuthPage extends StatefulWidget {
+  const PhoneAuthPage({super.key});
+  @override
+  State<PhoneAuthPage> createState() => _PhoneAuthPageState();
+}
+
+class _PhoneAuthPageState extends State<PhoneAuthPage>
+    with SingleTickerProviderStateMixin {
+  final _phoneCtrl = TextEditingController();
+  String _countryCode = '+91';
+  bool _loading = false;
+  String? _selectedRole; // passed from RoleSelectionPage args
+
+  late AnimationController _animCtrl;
+  late Animation<double> _fadeAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _animCtrl = AnimationController(
+        duration: const Duration(milliseconds: 800), vsync: this)
+      ..forward();
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Read the selected role passed from RoleSelectionPage
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    _selectedRole = args?['role'] as String?;
+  }
+
+  @override
+  void dispose() {
+    _animCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendOtp() async {
+    final phone = _phoneCtrl.text.trim();
+    if (phone.length < 10) {
+      _showSnack('Enter a valid 10-digit number', isError: true);
+      return;
+    }
+    setState(() => _loading = true);
+    final fullPhone = '$_countryCode$phone';
+    final err =
+        await context.read<AuthProvider>().sendPhoneOtp(fullPhone);
+    if (!mounted) return;
+    setState(() => _loading = false);
+    if (err != null) {
+      _showSnack(err, isError: true);
+    } else {
+      Navigator.pushNamed(
+        context,
+        AppRoutes.otpVerify,
+        arguments: {
+          'phone': fullPhone,
+          'role': _selectedRole, // forward the role to OTP page
+        },
+      );
+    }
+  }
+
+  void _showSnack(String msg, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg, style: GoogleFonts.outfit()),
+      backgroundColor:
+          isError ? const Color(0xFFE03131) : const Color(0xFF2F9E44),
+      behavior: SnackBarBehavior.floating,
+      shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      margin: const EdgeInsets.all(16),
+    ));
+  }
+
+  String get _roleLabel {
+    switch (_selectedRole) {
+      case 'customer':         return 'Customer';
+      case 'seller':           return 'Seller';
+      case 'delivery_partner': return 'Delivery Partner';
+      default:                 return '';
+    }
+  }
+
+  String get _roleEmoji {
+    switch (_selectedRole) {
+      case 'customer':         return '🛍️';
+      case 'seller':           return '🏪';
+      case 'delivery_partner': return '🏍️';
+      default:                 return '⚡';
+    }
+  }
+
+  Color get _roleColor {
+    switch (_selectedRole) {
+      case 'seller':           return const Color(0xFFF4C542);
+      case 'delivery_partner': return const Color(0xFF51CF66);
+      default:                 return const Color(0xFF4C6EF5);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF02061A),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                shape: BoxShape.circle),
+            child: const Icon(Icons.arrow_back_ios_new,
+                color: Colors.white, size: 16),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: FadeTransition(
+        opacity: _fadeAnim,
+        child: Stack(
+          children: [
+            // Background blobs
+            Positioned(
+                top: -80,
+                left: -60,
+                child: _blob(300, const Color(0xFF1A35C8), 0.18)),
+            Positioned(
+                bottom: -100,
+                right: -80,
+                child: _blob(350, const Color(0xFF5E20D4), 0.15)),
+
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 20),
+
+                    // Logo mark
+                    const _MiniLogo(size: 72),
+                    const SizedBox(height: 24),
+
+                    // Role badge
+                    if (_selectedRole != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _roleColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(
+                              color: _roleColor.withOpacity(0.40)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(_roleEmoji,
+                                style: const TextStyle(fontSize: 18)),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Joining as $_roleLabel',
+                              style: GoogleFonts.outfit(
+                                color: _roleColor,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+
+                    Text(
+                      'Enter your number',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'We\'ll send a one-time password\nto verify your identity',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                          color: Colors.white54, fontSize: 14, height: 1.5),
+                    ),
+                    const SizedBox(height: 44),
+
+                    // Phone input card
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: Colors.white.withOpacity(0.10)),
+                      ),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Mobile Number',
+                              style: GoogleFonts.outfit(
+                                color: Colors.white54,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.8,
+                              )),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              // Country code selector
+                              GestureDetector(
+                                onTap: _showCountryCodes,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        Colors.white.withOpacity(0.08),
+                                    borderRadius:
+                                        BorderRadius.circular(14),
+                                  ),
+                                  child: Row(children: [
+                                    const Text('🇮🇳',
+                                        style: TextStyle(fontSize: 18)),
+                                    const SizedBox(width: 6),
+                                    Text(_countryCode,
+                                        style: GoogleFonts.outfit(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w700)),
+                                    const Icon(Icons.arrow_drop_down,
+                                        color: Colors.white54, size: 18),
+                                  ]),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextField(
+                                  controller: _phoneCtrl,
+                                  keyboardType: TextInputType.phone,
+                                  maxLength: 10,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly
+                                  ],
+                                  style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 2,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: '9876543210',
+                                    hintStyle: GoogleFonts.outfit(
+                                        color: Colors.white24,
+                                        fontSize: 18),
+                                    counterText: '',
+                                    border: InputBorder.none,
+                                    filled: false,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // CTA Button
+                    GestureDetector(
+                      onTap: _loading ? null : _sendOtp,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: double.infinity,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFFD700), Color(0xFFF4A800)],
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                                color: const Color(0xFFF4C542)
+                                    .withOpacity(0.40),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8))
+                          ],
+                        ),
+                        child: Center(
+                          child: _loading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                      color: Colors.black, strokeWidth: 2.5))
+                              : Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text('Send OTP',
+                                        style: GoogleFonts.outfit(
+                                          color: Colors.black,
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w800,
+                                        )),
+                                    const SizedBox(width: 10),
+                                    const Icon(
+                                        Icons.arrow_forward_rounded,
+                                        color: Colors.black,
+                                        size: 20),
+                                  ],
+                                ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 28),
+                    Text(
+                      'By continuing, you agree to our Terms of Service\nand Privacy Policy',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                          color: Colors.white30,
+                          fontSize: 12,
+                          height: 1.5),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Want to switch role?
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Text(
+                        '← Choose a different role',
+                        style: GoogleFonts.outfit(
+                          color: const Color(0xFFF4C542).withOpacity(0.70),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _blob(double size, Color color, double opacity) => Opacity(
+        opacity: opacity,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient:
+                RadialGradient(colors: [color, color.withOpacity(0)]),
+          ),
+        ),
+      );
+
+  void _showCountryCodes() {
+    final codes = [
+      ['🇮🇳', '+91', 'India'],
+      ['🇺🇸', '+1', 'USA'],
+      ['🇬🇧', '+44', 'UK'],
+      ['🇦🇪', '+971', 'UAE'],
+      ['🇸🇬', '+65', 'Singapore'],
+    ];
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0D1440),
+      shape: const RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: codes
+              .map((c) => ListTile(
+                    leading:
+                        Text(c[0], style: const TextStyle(fontSize: 24)),
+                    title: Text(c[2],
+                        style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600)),
+                    trailing: Text(c[1],
+                        style:
+                            GoogleFonts.outfit(color: Colors.white54)),
+                    onTap: () {
+                      setState(() => _countryCode = c[1]);
+                      Navigator.pop(context);
+                    },
+                  ))
+              .toList(),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Mini logo reused across auth screens ───────────────────────────────────────
+class _MiniLogo extends StatelessWidget {
+  final double size;
+  const _MiniLogo({required this.size});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+            colors: [Color(0xFF1A35C8), Color(0xFF0A178C)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(size * 0.28),
+        border: Border.all(
+            color: const Color(0xFFF4C542).withOpacity(0.35), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+              color: const Color(0xFFF4C542).withOpacity(0.30),
+              blurRadius: 20,
+              spreadRadius: 2)
+        ],
+      ),
+      child: Center(
+          child: Text('⚡', style: TextStyle(fontSize: size * 0.45))),
+    );
+  }
+}
