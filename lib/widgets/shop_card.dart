@@ -68,6 +68,17 @@ class ShopCard extends StatelessWidget {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
+                        if (shop.totalReviews > 0) ...[
+                          const SizedBox(width: 2),
+                          Text(
+                            '(${shop.totalReviews})',
+                            style: GoogleFonts.outfit(
+                              color: Colors.white70,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

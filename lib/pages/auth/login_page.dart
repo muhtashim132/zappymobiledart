@@ -232,7 +232,7 @@ class _LoginPageState extends State<LoginPage>
                             ),
                             GestureDetector(
                               onTap: () => Navigator.pushReplacementNamed(
-                                  context, AppRoutes.signup),
+                                  context, AppRoutes.roleSelect),
                               child: const Text(
                                 'Sign Up',
                                 style: TextStyle(

@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../config/routes.dart';
+import '../../config/app_categories.dart';
 
 class SellerDashboardPage extends StatefulWidget {
   const SellerDashboardPage({super.key});
@@ -25,6 +26,8 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
     'products': 0,
   };
   bool _isLoading = true;
+  String _shopBadgeName = 'Seller';
+  String _shopEmoji = '🏪';
 
   late AnimationController _bgCtrl;
   late AnimationController _entryCtrl;
@@ -61,7 +64,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
     try {
       final shopsResp = await _supabase
           .from('shops')
-          .select('id')
+          .select('id, category, categories')
           .eq('seller_id', auth.currentUserId ?? '');
 
       if ((shopsResp as List).isEmpty) {
@@ -70,7 +73,13 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
         return;
       }
 
-      final shopId = shopsResp.first['id'];
+      final shopData = shopsResp.first;
+      final shopId = shopData['id'];
+
+      final rawCat = shopData['category'] ?? 
+          (shopData['categories'] != null && (shopData['categories'] as List).isNotEmpty 
+              ? shopData['categories'][0] 
+              : 'Other');
 
       final ordersResp = await _supabase
           .from('orders')
@@ -88,6 +97,13 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
 
       if (mounted) {
         setState(() {
+          _shopBadgeName = rawCat == 'Other' ? 'Store' : rawCat;
+          final catInfo = AppCategories.all.firstWhere(
+            (c) => c['name'] == rawCat,
+            orElse: () => {'name': rawCat, 'emoji': '🏪'},
+          );
+          _shopEmoji = catInfo['emoji']!;
+
           _stats = {
             'total_orders': ordersResp.length,
             'pending_orders': pending,
@@ -185,7 +201,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                                   fontSize: 20,
                                                   fontWeight: FontWeight.w800)),
                                           const SizedBox(height: 4),
-                                          _roleBadge('🏪  Seller',
+                                          _roleBadge('$_shopEmoji  $_shopBadgeName',
                                               const Color(0xFFF4C542)),
                                         ],
                                       ),
@@ -208,34 +224,6 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                             (_) => false);
                                     }),
                                   ],
-                                ),
-                                const SizedBox(height: 20),
-                                // Zero commission banner
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.08),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                        color: Colors.white.withOpacity(0.12)),
-                                  ),
-                                  child: Row(children: [
-                                    Container(
-                                        width: 10,
-                                        height: 10,
-                                        decoration: const BoxDecoration(
-                                            color: Color(0xFF51CF66),
-                                            shape: BoxShape.circle)),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                        '🎉  ZERO COMMISSION  ·  Keep 100% of revenue',
-                                        style: GoogleFonts.outfit(
-                                            color:
-                                                Colors.white.withOpacity(0.9),
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600)),
-                                  ]),
                                 ),
                                 const SizedBox(height: 20),
                                 // Revenue hero number
@@ -296,9 +284,9 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                               Row(children: [
                                 Expanded(
                                     child: _statCard(
-                                        'Revenue',
-                                        '₹${(_stats['revenue'] as double).toStringAsFixed(0)}',
-                                        Icons.trending_up_rounded,
+                                        'Rating',
+                                        '⭐ 4.5',
+                                        Icons.star_rounded,
                                         const Color(0xFF51CF66),
                                         const Color(0xFF2F9E44))),
                                 const SizedBox(width: 14),

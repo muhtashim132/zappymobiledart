@@ -10,6 +10,7 @@ class OrderModel {
   final DateTime createdAt;
   List<OrderItem> items;
   String? deliveryPartnerId;
+  final String? shopId;
   final String? address;
   final String? deliveryNotes;
   // Dual-acceptance flags (stored in DB columns)
@@ -21,6 +22,11 @@ class OrderModel {
   DateTime? orderReadyTime;
   double waitTimePenalty;
   bool waitTimeDisputed;
+
+  // Rating flags
+  bool hasCustomerRated;
+  bool hasSellerRated;
+  bool hasDeliveryRated;
 
   OrderModel({
     required this.id,
@@ -34,6 +40,7 @@ class OrderModel {
     required this.createdAt,
     this.items = const [],
     this.deliveryPartnerId,
+    this.shopId,
     this.address,
     this.deliveryNotes,
     this.sellerAccepted = false,
@@ -42,6 +49,9 @@ class OrderModel {
     this.orderReadyTime,
     this.waitTimePenalty = 0.0,
     this.waitTimeDisputed = false,
+    this.hasCustomerRated = false,
+    this.hasSellerRated = false,
+    this.hasDeliveryRated = false,
   });
 
   factory OrderModel.fromMap(Map<String, dynamic> map) {
@@ -56,6 +66,7 @@ class OrderModel {
       platformFee: (map['platform_fee'] ?? 0.0).toDouble(),
       createdAt: DateTime.tryParse(map['created_at'] ?? '') ?? DateTime.now(),
       deliveryPartnerId: map['delivery_partner_id'],
+      shopId: map['shop_id'],
       address: map['address'],
       deliveryNotes: map['delivery_notes'],
       sellerAccepted: map['seller_accepted'] ?? false,
@@ -68,11 +79,51 @@ class OrderModel {
           : null,
       waitTimePenalty: (map['wait_time_penalty'] ?? 0.0).toDouble(),
       waitTimeDisputed: map['wait_time_disputed'] ?? false,
+      hasCustomerRated: map['has_customer_rated'] ?? false,
+      hasSellerRated: map['has_seller_rated'] ?? false,
+      hasDeliveryRated: map['has_delivery_rated'] ?? false,
     );
   }
 
   /// True when both the seller and delivery partner have accepted.
   bool get isFullyConfirmed => sellerAccepted && partnerAccepted;
+
+  OrderModel copyWith({
+    String? status,
+    String? deliveryPartnerId,
+    String? shopId,
+    bool? sellerAccepted,
+    bool? partnerAccepted,
+    bool? hasCustomerRated,
+    bool? hasSellerRated,
+    bool? hasDeliveryRated,
+  }) {
+    return OrderModel(
+      id: id,
+      customerId: customerId,
+      status: status ?? this.status,
+      totalAmount: totalAmount,
+      deliveryCharges: deliveryCharges,
+      riderEarnings: riderEarnings,
+      multiShopSurcharge: multiShopSurcharge,
+      platformFee: platformFee,
+      createdAt: createdAt,
+      items: items,
+      deliveryPartnerId: deliveryPartnerId ?? this.deliveryPartnerId,
+      shopId: shopId ?? this.shopId,
+      address: address,
+      deliveryNotes: deliveryNotes,
+      sellerAccepted: sellerAccepted ?? this.sellerAccepted,
+      partnerAccepted: partnerAccepted ?? this.partnerAccepted,
+      arrivedAtShopTime: arrivedAtShopTime,
+      orderReadyTime: orderReadyTime,
+      waitTimePenalty: waitTimePenalty,
+      waitTimeDisputed: waitTimeDisputed,
+      hasCustomerRated: hasCustomerRated ?? this.hasCustomerRated,
+      hasSellerRated: hasSellerRated ?? this.hasSellerRated,
+      hasDeliveryRated: hasDeliveryRated ?? this.hasDeliveryRated,
+    );
+  }
 
   String get statusDisplay {
     switch (status) {

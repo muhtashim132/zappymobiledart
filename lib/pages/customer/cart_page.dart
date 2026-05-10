@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../providers/cart_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
+import '../../config/payment_config.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -288,7 +289,7 @@ class CartPage extends StatelessWidget {
             _summaryRow(
               'Small Cart Fee',
               '+₹${cart.smallCartFee.toStringAsFixed(0)}',
-              hint: 'For orders under ₹99',
+              hint: 'For orders under ₹${PaymentConfig.smallCartThreshold.toInt()}',
               valueColor: Colors.orange.shade700,
             ),
           ],
@@ -297,7 +298,7 @@ class CartPage extends StatelessWidget {
             _summaryRow(
               'Heavy Order Fee',
               '+₹${heavyFee.toStringAsFixed(0)}',
-              hint: 'For orders over 10 kg',
+              hint: 'For orders over ${PaymentConfig.heavyOrderThreshold.toInt()} kg',
               valueColor: Colors.orange.shade700,
             ),
           ],
@@ -338,8 +339,8 @@ class CartPage extends StatelessWidget {
                   ? Text('Proceed to Checkout • ₹${total.toStringAsFixed(0)}',
                       style: const TextStyle(
                           fontSize: 15, fontWeight: FontWeight.w700))
-                  : const Text('Minimum order ₹100',
-                      style: TextStyle(fontSize: 14)),
+                  : Text('Minimum order ₹${PaymentConfig.minimumOrderValue.toInt()}',
+                      style: const TextStyle(fontSize: 14)),
             ),
           ),
         ],

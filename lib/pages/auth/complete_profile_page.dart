@@ -6,42 +6,10 @@ import 'package:latlong2/latlong.dart' as ll;
 import '../../providers/auth_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../config/routes.dart';
+import '../../config/app_categories.dart';
+import '../../widgets/seller/category_extra_fields.dart';
 
-// ── All business categories ───────────────────────────────────────────────────
-const List<String> kBusinessCategories = [
-  'Grocery & Supermarket',
-  'Fresh Vegetables & Fruits',
-  'Butcher / Meat Shop',
-  'Seafood / Fish Market',
-  'Dairy & Eggs',
-  'Bakery & Confectionery',
-  'Restaurant / Food Joint',
-  'Fast Food & Snacks',
-  'Café & Coffee Shop',
-  'Sweet Shop / Mithai',
-  'Juice & Beverages',
-  'Ice Cream & Desserts',
-  'Pharmacy & Medicine',
-  'Health & Wellness',
-  'Clothing & Apparel',
-  'Footwear',
-  'Electronics & Gadgets',
-  'Mobile & Accessories',
-  'Home Appliances',
-  'Furniture & Décor',
-  'Hardware & Tools',
-  'Stationery & Books',
-  'Toys & Games',
-  'Sports & Fitness',
-  'Beauty & Cosmetics',
-  'Salon & Spa',
-  'Pet Shop & Supplies',
-  'Flower Shop',
-  'Automobile Parts',
-  'Agricultural Supplies',
-  'Wholesale / Distributor',
-  'Other / General Store',
-];
+
 
 enum _Role { customer, seller, delivery }
 
@@ -59,9 +27,10 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
   final _addressCtrl = TextEditingController();
   // Seller
   final _shopNameCtrl = TextEditingController();
-  String _shopCategory = kBusinessCategories[0];
+  String _shopCategory = AppCategories.names[0];
+  CategoryGroup _shopGroup = AppCategories.groupFor(AppCategories.names[0]);
   final _shopAddressCtrl = TextEditingController();
-  final _gstCtrl = TextEditingController();
+  final _extraFieldsKey = GlobalKey<CategoryExtraFieldsState>();
   bool _fetchingLocation = false;
   // Delivery
   final _vehicleTypeCtrl = TextEditingController();
@@ -121,7 +90,6 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
       _addressCtrl,
       _shopNameCtrl,
       _shopAddressCtrl,
-      _gstCtrl,
       _vehicleTypeCtrl,
       _vehicleRegCtrl,
       _licenseCtrl,
@@ -196,6 +164,14 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         extra = {'default_address': _addressCtrl.text.trim()};
         break;
       case _Role.seller:
+        // Validate category-specific required fields
+        final extraValidationError = _extraFieldsKey.currentState?.validate();
+        if (extraValidationError != null) {
+          _showSnack(extraValidationError, isError: true);
+          setState(() => _loading = false);
+          return;
+        }
+        final categoryExtra = _extraFieldsKey.currentState?.collectData() ?? {};
         roleName = 'seller';
         extra = {
           'name': _shopNameCtrl.text.trim().isEmpty
@@ -203,8 +179,12 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
               : _shopNameCtrl.text.trim(),
           'category': _shopCategory,
           'address': _shopAddressCtrl.text.trim(),
-          'gst_number': _gstCtrl.text.trim(),
           'is_active': false,
+          // Merge the group-specific fields directly into the shops row.
+          // Supabase ignores keys that don't exist as columns, so unknown
+          // fields will be silently dropped unless you add a `metadata` JSONB
+          // column — both approaches work.
+          ...categoryExtra,
         };
         break;
       case _Role.delivery:
@@ -493,12 +473,14 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         ];
       case _Role.seller:
         return [
+          // ── Shop Name ────────────────────────────────────────────────
           _DarkField(
               label: 'Shop Name *',
               controller: _shopNameCtrl,
               hint: 'e.g. Sharma General Store'),
           const SizedBox(height: 16),
-          // ── Business Category Dropdown ──────────────────────────────
+
+          // ── Business Category — sourced from AppCategories ────────────
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -527,16 +509,28 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
                         fontWeight: FontWeight.w500),
                     icon: const Icon(Icons.keyboard_arrow_down,
                         color: Colors.white54),
-                    items: kBusinessCategories
+                    items: AppCategories.all
                         .map((cat) => DropdownMenuItem(
-                              value: cat,
-                              child: Text(cat,
-                                  style: GoogleFonts.outfit(
-                                      color: Colors.white, fontSize: 14)),
+                              value: cat['name'],
+                              child: Row(
+                                children: [
+                                  Text(cat['emoji']!,
+                                      style: const TextStyle(fontSize: 18)),
+                                  const SizedBox(width: 10),
+                                  Text(cat['name']!,
+                                      style: GoogleFonts.outfit(
+                                          color: Colors.white, fontSize: 14)),
+                                ],
+                              ),
                             ))
                         .toList(),
                     onChanged: (v) {
-                      if (v != null) setState(() => _shopCategory = v);
+                      if (v != null) {
+                        setState(() {
+                          _shopCategory = v;
+                          _shopGroup = AppCategories.groupFor(v);
+                        });
+                      }
                     },
                   ),
                 ),
@@ -544,7 +538,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
             ],
           ),
           const SizedBox(height: 16),
-          // ── Shop Address with live location ────────────────────────
+
+          // ── Shop Address with live GPS ────────────────────────────────
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -612,12 +607,38 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
                       GoogleFonts.outfit(color: Colors.white30, fontSize: 11)),
             ],
           ),
-          const SizedBox(height: 16),
-          _DarkField(
-              label: 'GST Number (optional)',
-              controller: _gstCtrl,
-              hint: '22AAAAA0000A1Z5',
-              caps: true),
+          const SizedBox(height: 24),
+
+          // ── Dynamic category-specific fields ─────────────────────────
+          // A section divider so the user knows these next fields are
+          // specific to their chosen business category.
+          Row(
+            children: [
+              Expanded(
+                  child: Container(
+                      height: 1,
+                      color: Colors.white.withOpacity(0.08))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  '${AppCategories.groupInfo(_shopGroup)["emoji"]} Business Details',
+                  style: GoogleFonts.outfit(
+                      color: Colors.white38, fontSize: 12),
+                ),
+              ),
+              Expanded(
+                  child: Container(
+                      height: 1,
+                      color: Colors.white.withOpacity(0.08))),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          CategoryExtraFields(
+            key: _extraFieldsKey,
+            group: _shopGroup,
+            category: _shopCategory,
+          ),
         ];
       case _Role.delivery:
         return [

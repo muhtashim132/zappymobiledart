@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/auth_provider.dart';
+import '../../config/app_categories.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/validators.dart';
 
@@ -19,17 +20,15 @@ class _AddProductPageState extends State<AddProductPage> {
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _menuCategoryController = TextEditingController();
   bool _isVeg = true;
   bool _isAvailable = true;
   bool _isSaving = false;
-  String _selectedCategory = 'Food';
+  String _shopCategory = 'Food';
+  String _productCategory = 'Food';
+  bool _isFoodGroup = true;
   String? _shopId;
   XFile? _imageFile;
-
-  final List<String> _categories = [
-    'Food', 'Grocery', 'Pharmacy', 'Clothing',
-    'Electronics', 'Beverages', 'Other'
-  ];
 
   @override
   void initState() {
@@ -42,10 +41,24 @@ class _AddProductPageState extends State<AddProductPage> {
     try {
       final resp = await _supabase
           .from('shops')
-          .select('id')
+          .select('id, category, categories')
           .eq('seller_id', auth.currentUserId ?? '')
           .single();
-      setState(() => _shopId = resp['id']);
+          
+      final cat = resp['category'] ?? 
+          (resp['categories'] != null && (resp['categories'] as List).isNotEmpty 
+              ? resp['categories'][0] 
+              : 'Food');
+
+      setState(() {
+        _shopId = resp['id'];
+        _shopCategory = cat;
+        if (_productCategory == 'Food' && cat != 'Food') {
+          _productCategory = cat;
+        }
+        _isFoodGroup = AppCategories.groupFor(_productCategory) == CategoryGroup.food || 
+                       AppCategories.groupFor(_productCategory) == CategoryGroup.perishable;
+      });
     } catch (e) {
       debugPrint('Shop fetch error: $e');
     }
@@ -73,8 +86,9 @@ class _AddProductPageState extends State<AddProductPage> {
         'name': _nameController.text.trim(),
         'price': double.parse(_priceController.text),
         'description': _descriptionController.text.trim(),
-        'category': _selectedCategory,
-        'is_veg': _isVeg,
+        'category': _productCategory,
+        'menu_category': _menuCategoryController.text.trim().isEmpty ? null : _menuCategoryController.text.trim(),
+        'is_veg': _isFoodGroup ? _isVeg : false,
         'is_available': _isAvailable,
         'images': [],
       });
@@ -193,48 +207,42 @@ class _AddProductPageState extends State<AddProductPage> {
 
               _card(
                 children: [
-                  const Text('Category',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins')),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _categories.map((cat) {
-                      final isSelected = _selectedCategory == cat;
-                      return GestureDetector(
-                        onTap: () =>
-                            setState(() => _selectedCategory = cat),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.primary
-                                : AppColors.background,
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : AppColors.divider,
-                            ),
-                          ),
-                          child: Text(
-                            cat,
-                            style: TextStyle(
-                              color: isSelected
-                                  ? Colors.white
-                                  : AppColors.textSecondary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                              fontFamily: 'Poppins',
-                            ),
-                          ),
-                        ),
+                  DropdownButtonFormField<String>(
+                    value: AppCategories.names.contains(_productCategory) 
+                        ? _productCategory 
+                        : AppCategories.names.first,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Global App Category',
+                      prefixIcon: Icon(Icons.public_outlined),
+                    ),
+                    items: AppCategories.names.map((cat) {
+                      final emoji = AppCategories.all.firstWhere(
+                          (c) => c['name'] == cat,
+                          orElse: () => {'emoji': '🏪'})['emoji'];
+                      return DropdownMenuItem(
+                        value: cat,
+                        child: Text('$emoji  $cat'),
                       );
                     }).toList(),
+                    onChanged: (v) {
+                      if (v != null) {
+                        setState(() {
+                          _productCategory = v;
+                          _isFoodGroup = AppCategories.groupFor(v) == CategoryGroup.food || 
+                                         AppCategories.groupFor(v) == CategoryGroup.perishable;
+                        });
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _menuCategoryController,
+                    decoration: const InputDecoration(
+                      labelText: 'Menu/Section Category (Optional)',
+                      hintText: 'e.g., Main Course, Beverages, Shirts',
+                      prefixIcon: Icon(Icons.category_outlined),
+                    ),
                   ),
                 ],
               ),
@@ -242,18 +250,20 @@ class _AddProductPageState extends State<AddProductPage> {
 
               _card(
                 children: [
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Vegetarian',
-                        style: TextStyle(fontFamily: 'Poppins')),
-                    subtitle: Text(
-                      _isVeg ? 'Marked as veg 🟢' : 'Marked as non-veg 🔴',
-                      style: const TextStyle(fontSize: 12),
+                  if (_isFoodGroup) ...[
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Vegetarian',
+                          style: TextStyle(fontFamily: 'Poppins')),
+                      subtitle: Text(
+                        _isVeg ? 'Marked as veg 🟢' : 'Marked as non-veg 🔴',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      value: _isVeg,
+                      activeThumbColor: AppColors.vegGreen,
+                      onChanged: (v) => setState(() => _isVeg = v),
                     ),
-                    value: _isVeg,
-                    activeThumbColor: AppColors.vegGreen,
-                    onChanged: (v) => setState(() => _isVeg = v),
-                  ),
+                  ],
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Available',

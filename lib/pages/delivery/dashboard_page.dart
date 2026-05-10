@@ -9,6 +9,7 @@ import '../../providers/theme_provider.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
+import '../../widgets/common/rating_bottom_sheet.dart';
 
 class DeliveryDashboardPage extends StatefulWidget {
   const DeliveryDashboardPage({super.key});
@@ -121,17 +122,100 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
           'wait_time_disputed': status == 'reassign_disputed',
         }).eq('id', order.id);
       } else if (status == 'delivered') {
-        // When the order is completed, finalize the seller payout (= item total)
         await _supabase.from('orders').update({
           'status': status,
           'seller_payout': order.totalAmount,
         }).eq('id', order.id);
+        _loadOrders();
+        // Show rating prompt after delivering
+        if (mounted && !order.hasDeliveryRated) {
+          Future.delayed(const Duration(milliseconds: 500),
+              () => _showDeliveryRatingFlow(order));
+        }
+        return;
       } else {
         await _supabase.from('orders').update({'status': status}).eq('id', order.id);
       }
       _loadOrders();
     } catch (e) {
       debugPrint('Status update error: $e');
+    }
+  }
+
+  void _showDeliveryRatingFlow(OrderModel order) {
+    if (!mounted) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (_) => RatingBottomSheet(
+        title: 'Rate the Customer 👤',
+        subtitle: 'How was the pickup/drop experience?',
+        onSubmit: (rating, review) async {
+          await _submitDeliveryRating(
+            orderId: order.id,
+            rateeId: order.customerId,
+            rateeRole: 'customer',
+            rating: rating,
+            review: review,
+          );
+          // Then rate the shop
+          if (mounted) {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.white,
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+              builder: (_) => RatingBottomSheet(
+                title: 'Rate the Shop 🏪',
+                subtitle: 'How was your wait time and experience at the shop?',
+                onSubmit: (r, rv) => _submitDeliveryRating(
+                  orderId: order.id,
+                  rateeId: null,
+                  shopId: order.shopId, // link to the actual shop
+                  rateeRole: 'seller',
+                  rating: r,
+                  review: rv,
+                  markRated: true,
+                ),
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Future<void> _submitDeliveryRating({
+    required String orderId,
+    required String? rateeId,
+    String? shopId,
+    required String rateeRole,
+    required int rating,
+    required String review,
+    bool markRated = false,
+  }) async {
+    try {
+      final auth = context.read<AuthProvider>();
+      await _supabase.from('ratings').insert({
+        'order_id': orderId,
+        'rater_id': auth.currentUserId,
+        'ratee_id': rateeId,
+        'shop_id': shopId,
+        'rater_role': 'delivery',
+        'ratee_role': rateeRole,
+        'rating': rating,
+        'review': review.isEmpty ? null : review,
+      });
+      if (markRated) {
+        await _supabase.from('orders')
+            .update({'has_delivery_rated': true}).eq('id', orderId);
+      }
+    } catch (e) {
+      debugPrint('Delivery rating error: $e');
     }
   }
 

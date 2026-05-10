@@ -10,6 +10,8 @@ class UserModel {
   final List<String> activeRoles;
   /// The role currently chosen for this session (may differ from primary role)
   final String activeSessionRole;
+  final double averageRating;
+  final int totalReviews;
 
   UserModel({
     required this.id,
@@ -21,6 +23,8 @@ class UserModel {
     required this.createdAt,
     List<String>? activeRoles,
     String? activeSessionRole,
+    this.averageRating = 0.0,
+    this.totalReviews = 0,
   })  : activeRoles = activeRoles ?? [role],
         activeSessionRole = activeSessionRole ?? role;
 
@@ -36,12 +40,16 @@ class UserModel {
       createdAt: DateTime.tryParse(map['created_at'] ?? '') ?? DateTime.now(),
       activeRoles: (map['activeRoles'] as List<dynamic>?)?.cast<String>() ?? [role],
       activeSessionRole: map['activeSessionRole'] as String? ?? role,
+      averageRating: (map['average_rating'] ?? 0.0).toDouble(),
+      totalReviews: map['total_reviews'] ?? 0,
     );
   }
 
   UserModel copyWith({
     String? activeSessionRole,
     List<String>? activeRoles,
+    double? averageRating,
+    int? totalReviews,
   }) {
     return UserModel(
       id: id,
@@ -53,6 +61,8 @@ class UserModel {
       createdAt: createdAt,
       activeRoles: activeRoles ?? this.activeRoles,
       activeSessionRole: activeSessionRole ?? this.activeSessionRole,
+      averageRating: averageRating ?? this.averageRating,
+      totalReviews: totalReviews ?? this.totalReviews,
     );
   }
 
@@ -63,6 +73,8 @@ class UserModel {
     'email': email,
     'phone': phone,
     'avatar_url': avatarUrl,
+    'average_rating': averageRating,
+    'total_reviews': totalReviews,
   };
 
   String get initials {

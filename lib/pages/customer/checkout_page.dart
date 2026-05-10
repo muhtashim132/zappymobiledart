@@ -8,6 +8,7 @@ import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
 import '../../widgets/common/zappy_map.dart';
 import 'package:uuid/uuid.dart';
+import '../../config/payment_config.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -100,12 +101,21 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
       cart.clear();
       if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.trackOrder,
-          (route) => route.settings.name == AppRoutes.customerHome,
-          arguments: {'orderId': orderIds.first},
-        );
+        if (orderIds.length == 1) {
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.trackOrder,
+            (route) => route.settings.name == AppRoutes.customerHome,
+            arguments: {'orderId': orderIds.first},
+          );
+        } else {
+          // Multi-shop order: send them to history to see all their concurrent orders
+          Navigator.pushNamedAndRemoveUntil(
+            context,
+            AppRoutes.orderHistory,
+            (route) => route.settings.name == AppRoutes.customerHome,
+          );
+        }
       }
     } catch (e) {
       debugPrint('Order placement error: $e');
@@ -322,7 +332,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     _billRow(
                       'Small Cart Fee',
                       '+₹${cart.smallCartFee.toStringAsFixed(0)}',
-                      hint: 'For orders under ₹99',
+                      hint: 'For orders under ₹${PaymentConfig.smallCartThreshold.toInt()}',
                       valueColor: Colors.orange.shade700,
                     ),
                   ],
@@ -331,7 +341,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     _billRow(
                       'Heavy Order Fee',
                       '+₹${heavyFee.toStringAsFixed(0)}',
-                      hint: 'For orders over 10 kg',
+                      hint: 'For orders over ${PaymentConfig.heavyOrderThreshold.toInt()} kg',
                       valueColor: Colors.orange.shade700,
                     ),
                   ],

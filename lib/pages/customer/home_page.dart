@@ -11,6 +11,7 @@ import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
 import '../../models/product_model.dart';
 import '../../models/shop_model.dart';
+import '../../config/app_categories.dart';
 import '../../utils/delivery_calculator.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/shop_card.dart';
@@ -107,8 +108,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
       final shopsResponse = await _supabase
           .from('shops')
           .select()
-          .eq('is_active', true)
-          .contains('categories', [category]);
+          .or('category.eq.$category,categories.cs.{"$category"}');
 
       final productsResponse = await _supabase
           .from('products')
@@ -118,7 +118,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           .limit(20);
 
       if (mounted) {
-        // Compute distance for each shop and filter to 15 km radius
+        // Compute distance for each shop and filter to max radius
         final allShops =
             (shopsResponse as List).map((s) => ShopModel.fromMap(s)).toList();
 
@@ -127,7 +127,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           for (final shop in allShops) {
             shop.distanceKm = locationProvider.distanceTo(shop.location);
           }
-          // Keep only shops within 15 km, sorted nearest-first
+          // Keep only shops within max radius, sorted nearest-first
           nearby = allShops
               .where((s) => DeliveryCalculator.isWithinRange(s.distanceKm!))
               .toList()
@@ -375,7 +375,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                               _isFoodTab
                                   ? 'Restaurants near you'
                                   : 'Shops near you',
-                              subtitle: '${_shops.length} within 15 km',
+                              subtitle: '${_shops.length} within ${DeliveryCalculator.maxRadiusKm.toInt()} km',
                             ),
                             const SizedBox(height: 16),
                             ..._shops
@@ -384,27 +384,29 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                                     s.name
                                         .toLowerCase()
                                         .contains(_searchQuery.toLowerCase()))
-                                .map((shop) => Padding(
-                                      padding:
-                                          const EdgeInsets.only(bottom: 16),
-                                      child: _isFoodTab
-                                          ? RestaurantShopCard(
-                                              shop: shop,
-                                              onTap: () => Navigator.pushNamed(
-                                                context,
-                                                AppRoutes.restaurantDashboard,
-                                                arguments: {'shopId': shop.id},
+                                .map((shop) {
+                                      final isFood = AppCategories.groupFor(shop.category) == CategoryGroup.food;
+                                      return Padding(
+                                        padding: const EdgeInsets.only(bottom: 16),
+                                        child: isFood
+                                            ? RestaurantShopCard(
+                                                shop: shop,
+                                                onTap: () => Navigator.pushNamed(
+                                                  context,
+                                                  AppRoutes.restaurantDashboard,
+                                                  arguments: {'shopId': shop.id},
+                                                ),
+                                              )
+                                            : ShopCard(
+                                                shop: shop,
+                                                onTap: () => Navigator.pushNamed(
+                                                  context,
+                                                  AppRoutes.restaurant,
+                                                  arguments: {'shopId': shop.id},
+                                                ),
                                               ),
-                                            )
-                                          : ShopCard(
-                                              shop: shop,
-                                              onTap: () => Navigator.pushNamed(
-                                                context,
-                                                AppRoutes.restaurant,
-                                                arguments: {'shopId': shop.id},
-                                              ),
-                                            ),
-                                    )),
+                                      );
+                                    }),
                           ] else if (!_isLoading &&
                               locationProvider.hasLocation) ...[
                             _buildNoShopsNearby(),
@@ -599,7 +601,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
             ),
             const SizedBox(height: 8),
             Text(
-              'No shops found within 15 km of\nyour location in this category.',
+              'No shops found within ${DeliveryCalculator.maxRadiusKm.toInt()} km of\nyour location in this category.',
               textAlign: TextAlign.center,
               style: GoogleFonts.outfit(
                   color: AppColors.textSecondary, height: 1.5),

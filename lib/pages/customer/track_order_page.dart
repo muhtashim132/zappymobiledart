@@ -4,6 +4,7 @@ import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
 import '../../widgets/common/zappy_map.dart';
+import '../../widgets/common/rating_bottom_sheet.dart';
 import 'package:latlong2/latlong.dart';
 
 class TrackOrderPage extends StatefulWidget {
@@ -91,10 +92,17 @@ class _TrackOrderPageState extends State<TrackOrderPage>
           .eq('id', widget.orderId)
           .single();
 
-      setState(() {
-        _order = OrderModel.fromMap(response);
-        _isLoading = false;
-      });
+      if (mounted) {
+        final order = OrderModel.fromMap(response);
+        setState(() {
+          _order = order;
+          _isLoading = false;
+        });
+        // If already delivered and not yet rated, show rating prompt
+        if (order.status == 'delivered' && !order.hasCustomerRated) {
+          WidgetsBinding.instance.addPostFrameCallback((_) => _showRatingFlow());
+        }
+      }
     } catch (e) {
       setState(() => _isLoading = false);
     }
@@ -114,13 +122,97 @@ class _TrackOrderPageState extends State<TrackOrderPage>
           ),
           callback: (payload) {
             if (mounted && payload.newRecord.isNotEmpty) {
-              setState(() {
-                _order = OrderModel.fromMap(payload.newRecord);
-              });
+              final updatedOrder = OrderModel.fromMap(payload.newRecord);
+              final wasDelivered = _order?.status != 'delivered' &&
+                  updatedOrder.status == 'delivered';
+              setState(() => _order = updatedOrder);
+              // Trigger rating prompt the moment delivery is confirmed
+              if (wasDelivered && !updatedOrder.hasCustomerRated) {
+                Future.delayed(
+                    const Duration(milliseconds: 600), _showRatingFlow);
+              }
             }
           },
         )
         .subscribe();
+  }
+
+  /// Step 1: Rate the Shop. Step 2 (if partner assigned): Rate the Rider.
+  void _showRatingFlow() {
+    if (!mounted || _order == null) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (_) => RatingBottomSheet(
+        title: 'Rate the Shop ⭐',
+        subtitle: 'How was the quality of your order?',
+        onSubmit: (rating, review) => _submitRating(
+          rateeId: null,
+          shopId: _order!.shopId, // Pass the actual shop ID
+          rateeRole: 'seller',
+          rating: rating,
+          review: review,
+          thenRateRider: _order!.deliveryPartnerId != null,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submitRating({
+    required String? rateeId,
+    required String? shopId,
+    required String rateeRole,
+    required int rating,
+    required String review,
+    bool thenRateRider = false,
+  }) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      await _supabase.from('ratings').insert({
+        'order_id': widget.orderId,
+        'rater_id': userId,
+        'ratee_id': rateeId,
+        'shop_id': shopId,
+        'rater_role': 'customer',
+        'ratee_role': rateeRole,
+        'rating': rating,
+        'review': review.isEmpty ? null : review,
+      });
+
+      if (rateeRole == 'seller') {
+        // Mark customer rated on the order
+        await _supabase.from('orders')
+            .update({'has_customer_rated': true}).eq('id', widget.orderId);
+        setState(() => _order = _order?.copyWith(hasCustomerRated: true));
+      }
+
+      if (thenRateRider && mounted) {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.white,
+          shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+          builder: (_) => RatingBottomSheet(
+            title: 'Rate the Rider 🚴',
+            subtitle: 'How was the delivery experience?',
+            onSubmit: (r, rv) => _submitRating(
+              rateeId: _order!.deliveryPartnerId,
+              shopId: null,
+              rateeRole: 'delivery',
+              rating: r,
+              review: rv,
+              thenRateRider: false,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Rating submit error: $e');
+    }
   }
 
   int _getCurrentStep() {
@@ -344,6 +436,40 @@ class _TrackOrderPageState extends State<TrackOrderPage>
                 minimumSize: const Size(double.infinity, 52),
               ),
             ),
+            if (isDelivered && !(_order!.hasCustomerRated)) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _showRatingFlow,
+                icon: const Icon(Icons.star_outline_rounded, color: Colors.amber),
+                label: const Text('Rate Your Order',
+                    style: TextStyle(color: Colors.amber, fontWeight: FontWeight.w700)),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 52),
+                  side: const BorderSide(color: Colors.amber),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ] else if (isDelivered && _order!.hasCustomerRated) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.check_circle_outline, color: AppColors.success, size: 18),
+                    SizedBox(width: 8),
+                    Text('Thanks for your rating!',
+                        style: TextStyle(color: AppColors.success, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
           ],
         ),

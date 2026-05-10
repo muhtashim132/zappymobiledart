@@ -71,8 +71,12 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
   void dispose() {
     _timer?.cancel();
     _shakeCtrl.dispose();
-    for (final c in _ctrlList) c.dispose();
-    for (final f in _focusList) f.dispose();
+    for (final c in _ctrlList) {
+      c.dispose();
+    }
+    for (final f in _focusList) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -159,7 +163,9 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
       );
     } else {
       _shakeCtrl.forward(from: 0);
-      for (final c in _ctrlList) c.clear();
+      for (final c in _ctrlList) {
+        c.clear();
+      }
       _focusList[0].requestFocus();
       final err =
           context.read<AuthProvider>().error ?? 'Invalid OTP. Try again.';
@@ -206,7 +212,9 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
     if (!mounted) return;
     setState(() => _loading = false);
     _startTimer();
-    for (final c in _ctrlList) c.clear();
+    for (final c in _ctrlList) {
+      c.clear();
+    }
     _focusList[0].requestFocus();
   }
 

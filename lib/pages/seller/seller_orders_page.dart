@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
+import '../../widgets/common/rating_bottom_sheet.dart';
 
 class SellerOrdersPage extends StatefulWidget {
   const SellerOrdersPage({super.key});
@@ -128,6 +129,53 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ));
+  }
+
+  void _showSellerRatingFlow(OrderModel order) {
+    if (!mounted || order.deliveryPartnerId == null) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (_) => RatingBottomSheet(
+        title: 'Rate the Rider 🚴',
+        subtitle: 'How punctual was the delivery partner?',
+        onSubmit: (rating, review) => _submitSellerRating(
+          orderId: order.id,
+          rateeId: order.deliveryPartnerId!,
+          rating: rating,
+          review: review,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submitSellerRating({
+    required String orderId,
+    required String rateeId,
+    required int rating,
+    required String review,
+  }) async {
+    try {
+      final auth = context.read<AuthProvider>();
+      await _supabase.from('ratings').insert({
+        'order_id': orderId,
+        'rater_id': auth.currentUserId,
+        'ratee_id': rateeId,
+        'rater_role': 'seller',
+        'ratee_role': 'delivery',
+        'rating': rating,
+        'review': review.isEmpty ? null : review,
+      });
+      await _supabase.from('orders')
+          .update({'has_seller_rated': true}).eq('id', orderId);
+      _loadOrders();
+      _showSnack('⭐ Rider rated successfully!', isError: false);
+    } catch (e) {
+      debugPrint('Seller rating error: $e');
+    }
   }
 
   // ── Tab filters ────────────────────────────────────────────────────────────
@@ -373,7 +421,41 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
                         fontWeight: FontWeight.w700, color: Colors.black)),
               ),
             ),
-          ],
+          ] else if (tab == 'done' &&
+              order.status == 'delivered' &&
+              order.deliveryPartnerId != null &&
+              !order.hasSellerRated) ...[
+            const Divider(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _showSellerRatingFlow(order),
+                icon: const Icon(Icons.star_outline_rounded, color: Colors.amber),
+                label: Text('Rate Delivery Partner',
+                    style: GoogleFonts.outfit(
+                        color: Colors.amber, fontWeight: FontWeight.w700)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.amber),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ] else if (tab == 'done' && order.hasSellerRated) ...[
+            const Divider(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.check_circle_outline,
+                    color: AppColors.success, size: 16),
+                const SizedBox(width: 6),
+                Text('Rider Rated',
+                    style: GoogleFonts.outfit(
+                        color: AppColors.success,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600)),
+              ],
+            ),
         ],
       ),
     );

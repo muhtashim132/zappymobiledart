@@ -7,7 +7,7 @@ class PaymentConfig {
   static const double deliveryDiscountAmount = 15.0;
   static const double smallCartThreshold = 99.0;
   static const double smallCartFee = 15.0;
-  static const double maxDeliveryRadiusKm = 15.0;
+  static const double maxDeliveryRadiusKm = 9.0;
   static const int maxItemsPerOrder = 50;
   static const double maxWeightKg = 15.0; // Reduced to 15 kg
   static const double heavyOrderThreshold = 10.0;

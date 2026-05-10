@@ -233,7 +233,9 @@ class RestaurantShopCard extends StatelessWidget {
                   color: AppColors.textPrimary),
             ),
             Text(
-              ' (${shop.totalOrders}+)',
+              shop.totalReviews > 0
+                  ? ' (${shop.totalReviews})'
+                  : ' (New)',
               style: GoogleFonts.outfit(
                   fontSize: 11, color: AppColors.textSecondary),
             ),

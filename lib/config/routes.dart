@@ -5,9 +5,7 @@ import '../pages/auth/phone_input_page.dart';
 import '../pages/auth/otp_verify_page.dart';
 import '../pages/auth/complete_profile_page.dart';
 import '../pages/auth/login_page.dart';
-import '../pages/auth/signup_page.dart';
 import '../pages/customer/home_page.dart';
-import '../pages/customer/food_home_page.dart';
 import '../pages/customer/restaurant_page.dart';
 import '../pages/customer/restaurant_dashboard_page.dart';
 import '../pages/customer/product_details_page.dart';
@@ -31,9 +29,7 @@ class AppRoutes {
   static const String otpVerify = '/auth/otp';
   static const String completeProfile = '/auth/complete-profile';
   static const String login = '/login';
-  static const String signup = '/signup';
   static const String customerHome = '/customer/home';
-  static const String foodHome = '/customer/food';
   static const String restaurant = '/customer/restaurant';
   static const String restaurantDashboard = '/customer/restaurant-food';
   static const String productDetails = '/customer/product';
@@ -64,12 +60,8 @@ class AppRoutes {
         return _build(const CompleteProfilePage(), routeSettings);
       case login:
         return _build(const LoginPage(), routeSettings);
-      case signup:
-        return _build(const SignupPage(), routeSettings);
       case customerHome:
         return _build(const CustomerHomePage(), routeSettings);
-      case foodHome:
-        return _build(const FoodHomePage(), routeSettings);
       case restaurant:
         final a = routeSettings.arguments as Map<String, dynamic>?;
         return _build(
