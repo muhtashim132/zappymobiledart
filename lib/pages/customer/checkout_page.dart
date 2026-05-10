@@ -41,14 +41,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final surcharge = cart.multiShopSurcharge;
       final heavyFee = cart.heavyOrderFee;
       final discount = cart.calculateDeliveryDiscount(distanceKm);
-      final totalDelivery =
-          (baseDelivery >= 0 ? baseDelivery : 25.0) + surcharge + heavyFee + cart.smallCartFee - discount;
+      
+      final effectiveBase = baseDelivery >= 0 ? baseDelivery : 25.0;
+      final riderEarnings = effectiveBase + surcharge + heavyFee;
+      final totalDelivery = riderEarnings + cart.smallCartFee - discount;
 
       final orderResponse = await supabase.from('orders').insert({
         'customer_id': auth.currentUserId,
         'status': 'pending',
         'total_amount': cart.subtotal,
         'delivery_charges': totalDelivery,
+        'rider_earnings': riderEarnings,
         'platform_fee': cart.platformFee,
         'address': location.currentAddress,
         'delivery_notes': _notesController.text.isEmpty

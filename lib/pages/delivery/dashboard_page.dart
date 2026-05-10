@@ -120,6 +120,12 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
           'wait_time_penalty': penalty,
           'wait_time_disputed': status == 'reassign_disputed',
         }).eq('id', order.id);
+      } else if (status == 'delivered') {
+        // When the order is completed, lock in the final payout for the seller
+        await _supabase.from('orders').update({
+          'status': status,
+          'seller_payout': order.sellerPayout,
+        }).eq('id', order.id);
       } else {
         await _supabase.from('orders').update({'status': status}).eq('id', order.id);
       }
@@ -407,7 +413,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(color: AppColors.success.withOpacity(0.2), borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: AppColors.success.withOpacity(0.5))),
-              child: Text('₹${order.deliveryCharges.toStringAsFixed(0)} earn',
+              child: Text('₹${order.riderEarnings.toStringAsFixed(0)} earn',
                 style: GoogleFonts.outfit(color: AppColors.success, fontSize: 11, fontWeight: FontWeight.w700)),
             ),
           ]),

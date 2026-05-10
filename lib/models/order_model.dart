@@ -4,6 +4,7 @@ class OrderModel {
   String status;
   final double totalAmount;
   final double deliveryCharges;
+  final double riderEarnings;
   final double multiShopSurcharge;
   final double platformFee;
   final DateTime createdAt;
@@ -27,6 +28,7 @@ class OrderModel {
     required this.status,
     required this.totalAmount,
     required this.deliveryCharges,
+    this.riderEarnings = 0.0,
     this.multiShopSurcharge = 0,
     this.platformFee = 0,
     required this.createdAt,
@@ -49,6 +51,7 @@ class OrderModel {
       status: map['status'] ?? 'pending',
       totalAmount: (map['total_amount'] ?? 0.0).toDouble(),
       deliveryCharges: (map['delivery_charges'] ?? 0.0).toDouble(),
+      riderEarnings: (map['rider_earnings'] ?? (map['delivery_charges'] ?? 0.0)).toDouble(), // Fallback for legacy orders
       multiShopSurcharge: (map['multi_shop_surcharge'] ?? 0.0).toDouble(),
       platformFee: (map['platform_fee'] ?? 0.0).toDouble(),
       createdAt: DateTime.tryParse(map['created_at'] ?? '') ?? DateTime.now(),
