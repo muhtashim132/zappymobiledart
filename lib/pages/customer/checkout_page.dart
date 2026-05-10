@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
 import '../../widgets/common/zappy_map.dart';
+import 'package:uuid/uuid.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -41,38 +42,61 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final surcharge = cart.multiShopSurcharge;
       final heavyFee = cart.heavyOrderFee;
       final discount = cart.calculateDeliveryDiscount(distanceKm);
-      
+
       final effectiveBase = baseDelivery >= 0 ? baseDelivery : 25.0;
       final riderEarnings = effectiveBase + surcharge + heavyFee;
       final totalDelivery = riderEarnings + cart.smallCartFee - discount;
 
-      final orderResponse = await supabase.from('orders').insert({
-        'customer_id': auth.currentUserId,
-        'status': 'pending',
-        'total_amount': cart.subtotal,
-        'delivery_charges': totalDelivery,
-        'rider_earnings': riderEarnings,
-        'platform_fee': cart.platformFee,
-        'address': location.currentAddress,
-        'delivery_notes': _notesController.text.isEmpty
-            ? null
-            : _notesController.text,
-      }).select().single();
+      final cartGroupId = const Uuid().v4();
+      final numShops = cart.shops.length;
 
-      final orderId = orderResponse['id'];
+      final List<String> orderIds = [];
 
-      final itemsToInsert = cart.items
-          .map((item) => {
-                'order_id': orderId,
-                'product_id': item.product.id,
-                'product_name': item.product.name,
-                'quantity': item.quantity,
-                'price': item.product.price,
-                'weight_kg': item.weightKg,
-              })
-          .toList();
+      for (final shop in cart.shops) {
+        final shopItems =
+            cart.items.where((i) => i.shop.id == shop.id).toList();
+        final shopSubtotal =
+            shopItems.fold(0.0, (sum, i) => sum + i.totalPrice);
 
-      await supabase.from('order_items').insert(itemsToInsert);
+        // Split fees evenly across the grouped orders
+        final shopDelivery = totalDelivery / numShops;
+        final shopRiderEarnings = riderEarnings / numShops;
+        final shopPlatformFee = cart.platformFee / numShops;
+
+        final orderResponse = await supabase
+            .from('orders')
+            .insert({
+              'cart_group_id': cartGroupId,
+              'shop_id': shop.id,
+              'customer_id': auth.currentUserId,
+              'status': 'pending',
+              'total_amount': shopSubtotal,
+              'delivery_charges': shopDelivery,
+              'rider_earnings': shopRiderEarnings,
+              'platform_fee': shopPlatformFee,
+              'address': location.currentAddress,
+              'delivery_notes':
+                  _notesController.text.isEmpty ? null : _notesController.text,
+            })
+            .select()
+            .single();
+
+        final orderId = orderResponse['id'];
+        orderIds.add(orderId);
+
+        final itemsToInsert = shopItems
+            .map((item) => {
+                  'order_id': orderId,
+                  'product_id': item.product.id,
+                  'product_name': item.product.name,
+                  'quantity': item.quantity,
+                  'price': item.product.price,
+                  'weight_kg': item.weightKg,
+                })
+            .toList();
+
+        await supabase.from('order_items').insert(itemsToInsert);
+      }
 
       cart.clear();
       if (mounted) {
@@ -80,7 +104,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           context,
           AppRoutes.trackOrder,
           (route) => route.settings.name == AppRoutes.customerHome,
-          arguments: {'orderId': orderId},
+          arguments: {'orderId': orderIds.first},
         );
       }
     } catch (e) {
@@ -91,8 +115,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
             content: const Text('Failed to place order. Please try again.'),
             backgroundColor: AppColors.danger,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
       }
@@ -105,18 +129,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
     final location = context.watch<LocationProvider>();
-    
+
     double distanceKm = 3.0;
     if (location.currentLocation != null && cart.shops.isNotEmpty) {
       distanceKm = location.distanceTo(cart.shops.first.location);
     }
-    
+
     final baseCharge = cart.calculateDeliveryCharges(distanceKm);
     final surcharge = cart.multiShopSurcharge;
     final heavyFee = cart.heavyOrderFee;
     final discount = cart.calculateDeliveryDiscount(distanceKm);
     final effectiveBase = baseCharge >= 0 ? baseCharge : 25.0;
-    final totalDelivery = effectiveBase + surcharge + heavyFee + cart.smallCartFee - discount;
+    final totalDelivery =
+        effectiveBase + surcharge + heavyFee + cart.smallCartFee - discount;
     final total = cart.subtotal + totalDelivery + cart.platformFee;
 
     return Scaffold(
@@ -236,6 +261,40 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
             const SizedBox(height: 16),
 
+            // Payment Method
+            _sectionCard(
+              title: 'Payment Method',
+              icon: Icons.payments_outlined,
+              iconColor: AppColors.warning,
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.money_off, color: AppColors.warning, size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Cash on Delivery is temporarily disabled. Please pay online via UPI or Card upon order confirmation.',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // Bill Details
             _sectionCard(
               title: 'Bill Details',
@@ -243,8 +302,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
               iconColor: AppColors.success,
               child: Column(
                 children: [
-                  _billRow('Item Total',
-                      '₹${cart.subtotal.toStringAsFixed(0)}'),
+                  _billRow(
+                      'Item Total', '₹${cart.subtotal.toStringAsFixed(0)}'),
                   const SizedBox(height: 8),
                   _billRow(
                     'Delivery Fee',
@@ -277,16 +336,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     ),
                   ],
                   // Multi-shop surcharge — shown only when ordering from 2+ shops
-                  if (surcharge > 0) ...
-                    [
-                      const SizedBox(height: 8),
-                      _billRow(
-                        'Multi-shop fee (${cart.shops.length} shops)',
-                        '+₹${surcharge.toStringAsFixed(0)}',
-                        valueColor: Colors.orange.shade700,
-                        hint: '₹7/km between shops',
-                      ),
-                    ],
+                  if (surcharge > 0) ...[
+                    const SizedBox(height: 8),
+                    _billRow(
+                      'Multi-shop fee (${cart.shops.length} shops)',
+                      '+₹${surcharge.toStringAsFixed(0)}',
+                      valueColor: Colors.orange.shade700,
+                      hint: '₹7/km between shops',
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   _billRow(
                     'Handling/Platform Fee',
@@ -368,7 +426,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     : const Text(
                         'PLACE ORDER',
                         style: TextStyle(
-                            fontSize: 16, 
+                            fontSize: 16,
                             color: Colors.white,
                             fontWeight: FontWeight.w700),
                       ),
@@ -432,7 +490,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
           children: [
             Text(label,
                 style: TextStyle(
-                  color: isBold ? AppColors.textPrimary : AppColors.textSecondary,
+                  color:
+                      isBold ? AppColors.textPrimary : AppColors.textSecondary,
                   fontSize: isBold ? 15 : 13,
                   fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
                 )),

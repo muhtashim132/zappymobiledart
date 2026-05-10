@@ -121,10 +121,10 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
           'wait_time_disputed': status == 'reassign_disputed',
         }).eq('id', order.id);
       } else if (status == 'delivered') {
-        // When the order is completed, lock in the final payout for the seller
+        // When the order is completed, finalize the seller payout (= item total)
         await _supabase.from('orders').update({
           'status': status,
-          'seller_payout': order.sellerPayout,
+          'seller_payout': order.totalAmount,
         }).eq('id', order.id);
       } else {
         await _supabase.from('orders').update({'status': status}).eq('id', order.id);

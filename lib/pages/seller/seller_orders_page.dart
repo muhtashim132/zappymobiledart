@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
 
@@ -34,17 +36,36 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
 
   Future<void> _loadOrders() async {
     try {
+      if (!mounted) return;
+      final auth = context.read<AuthProvider>();
+
+      final shopsResp = await _supabase
+          .from('shops')
+          .select('id')
+          .eq('seller_id', auth.currentUserId ?? '');
+
+      if ((shopsResp as List).isEmpty) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+      final shopId = shopsResp.first['id'];
+
       final response = await _supabase
           .from('orders')
           .select()
+          .eq('shop_id', shopId)
           .order('created_at', ascending: false);
 
-      setState(() {
-        _orders = (response as List).map((o) => OrderModel.fromMap(o)).toList();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _orders =
+              (response as List).map((o) => OrderModel.fromMap(o)).toList();
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

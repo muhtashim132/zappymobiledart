@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 
 class AnalyticsPage extends StatefulWidget {
@@ -26,9 +28,25 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
   Future<void> _loadAnalytics() async {
     try {
+      if (!mounted) return;
+      final auth = context.read<AuthProvider>();
+
+      final shopsResp = await _supabase
+          .from('shops')
+          .select('id')
+          .eq('seller_id', auth.currentUserId ?? '');
+
+      if ((shopsResp as List).isEmpty) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+      final shopId = shopsResp.first['id'];
+
       final orders = await _supabase
           .from('orders')
           .select()
+          .eq('shop_id', shopId)
           .order('created_at', ascending: true);
 
       double total = 0;
@@ -150,7 +168,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                                     gridData: FlGridData(
                                       show: true,
                                       drawVerticalLine: false,
-                                      getDrawingHorizontalLine: (v) => const FlLine(
+                                      getDrawingHorizontalLine: (v) =>
+                                          const FlLine(
                                         color: AppColors.divider,
                                         strokeWidth: 1,
                                       ),
@@ -163,22 +182,21 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                                             'D${v.toInt() + 1}',
                                             style: const TextStyle(
                                                 fontSize: 10,
-                                                color:
-                                                    AppColors.textSecondary),
+                                                color: AppColors.textSecondary),
                                           ),
                                         ),
                                       ),
                                       leftTitles: const AxisTitles(
-                                        sideTitles: SideTitles(
-                                            showTitles: false),
+                                        sideTitles:
+                                            SideTitles(showTitles: false),
                                       ),
                                       topTitles: const AxisTitles(
-                                        sideTitles: SideTitles(
-                                            showTitles: false),
+                                        sideTitles:
+                                            SideTitles(showTitles: false),
                                       ),
                                       rightTitles: const AxisTitles(
-                                        sideTitles: SideTitles(
-                                            showTitles: false),
+                                        sideTitles:
+                                            SideTitles(showTitles: false),
                                       ),
                                     ),
                                     borderData: FlBorderData(show: false),
@@ -220,8 +238,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     );
   }
 
-  Widget _statCard(
-      String title, String value, IconData icon, Color color) {
+  Widget _statCard(String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

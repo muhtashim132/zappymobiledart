@@ -79,8 +79,8 @@ class _FoodHomePageState extends State<FoodHomePage> {
             ),
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
-                decoration: const BoxDecoration(
-                    gradient: AppColors.foodGradient),
+                decoration:
+                    const BoxDecoration(gradient: AppColors.foodGradient),
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 56, 20, 20),
@@ -114,13 +114,10 @@ class _FoodHomePageState extends State<FoodHomePage> {
                           ),
                           child: const TextField(
                             decoration: InputDecoration(
-                              hintText:
-                                  'Search restaurants or dishes...',
+                              hintText: 'Search restaurants or dishes...',
                               hintStyle: TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textSecondary),
-                              prefixIcon:
-                                  Icon(Icons.search, size: 20),
+                                  fontSize: 13, color: AppColors.textSecondary),
+                              prefixIcon: Icon(Icons.search, size: 20),
                               border: InputBorder.none,
                               enabledBorder: InputBorder.none,
                               focusedBorder: InputBorder.none,
@@ -191,9 +188,8 @@ class _FoodHomePageState extends State<FoodHomePage> {
                           : Colors.white,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: isSelected
-                            ? AppColors.foodRed
-                            : Colors.transparent,
+                        color:
+                            isSelected ? AppColors.foodRed : Colors.transparent,
                         width: 2,
                       ),
                       boxShadow: [
@@ -216,9 +212,8 @@ class _FoodHomePageState extends State<FoodHomePage> {
                     style: TextStyle(
                       fontSize: 10,
                       fontFamily: 'Poppins',
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
                       color: isSelected
                           ? AppColors.foodRed
                           : AppColors.textSecondary,
@@ -252,8 +247,7 @@ class _FoodHomePageState extends State<FoodHomePage> {
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: _vegOnly
                     ? AppColors.vegGreen.withOpacity(0.1)
@@ -270,8 +264,7 @@ class _FoodHomePageState extends State<FoodHomePage> {
                     width: 14,
                     height: 14,
                     decoration: BoxDecoration(
-                      border: Border.all(
-                          color: AppColors.vegGreen, width: 2),
+                      border: Border.all(color: AppColors.vegGreen, width: 2),
                       borderRadius: BorderRadius.circular(3),
                     ),
                     child: _vegOnly
@@ -333,7 +326,7 @@ class _FoodHomePageState extends State<FoodHomePage> {
           restaurant: _restaurants[index],
           onTap: () => Navigator.pushNamed(
             context,
-            AppRoutes.restaurant,
+            AppRoutes.restaurantDashboard,
             arguments: {'shopId': _restaurants[index].id},
           ),
         ),

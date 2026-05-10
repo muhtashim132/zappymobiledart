@@ -75,6 +75,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
       final ordersResp = await _supabase
           .from('orders')
           .select()
+          .eq('shop_id', shopId)
           .not('status', 'in', '("cancelled","seller_rejected")');
 
       final productsResp =

@@ -9,6 +9,7 @@ import '../pages/auth/signup_page.dart';
 import '../pages/customer/home_page.dart';
 import '../pages/customer/food_home_page.dart';
 import '../pages/customer/restaurant_page.dart';
+import '../pages/customer/restaurant_dashboard_page.dart';
 import '../pages/customer/product_details_page.dart';
 import '../pages/customer/cart_page.dart';
 import '../pages/customer/checkout_page.dart';
@@ -24,62 +25,91 @@ import '../pages/delivery/earnings_page.dart';
 import '../pages/settings/profile_settings_page.dart';
 
 class AppRoutes {
-  static const String splash          = '/';
-  static const String roleSelect      = '/auth/role';
-  static const String phoneAuth       = '/auth/phone';
-  static const String otpVerify       = '/auth/otp';
+  static const String splash = '/';
+  static const String roleSelect = '/auth/role';
+  static const String phoneAuth = '/auth/phone';
+  static const String otpVerify = '/auth/otp';
   static const String completeProfile = '/auth/complete-profile';
-  static const String login           = '/login';
-  static const String signup          = '/signup';
-  static const String customerHome   = '/customer/home';
-  static const String foodHome       = '/customer/food';
-  static const String restaurant     = '/customer/restaurant';
+  static const String login = '/login';
+  static const String signup = '/signup';
+  static const String customerHome = '/customer/home';
+  static const String foodHome = '/customer/food';
+  static const String restaurant = '/customer/restaurant';
+  static const String restaurantDashboard = '/customer/restaurant-food';
   static const String productDetails = '/customer/product';
-  static const String cart           = '/customer/cart';
-  static const String checkout       = '/customer/checkout';
-  static const String trackOrder     = '/customer/track';
-  static const String orderHistory   = '/customer/orders';
-  static const String sellerDashboard  = '/seller/dashboard';
-  static const String addProduct       = '/seller/add-product';
-  static const String manageProducts   = '/seller/products';
-  static const String sellerOrders     = '/seller/orders';
-  static const String analytics        = '/seller/analytics';
+  static const String cart = '/customer/cart';
+  static const String checkout = '/customer/checkout';
+  static const String trackOrder = '/customer/track';
+  static const String orderHistory = '/customer/orders';
+  static const String sellerDashboard = '/seller/dashboard';
+  static const String addProduct = '/seller/add-product';
+  static const String manageProducts = '/seller/products';
+  static const String sellerOrders = '/seller/orders';
+  static const String analytics = '/seller/analytics';
   static const String deliveryDashboard = '/delivery/dashboard';
-  static const String earnings          = '/delivery/earnings';
-  static const String settings          = '/settings';
+  static const String earnings = '/delivery/earnings';
+  static const String settings = '/settings';
 
   static Route<dynamic> generateRoute(RouteSettings routeSettings) {
     switch (routeSettings.name) {
-      case splash:          return _build(const SplashPage(), routeSettings);
-      case roleSelect:      return _build(const RoleSelectionPage(), routeSettings);
-      case phoneAuth:       return _build(const PhoneAuthPage(), routeSettings);
-      case otpVerify:       return _build(const OtpVerifyPage(), routeSettings);
-      case completeProfile: return _build(const CompleteProfilePage(), routeSettings);
-      case login:           return _build(const LoginPage(), routeSettings);
-      case signup:          return _build(const SignupPage(), routeSettings);
-      case customerHome:    return _build(const CustomerHomePage(), routeSettings);
-      case foodHome:        return _build(const FoodHomePage(), routeSettings);
+      case splash:
+        return _build(const SplashPage(), routeSettings);
+      case roleSelect:
+        return _build(const RoleSelectionPage(), routeSettings);
+      case phoneAuth:
+        return _build(const PhoneAuthPage(), routeSettings);
+      case otpVerify:
+        return _build(const OtpVerifyPage(), routeSettings);
+      case completeProfile:
+        return _build(const CompleteProfilePage(), routeSettings);
+      case login:
+        return _build(const LoginPage(), routeSettings);
+      case signup:
+        return _build(const SignupPage(), routeSettings);
+      case customerHome:
+        return _build(const CustomerHomePage(), routeSettings);
+      case foodHome:
+        return _build(const FoodHomePage(), routeSettings);
       case restaurant:
         final a = routeSettings.arguments as Map<String, dynamic>?;
-        return _build(RestaurantPage(shopId: a?['shopId'] ?? ''), routeSettings);
+        return _build(
+            RestaurantPage(shopId: a?['shopId'] ?? ''), routeSettings);
+      case restaurantDashboard:
+        final b = routeSettings.arguments as Map<String, dynamic>?;
+        return _build(
+            RestaurantDashboardPage(shopId: b?['shopId'] ?? ''), routeSettings);
       case productDetails:
         final a = routeSettings.arguments as Map<String, dynamic>?;
-        return _build(ProductDetailsPage(productId: a?['productId'] ?? ''), routeSettings);
-      case cart:            return _build(const CartPage(), routeSettings);
-      case checkout:        return _build(const CheckoutPage(), routeSettings);
+        return _build(ProductDetailsPage(productId: a?['productId'] ?? ''),
+            routeSettings);
+      case cart:
+        return _build(const CartPage(), routeSettings);
+      case checkout:
+        return _build(const CheckoutPage(), routeSettings);
       case trackOrder:
         final a = routeSettings.arguments as Map<String, dynamic>?;
-        return _build(TrackOrderPage(orderId: a?['orderId'] ?? ''), routeSettings);
-      case orderHistory:      return _build(const OrderHistoryPage(), routeSettings);
-      case sellerDashboard:   return _build(const SellerDashboardPage(), routeSettings);
-      case addProduct:        return _build(const AddProductPage(), routeSettings);
-      case manageProducts:    return _build(const ManageProductsPage(), routeSettings);
-      case sellerOrders:      return _build(const SellerOrdersPage(), routeSettings);
-      case analytics:         return _build(const AnalyticsPage(), routeSettings);
-      case deliveryDashboard: return _build(const DeliveryDashboardPage(), routeSettings);
-      case earnings:          return _build(const EarningsPage(), routeSettings);
-      case settings:          return _build(const ProfileSettingsPage(), routeSettings);
-      default:                return _build(const SplashPage(), routeSettings);
+        return _build(
+            TrackOrderPage(orderId: a?['orderId'] ?? ''), routeSettings);
+      case orderHistory:
+        return _build(const OrderHistoryPage(), routeSettings);
+      case sellerDashboard:
+        return _build(const SellerDashboardPage(), routeSettings);
+      case addProduct:
+        return _build(const AddProductPage(), routeSettings);
+      case manageProducts:
+        return _build(const ManageProductsPage(), routeSettings);
+      case sellerOrders:
+        return _build(const SellerOrdersPage(), routeSettings);
+      case analytics:
+        return _build(const AnalyticsPage(), routeSettings);
+      case deliveryDashboard:
+        return _build(const DeliveryDashboardPage(), routeSettings);
+      case earnings:
+        return _build(const EarningsPage(), routeSettings);
+      case settings:
+        return _build(const ProfileSettingsPage(), routeSettings);
+      default:
+        return _build(const SplashPage(), routeSettings);
     }
   }
 

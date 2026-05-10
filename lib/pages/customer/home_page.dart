@@ -14,7 +14,7 @@ import '../../models/shop_model.dart';
 import '../../utils/delivery_calculator.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/shop_card.dart';
-
+import '../../widgets/restaurant_shop_card.dart';
 
 class CustomerHomePage extends StatefulWidget {
   const CustomerHomePage({super.key});
@@ -35,13 +35,40 @@ class _CustomerHomePageState extends State<CustomerHomePage>
   String _searchQuery = '';
   final _searchController = TextEditingController();
 
+  /// True when the Food / Restaurant tab is currently selected.
+  bool get _isFoodTab => _selectedTabIndex == 0; // index 0 = 'Food'
+
   final List<Map<String, dynamic>> _categories = [
-    {'name': 'Food',        'emoji': '🍔', 'grad': [const Color(0xFFFF6B6B), const Color(0xFFEE5A24)]},
-    {'name': 'Grocery',     'emoji': '🛒', 'grad': [const Color(0xFF51CF66), const Color(0xFF2F9E44)]},
-    {'name': 'Pharmacy',    'emoji': '💊', 'grad': [const Color(0xFF4C6EF5), const Color(0xFF364FC7)]},
-    {'name': 'Clothing',    'emoji': '👕', 'grad': [const Color(0xFFFF8C42), const Color(0xFFE8590C)]},
-    {'name': 'Electronics', 'emoji': '📱', 'grad': [const Color(0xFFCC5DE8), const Color(0xFF9C36B5)]},
-    {'name': 'More',        'emoji': '🛍️', 'grad': [const Color(0xFF20C997), const Color(0xFF0CA678)]},
+    {
+      'name': 'Food',
+      'emoji': '🍔',
+      'grad': [const Color(0xFFFF6B6B), const Color(0xFFEE5A24)]
+    },
+    {
+      'name': 'Grocery',
+      'emoji': '🛒',
+      'grad': [const Color(0xFF51CF66), const Color(0xFF2F9E44)]
+    },
+    {
+      'name': 'Pharmacy',
+      'emoji': '💊',
+      'grad': [const Color(0xFF4C6EF5), const Color(0xFF364FC7)]
+    },
+    {
+      'name': 'Clothing',
+      'emoji': '👕',
+      'grad': [const Color(0xFFFF8C42), const Color(0xFFE8590C)]
+    },
+    {
+      'name': 'Electronics',
+      'emoji': '📱',
+      'grad': [const Color(0xFFCC5DE8), const Color(0xFF9C36B5)]
+    },
+    {
+      'name': 'More',
+      'emoji': '🛍️',
+      'grad': [const Color(0xFF20C997), const Color(0xFF0CA678)]
+    },
   ];
 
   @override
@@ -92,9 +119,8 @@ class _CustomerHomePageState extends State<CustomerHomePage>
 
       if (mounted) {
         // Compute distance for each shop and filter to 15 km radius
-        final allShops = (shopsResponse as List)
-            .map((s) => ShopModel.fromMap(s))
-            .toList();
+        final allShops =
+            (shopsResponse as List).map((s) => ShopModel.fromMap(s)).toList();
 
         List<ShopModel> nearby;
         if (locationProvider.hasLocation) {
@@ -110,7 +136,9 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           nearby = allShops;
         }
 
-        final prods = (productsResponse as List).map((p) => ProductModel.fromMap(p)).toList();
+        final prods = (productsResponse as List)
+            .map((p) => ProductModel.fromMap(p))
+            .toList();
         setState(() {
           _shops = nearby;
           _products = prods;
@@ -165,19 +193,24 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                                         letterSpacing: 1.2,
                                       ),
                                     ),
-                                    const Icon(Icons.keyboard_arrow_down, size: 16, color: AppColors.primary),
+                                    const Icon(Icons.keyboard_arrow_down,
+                                        size: 16, color: AppColors.primary),
                                   ],
                                 ),
                                 Text(
                                   locationProvider.hasLocation
-                                      ? locationProvider.currentAddress.isNotEmpty
+                                      ? locationProvider
+                                              .currentAddress.isNotEmpty
                                           ? locationProvider.currentAddress
                                           : 'Current Location'
                                       : 'Set location...',
                                   style: GoogleFonts.outfit(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
-                                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge
+                                        ?.color,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -201,7 +234,8 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                         _buildCircleAction(
                           icon: Icons.person_outline,
                           isDark: isDark,
-                          onTap: () => Navigator.pushNamed(context, AppRoutes.settings),
+                          onTap: () =>
+                              Navigator.pushNamed(context, AppRoutes.settings),
                         ),
                       ],
                     ),
@@ -222,15 +256,23 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                       onChanged: (v) => setState(() => _searchQuery = v),
                       decoration: InputDecoration(
                         hintText: 'Search "Milk", "Pizza" or "Medicines"',
-                        hintStyle: GoogleFonts.outfit(color: isDark ? Colors.grey.shade500 : Colors.grey.shade400, fontSize: 14),
-                        prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+                        hintStyle: GoogleFonts.outfit(
+                            color: isDark
+                                ? Colors.grey.shade500
+                                : Colors.grey.shade400,
+                            fontSize: 14),
+                        prefixIcon:
+                            const Icon(Icons.search, color: AppColors.primary),
                         filled: true,
-                        fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? Colors.grey.shade100,
+                        fillColor:
+                            Theme.of(context).inputDecorationTheme.fillColor ??
+                                Colors.grey.shade100,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide.none,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
                       ),
                     ),
                   ),
@@ -266,23 +308,43 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                             height: 58,
                             decoration: BoxDecoration(
                               gradient: isSelected
-                                  ? LinearGradient(colors: grad, begin: Alignment.topLeft, end: Alignment.bottomRight)
+                                  ? LinearGradient(
+                                      colors: grad,
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight)
                                   : null,
-                              color: isSelected ? null : (isDark ? const Color(0xFF1E1E2E) : const Color(0xFFF0F0F8)),
+                              color: isSelected
+                                  ? null
+                                  : (isDark
+                                      ? const Color(0xFF1E1E2E)
+                                      : const Color(0xFFF0F0F8)),
                               shape: BoxShape.circle,
                               boxShadow: isSelected
-                                  ? [BoxShadow(color: grad.first.withOpacity(0.4), blurRadius: 12, offset: const Offset(0, 4))]
+                                  ? [
+                                      BoxShadow(
+                                          color: grad.first.withOpacity(0.4),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4))
+                                    ]
                                   : [],
                             ),
-                            child: Center(child: Text(cat['emoji'], style: const TextStyle(fontSize: 26))),
+                            child: Center(
+                                child: Text(cat['emoji'],
+                                    style: const TextStyle(fontSize: 26))),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             cat['name'],
                             style: GoogleFonts.outfit(
                               fontSize: 11,
-                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                              color: isSelected ? grad.first : (isDark ? Colors.white54 : Colors.grey.shade600),
+                              fontWeight: isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? grad.first
+                                  : (isDark
+                                      ? Colors.white54
+                                      : Colors.grey.shade600),
                             ),
                           ),
                         ],
@@ -306,28 +368,45 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                           // Featured Banner
                           _buildFeaturedBanner(),
                           const SizedBox(height: 24),
-                          
+
                           // Shops Section
                           if (_shops.isNotEmpty) ...[
                             _buildSectionTitle(
-                              'Shops near you',
+                              _isFoodTab
+                                  ? 'Restaurants near you'
+                                  : 'Shops near you',
                               subtitle: '${_shops.length} within 15 km',
                             ),
                             const SizedBox(height: 16),
                             ..._shops
-                                .where((s) => _searchQuery.isEmpty || s.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+                                .where((s) =>
+                                    _searchQuery.isEmpty ||
+                                    s.name
+                                        .toLowerCase()
+                                        .contains(_searchQuery.toLowerCase()))
                                 .map((shop) => Padding(
-                                      padding: const EdgeInsets.only(bottom: 16),
-                                      child: ShopCard(
-                                        shop: shop,
-                                        onTap: () => Navigator.pushNamed(
-                                          context,
-                                          AppRoutes.restaurant,
-                                          arguments: {'shopId': shop.id},
-                                        ),
-                                      ),
+                                      padding:
+                                          const EdgeInsets.only(bottom: 16),
+                                      child: _isFoodTab
+                                          ? RestaurantShopCard(
+                                              shop: shop,
+                                              onTap: () => Navigator.pushNamed(
+                                                context,
+                                                AppRoutes.restaurantDashboard,
+                                                arguments: {'shopId': shop.id},
+                                              ),
+                                            )
+                                          : ShopCard(
+                                              shop: shop,
+                                              onTap: () => Navigator.pushNamed(
+                                                context,
+                                                AppRoutes.restaurant,
+                                                arguments: {'shopId': shop.id},
+                                              ),
+                                            ),
                                     )),
-                          ] else if (!_isLoading && locationProvider.hasLocation) ...[
+                          ] else if (!_isLoading &&
+                              locationProvider.hasLocation) ...[
                             _buildNoShopsNearby(),
                           ],
 
@@ -339,14 +418,16 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                             GridView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
                                 childAspectRatio: 0.72,
                                 mainAxisSpacing: 16,
                                 crossAxisSpacing: 16,
                               ),
                               itemCount: _products.length,
-                              itemBuilder: (context, index) => ProductCard(product: _products[index]),
+                              itemBuilder: (context, index) =>
+                                  ProductCard(product: _products[index]),
                             ),
                           ],
                         ]),
@@ -354,13 +435,16 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           ),
         ],
       ),
-      
+
       // ── Floating Action Bar (Bottom Nav Replacement) ────────────────
       bottomNavigationBar: _buildFloatingBottomNav(cartProvider),
     );
   }
 
-  Widget _buildCircleAction({required IconData icon, required bool isDark, required VoidCallback onTap}) {
+  Widget _buildCircleAction(
+      {required IconData icon,
+      required bool isDark,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -369,9 +453,11 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E2E) : const Color(0xFFF0F0F8),
           shape: BoxShape.circle,
-          border: Border.all(color: isDark ? Colors.white10 : Colors.transparent),
+          border:
+              Border.all(color: isDark ? Colors.white10 : Colors.transparent),
         ),
-        child: Icon(icon, color: isDark ? Colors.white70 : AppColors.textPrimary, size: 20),
+        child: Icon(icon,
+            color: isDark ? Colors.white70 : AppColors.textPrimary, size: 20),
       ),
     );
   }
@@ -388,22 +474,38 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         ),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
-          BoxShadow(color: const Color(0xFF162AC4).withOpacity(0.4), blurRadius: 24, offset: const Offset(0, 12)),
+          BoxShadow(
+              color: const Color(0xFF162AC4).withOpacity(0.4),
+              blurRadius: 24,
+              offset: const Offset(0, 12)),
         ],
       ),
       child: Stack(
         children: [
           // Decorative circles
-          Positioned(right: -30, top: -30,
-            child: Container(width: 160, height: 160,
-              decoration: BoxDecoration(shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05)))),
-          Positioned(right: 30, bottom: -40,
-            child: Container(width: 120, height: 120,
-              decoration: BoxDecoration(shape: BoxShape.circle,
-                color: const Color(0xFFF4C542).withOpacity(0.12)))),
-          Positioned(right: -10, bottom: -10,
-            child: Icon(Icons.bolt_rounded, size: 140, color: Colors.white.withOpacity(0.06))),
+          Positioned(
+              right: -30,
+              top: -30,
+              child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.05)))),
+          Positioned(
+              right: 30,
+              bottom: -40,
+              child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFF4C542).withOpacity(0.12)))),
+          Positioned(
+              right: -10,
+              bottom: -10,
+              child: Icon(Icons.bolt_rounded,
+                  size: 140, color: Colors.white.withOpacity(0.06))),
           // Content
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
@@ -412,20 +514,30 @@ class _CustomerHomePageState extends State<CustomerHomePage>
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF4C542),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text('⚡ FAST DELIVERY', style: GoogleFonts.outfit(
-                    fontSize: 10, fontWeight: FontWeight.w900, color: Colors.black, letterSpacing: 0.5)),
+                  child: Text('⚡ FAST DELIVERY',
+                      style: GoogleFonts.outfit(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black,
+                          letterSpacing: 0.5)),
                 ),
                 const SizedBox(height: 14),
                 Text('Delivered at the\nspeed of life!',
-                  style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, height: 1.1)),
+                    style: GoogleFonts.outfit(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        height: 1.1)),
                 const SizedBox(height: 8),
                 Text('Supporting local sellers · Zero commission',
-                  style: GoogleFonts.outfit(fontSize: 12, color: Colors.white.withOpacity(0.7))),
+                    style: GoogleFonts.outfit(
+                        fontSize: 12, color: Colors.white.withOpacity(0.7))),
               ],
             ),
           ),
@@ -482,13 +594,15 @@ class _CustomerHomePageState extends State<CustomerHomePage>
             const SizedBox(height: 16),
             Text(
               'No shops nearby',
-              style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700),
+              style:
+                  GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             Text(
               'No shops found within 15 km of\nyour location in this category.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(color: AppColors.textSecondary, height: 1.5),
+              style: GoogleFonts.outfit(
+                  color: AppColors.textSecondary, height: 1.5),
             ),
           ],
         ),
@@ -509,7 +623,10 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           ),
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
-            BoxShadow(color: const Color(0xFF162AC4).withOpacity(0.5), blurRadius: 24, offset: const Offset(0, 8)),
+            BoxShadow(
+                color: const Color(0xFF162AC4).withOpacity(0.5),
+                blurRadius: 24,
+                offset: const Offset(0, 8)),
           ],
         ),
         padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -517,16 +634,22 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
-            _buildNavItem(1, Icons.shopping_cart_rounded, Icons.shopping_cart_outlined, 'Cart', badge: cart.totalItemCount),
-            _buildNavItem(2, Icons.receipt_long_rounded, Icons.receipt_long_outlined, 'Orders'),
-            _buildNavItem(3, Icons.favorite_rounded, Icons.favorite_border_rounded, 'Favs'),
+            _buildNavItem(1, Icons.shopping_cart_rounded,
+                Icons.shopping_cart_outlined, 'Cart',
+                badge: cart.totalItemCount),
+            _buildNavItem(2, Icons.receipt_long_rounded,
+                Icons.receipt_long_outlined, 'Orders'),
+            _buildNavItem(3, Icons.favorite_rounded,
+                Icons.favorite_border_rounded, 'Favs'),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(int index, IconData activeIcon, IconData inactiveIcon, String label, {int badge = 0}) {
+  Widget _buildNavItem(
+      int index, IconData activeIcon, IconData inactiveIcon, String label,
+      {int badge = 0}) {
     final isSelected = _navIndex == index;
     return GestureDetector(
       onTap: () {
@@ -538,9 +661,12 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         duration: const Duration(milliseconds: 250),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent,
+          color:
+              isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(22),
-          border: isSelected ? Border.all(color: Colors.white.withOpacity(0.2)) : null,
+          border: isSelected
+              ? Border.all(color: Colors.white.withOpacity(0.2))
+              : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -549,22 +675,35 @@ class _CustomerHomePageState extends State<CustomerHomePage>
               clipBehavior: Clip.none,
               children: [
                 Icon(isSelected ? activeIcon : inactiveIcon,
-                  color: isSelected ? Colors.white : Colors.white54, size: 22),
+                    color: isSelected ? Colors.white : Colors.white54,
+                    size: 22),
                 if (badge > 0)
                   Positioned(
                     right: -7,
                     top: -7,
                     child: Container(
-                      width: 16, height: 16,
-                      decoration: const BoxDecoration(color: Color(0xFFFF6B6B), shape: BoxShape.circle),
-                      child: Center(child: Text('$badge',
-                        style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold))),
+                      width: 16,
+                      height: 16,
+                      decoration: const BoxDecoration(
+                          color: Color(0xFFFF6B6B), shape: BoxShape.circle),
+                      child: Center(
+                          child: Text('$badge',
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold))),
                     ),
                   ),
               ],
             ),
-            if (isSelected) ...[const SizedBox(height: 2),
-              Text(label, style: GoogleFonts.outfit(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700))],
+            if (isSelected) ...[
+              const SizedBox(height: 2),
+              Text(label,
+                  style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700))
+            ],
           ],
         ),
       ),
@@ -582,17 +721,20 @@ class _CustomerHomePageState extends State<CustomerHomePage>
             const SizedBox(height: 20),
             Text(
               'Location Required',
-              style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w700),
+              style:
+                  GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 12),
             Text(
               'We need your location to show nearby shops and ensure delivery is available.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(color: AppColors.textSecondary, height: 1.5),
+              style: GoogleFonts.outfit(
+                  color: AppColors.textSecondary, height: 1.5),
             ),
             const SizedBox(height: 28),
             ElevatedButton.icon(
-              onPressed: () => context.read<LocationProvider>().requestLocation(),
+              onPressed: () =>
+                  context.read<LocationProvider>().requestLocation(),
               icon: const Icon(Icons.my_location),
               label: const Text('Enable Location'),
             ),
@@ -608,15 +750,17 @@ class _CustomerHomePageState extends State<CustomerHomePage>
       baseColor: isDark ? const Color(0xFF1E1E2E) : Colors.grey.shade200,
       highlightColor: isDark ? const Color(0xFF2A2A3A) : Colors.grey.shade100,
       child: Column(
-        children: List.generate(3, (_) => Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          height: 130,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
-            borderRadius: BorderRadius.circular(24),
-          ),
-        )),
+        children: List.generate(
+            3,
+            (_) => Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  height: 130,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                )),
       ),
     );
   }
@@ -626,15 +770,23 @@ class _CustomerHomePageState extends State<CustomerHomePage>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+            Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 24),
-            Text('Delivery Location', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700)),
+            Text('Delivery Location',
+                style: GoogleFonts.outfit(
+                    fontSize: 20, fontWeight: FontWeight.w700)),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () {
@@ -643,7 +795,8 @@ class _CustomerHomePageState extends State<CustomerHomePage>
               },
               icon: const Icon(Icons.my_location),
               label: const Text('Use Current Location'),
-              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 56)),
+              style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 56)),
             ),
             const SizedBox(height: 16),
           ],
