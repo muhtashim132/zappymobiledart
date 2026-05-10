@@ -89,11 +89,9 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
 
   Future<void> _updateOrderStatus(String orderId, String status) async {
     try {
-      final updates = <String, dynamic>{'status': status};
-      if (status == 'ready_for_pickup') {
-        updates['order_ready_time'] = DateTime.now().toIso8601String();
-      }
-      await _supabase.from('orders').update(updates).eq('id', orderId);
+      await _supabase
+          .from('orders')
+          .update({'status': status}).eq('id', orderId);
       _loadOrders();
       _showSnack('Status → ${status.replaceAll('_', ' ')}', isError: false);
     } catch (e) {
@@ -115,17 +113,27 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
   List<OrderModel> _pendingOrders() =>
       _orders.where((o) => o.status == 'pending' && !o.sellerAccepted).toList();
 
-  List<OrderModel> _activeOrders() => _orders.where((o) => [
-        'pending',   // seller accepted, awaiting partner (or vice versa)
-        'confirmed',
-        'preparing',
-        'ready_for_pickup',
-        'picked_up',
-        'out_for_delivery',
-      ].contains(o.status) && (o.sellerAccepted || o.status != 'pending')).toList();
+  List<OrderModel> _activeOrders() => _orders
+      .where((o) =>
+          [
+            'pending', // seller accepted, awaiting partner (or vice versa)
+            'confirmed',
+            'preparing',
+            'ready_for_pickup',
+            'picked_up',
+            'out_for_delivery',
+          ].contains(o.status) &&
+          (o.sellerAccepted || o.status != 'pending'))
+      .toList();
 
-  List<OrderModel> _doneOrders() =>
-      _orders.where((o) => ['delivered', 'cancelled', 'seller_rejected', 'partner_rejected'].contains(o.status)).toList();
+  List<OrderModel> _doneOrders() => _orders
+      .where((o) => [
+            'delivered',
+            'cancelled',
+            'seller_rejected',
+            'partner_rejected'
+          ].contains(o.status))
+      .toList();
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +142,8 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('Orders', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
+        title: Text('Orders',
+            style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: AppColors.primary,
@@ -146,12 +155,19 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text('Pending', style: GoogleFonts.outfit()),
-                  if (pendingCount > 0) ...[ 
+                  if (pendingCount > 0) ...[
                     const SizedBox(width: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(10)),
-                      child: Text('$pendingCount', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                          color: AppColors.danger,
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Text('$pendingCount',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ],
@@ -187,8 +203,13 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
             const Text('📋', style: TextStyle(fontSize: 56)),
             const SizedBox(height: 16),
             Text(
-              tab == 'pending' ? 'No new orders' : tab == 'active' ? 'No active orders' : 'No completed orders',
-              style: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 16),
+              tab == 'pending'
+                  ? 'No new orders'
+                  : tab == 'active'
+                      ? 'No active orders'
+                      : 'No completed orders',
+              style: GoogleFonts.outfit(
+                  color: AppColors.textSecondary, fontSize: 16),
             ),
           ],
         ),
@@ -216,7 +237,9 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)
+        ],
         border: order.status == 'confirmed'
             ? Border.all(color: AppColors.success, width: 1.5)
             : null,
@@ -230,11 +253,13 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
             children: [
               Text(
                 'Order #${order.id.substring(0, 8).toUpperCase()}',
-                style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 14),
+                style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700, fontSize: 14),
               ),
               Text(
                 DateFormat('hh:mm a').format(order.createdAt),
-                style: GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 12),
+                style: GoogleFonts.outfit(
+                    color: AppColors.textSecondary, fontSize: 12),
               ),
             ],
           ),
@@ -244,26 +269,20 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '₹${order.sellerPayout.toStringAsFixed(0)} payout',
-                    style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary),
-                  ),
-                  if (order.waitTimePenalty > 0)
-                    Text(
-                      '-₹${order.waitTimePenalty.toStringAsFixed(0)} delay penalty',
-                      style: GoogleFonts.outfit(fontSize: 10, color: AppColors.danger, fontWeight: FontWeight.w600),
-                    ),
-                ],
+              Text(
+                '₹${order.grandTotal.toStringAsFixed(0)}',
+                style: GoogleFonts.outfit(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary),
               ),
               _statusBadge(order, statusColor),
             ],
           ),
 
           // Dual-acceptance progress bar (for pending-but-one-accepted)
-          if (order.status == 'pending' && (order.sellerAccepted || order.partnerAccepted)) ...[
+          if (order.status == 'pending' &&
+              (order.sellerAccepted || order.partnerAccepted)) ...[
             const SizedBox(height: 12),
             _buildAcceptanceProgress(order),
           ],
@@ -278,9 +297,11 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.danger,
                     side: const BorderSide(color: AppColors.danger),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text('Reject', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                  child: Text('Reject',
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -289,9 +310,12 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
                   onPressed: () => _sellerAccept(order),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text('Accept', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: Colors.white)),
+                  child: Text('Accept',
+                      style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.w700, color: Colors.white)),
                 ),
               ),
             ]),
@@ -303,9 +327,12 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
                 onPressed: () => _updateOrderStatus(order.id, 'preparing'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text('Start Preparing', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: Colors.white)),
+                child: Text('Start Preparing',
+                    style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.w700, color: Colors.white)),
               ),
             ),
           ] else if (tab == 'active' && order.status == 'preparing') ...[
@@ -313,12 +340,16 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => _updateOrderStatus(order.id, 'ready_for_pickup'),
+                onPressed: () =>
+                    _updateOrderStatus(order.id, 'ready_for_pickup'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text('Mark Ready for Pickup', style: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: Colors.black)),
+                child: Text('Mark Ready for Pickup',
+                    style: GoogleFonts.outfit(
+                        fontWeight: FontWeight.w700, color: Colors.black)),
               ),
             ),
           ],
@@ -341,7 +372,10 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
         children: [
           Text(
             'Waiting for both parties to accept',
-            style: GoogleFonts.outfit(fontSize: 12, color: Colors.amber.shade800, fontWeight: FontWeight.w600),
+            style: GoogleFonts.outfit(
+                fontSize: 12,
+                color: Colors.amber.shade800,
+                fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 10),
           Row(
@@ -371,7 +405,8 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
     );
   }
 
-  Widget _acceptanceStep({required String label, required IconData icon, required bool accepted}) {
+  Widget _acceptanceStep(
+      {required String label, required IconData icon, required bool accepted}) {
     return Column(
       children: [
         Container(
@@ -388,7 +423,11 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
           ),
         ),
         const SizedBox(height: 4),
-        Text(label, style: GoogleFonts.outfit(fontSize: 11, color: accepted ? AppColors.success : AppColors.textSecondary, fontWeight: FontWeight.w600)),
+        Text(label,
+            style: GoogleFonts.outfit(
+                fontSize: 11,
+                color: accepted ? AppColors.success : AppColors.textSecondary,
+                fontWeight: FontWeight.w600)),
       ],
     );
   }
@@ -403,24 +442,33 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
       ),
       child: Text(
         order.statusDisplay,
-        style: GoogleFonts.outfit(color: color, fontSize: 11, fontWeight: FontWeight.w700),
+        style: GoogleFonts.outfit(
+            color: color, fontSize: 11, fontWeight: FontWeight.w700),
       ),
     );
   }
 
   Color _statusColor(OrderModel order) {
     switch (order.status) {
-      case 'confirmed':        return AppColors.success;
-      case 'preparing':        return AppColors.primary;
-      case 'ready_for_pickup': return Colors.orange;
-      case 'picked_up':        return Colors.blue;
-      case 'out_for_delivery': return Colors.deepPurple;
-      case 'delivered':        return AppColors.success;
+      case 'confirmed':
+        return AppColors.success;
+      case 'preparing':
+        return AppColors.primary;
+      case 'ready_for_pickup':
+        return Colors.orange;
+      case 'picked_up':
+        return Colors.blue;
+      case 'out_for_delivery':
+        return Colors.deepPurple;
+      case 'delivered':
+        return AppColors.success;
       case 'seller_rejected':
       case 'partner_rejected':
-      case 'cancelled':        return AppColors.danger;
+      case 'cancelled':
+        return AppColors.danger;
       default:
-        if (order.sellerAccepted || order.partnerAccepted) return Colors.amber.shade700;
+        if (order.sellerAccepted || order.partnerAccepted)
+          return Colors.amber.shade700;
         return AppColors.textSecondary;
     }
   }

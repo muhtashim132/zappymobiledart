@@ -1,5 +1,3 @@
-import '../config/payment_config.dart';
-
 class OrderModel {
   final String id;
   final String customerId;
@@ -16,7 +14,7 @@ class OrderModel {
   // Dual-acceptance flags (stored in DB columns)
   bool sellerAccepted;
   bool partnerAccepted;
-  
+
   // Wait-time compensation fields
   DateTime? arrivedAtShopTime;
   DateTime? orderReadyTime;
@@ -59,8 +57,12 @@ class OrderModel {
       deliveryNotes: map['delivery_notes'],
       sellerAccepted: map['seller_accepted'] ?? false,
       partnerAccepted: map['partner_accepted'] ?? false,
-      arrivedAtShopTime: map['arrived_at_shop_time'] != null ? DateTime.tryParse(map['arrived_at_shop_time']) : null,
-      orderReadyTime: map['order_ready_time'] != null ? DateTime.tryParse(map['order_ready_time']) : null,
+      arrivedAtShopTime: map['arrived_at_shop_time'] != null
+          ? DateTime.tryParse(map['arrived_at_shop_time'])
+          : null,
+      orderReadyTime: map['order_ready_time'] != null
+          ? DateTime.tryParse(map['order_ready_time'])
+          : null,
       waitTimePenalty: (map['wait_time_penalty'] ?? 0.0).toDouble(),
       waitTimeDisputed: map['wait_time_disputed'] ?? false,
     );
@@ -75,28 +77,36 @@ class OrderModel {
         if (sellerAccepted && !partnerAccepted) return 'Awaiting Rider';
         if (!sellerAccepted && partnerAccepted) return 'Awaiting Shop';
         return 'Pending';
-      case 'confirmed':         return 'Confirmed';
-      case 'preparing':         return 'Preparing';
-      case 'ready_for_pickup':  return 'Ready for Pickup';
-      case 'picked_up':         return 'Picked Up';
-      case 'out_for_delivery':  return 'Out for Delivery';
-      case 'delivered':         return 'Delivered';
-      case 'cancelled':         return 'Cancelled';
-      case 'seller_rejected':   return 'Rejected by Shop';
-      case 'partner_rejected':  return 'Rejected by Rider';
+      case 'confirmed':
+        return 'Confirmed';
+      case 'preparing':
+        return 'Preparing';
+      case 'ready_for_pickup':
+        return 'Ready for Pickup';
+      case 'picked_up':
+        return 'Picked Up';
+      case 'out_for_delivery':
+        return 'Out for Delivery';
+      case 'delivered':
+        return 'Delivered';
+      case 'cancelled':
+        return 'Cancelled';
+      case 'seller_rejected':
+        return 'Rejected by Shop';
+      case 'partner_rejected':
+        return 'Rejected by Rider';
       // Legacy statuses (backward compat)
-      case 'seller_accepted':   return 'Shop Accepted';
-      case 'partner_assigned':  return 'Rider Assigned';
-      default: return status;
+      case 'seller_accepted':
+        return 'Shop Accepted';
+      case 'partner_assigned':
+        return 'Rider Assigned';
+      default:
+        return status;
     }
   }
 
-  double get grandTotal => totalAmount + deliveryCharges + multiShopSurcharge + platformFee;
-
-  double get sellerPayout {
-    final commission = totalAmount * PaymentConfig.platformCommission;
-    return totalAmount - waitTimePenalty - commission;
-  }
+  double get grandTotal =>
+      totalAmount + deliveryCharges + multiShopSurcharge + platformFee;
 }
 
 class OrderItem {
