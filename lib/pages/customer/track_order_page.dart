@@ -27,19 +27,25 @@ class _TrackOrderPageState extends State<TrackOrderPage>
     {
       'status': 'pending',
       'title': 'Order Placed',
-      'subtitle': 'We received your order!',
+      'subtitle': 'Waiting for shop & rider to accept',
       'icon': Icons.receipt_long,
     },
     {
-      'status': 'seller_accepted',
-      'title': 'Order Accepted',
+      'status': 'confirmed',
+      'title': 'Order Confirmed',
+      'subtitle': 'Both shop & rider accepted!',
+      'icon': Icons.verified_outlined,
+    },
+    {
+      'status': 'preparing',
+      'title': 'Preparing',
       'subtitle': 'Shop is preparing your order',
       'icon': Icons.restaurant,
     },
     {
-      'status': 'partner_assigned',
-      'title': 'Delivery Assigned',
-      'subtitle': 'Delivery partner is on the way',
+      'status': 'picked_up',
+      'title': 'Picked Up',
+      'subtitle': 'Rider collected your order',
       'icon': Icons.delivery_dining,
     },
     {
@@ -120,12 +126,14 @@ class _TrackOrderPageState extends State<TrackOrderPage>
   int _getCurrentStep() {
     if (_order == null) return 0;
     switch (_order!.status) {
-      case 'pending': return 0;
-      case 'seller_accepted': return 1;
-      case 'partner_assigned': return 2;
-      case 'out_for_delivery': case 'picked_up': return 3;
-      case 'delivered': return 4;
-      default: return 0;
+      case 'pending':          return 0;
+      case 'confirmed':        return 1;
+      case 'preparing':        return 2;
+      case 'ready_for_pickup': return 2;
+      case 'picked_up':        return 3;
+      case 'out_for_delivery': return 4;
+      case 'delivered':        return 5;
+      default:                 return 0;
     }
   }
 

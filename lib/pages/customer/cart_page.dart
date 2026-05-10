@@ -231,9 +231,13 @@ class CartPage extends StatelessWidget {
   }
 
   Widget _buildSummary(BuildContext context, CartProvider cart) {
-    final deliveryCharge = cart.calculateDeliveryCharges(3.0);
-    final total = cart.subtotal +
-        (deliveryCharge >= 0 ? deliveryCharge : 0);
+    // Use a fixed 3 km base distance placeholder (real distance from location provider
+    // is resolved at checkout; cart page shows an estimate).
+    const baseDistanceKm = 3.0;
+    final baseCharge = cart.calculateDeliveryCharges(baseDistanceKm);
+    final surcharge = cart.multiShopSurcharge;
+    final effectiveBase = baseCharge >= 0 ? baseCharge : 0.0;
+    final total = cart.subtotal + effectiveBase + surcharge;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
@@ -265,15 +269,26 @@ class CartPage extends StatelessWidget {
           const SizedBox(height: 6),
           _summaryRow(
             'Delivery Charges',
-            deliveryCharge == 0
+            baseCharge == 0
                 ? 'FREE 🎉'
-                : deliveryCharge < 0
+                : baseCharge < 0
                     ? 'Out of range'
-                    : '₹${deliveryCharge.toStringAsFixed(0)}',
-            valueColor: deliveryCharge == 0
+                    : '₹${baseCharge.toStringAsFixed(0)}',
+            valueColor: baseCharge == 0
                 ? AppColors.success
                 : AppColors.textSecondary,
           ),
+          // Multi-shop surcharge row — only visible when ordering from 2+ shops
+          if (surcharge > 0) ...
+            [
+              const SizedBox(height: 6),
+              _summaryRow(
+                'Multi-shop fee (${cart.shops.length} shops)',
+                '+₹${surcharge.toStringAsFixed(0)}',
+                valueColor: Colors.orange.shade700,
+                hint: '₹10/km between shops',
+              ),
+            ],
           const Divider(height: 20),
           _summaryRow(
             'Total',
@@ -304,17 +319,30 @@ class CartPage extends StatelessWidget {
   }
 
   Widget _summaryRow(String label, String value,
-      {bool isBold = false, Color? valueColor}) {
+      {bool isBold = false, Color? valueColor, String? hint}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: TextStyle(
-              color: isBold ? AppColors.textPrimary : AppColors.textSecondary,
-              fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
-              fontSize: isBold ? 16 : 14,
-              fontFamily: 'Poppins',
-            )),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label,
+                style: TextStyle(
+                  color: isBold ? AppColors.textPrimary : AppColors.textSecondary,
+                  fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
+                  fontSize: isBold ? 16 : 14,
+                  fontFamily: 'Poppins',
+                )),
+            if (hint != null)
+              Text(hint,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 10,
+                    fontFamily: 'Poppins',
+                  )),
+          ],
+        ),
         Text(value,
             style: TextStyle(
               color: valueColor ?? AppColors.textPrimary,

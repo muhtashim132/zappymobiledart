@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../providers/auth_provider.dart';
+
 import '../../providers/theme_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/cart_provider.dart';
@@ -11,9 +11,10 @@ import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
 import '../../models/product_model.dart';
 import '../../models/shop_model.dart';
+import '../../utils/delivery_calculator.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/shop_card.dart';
-import '../../widgets/common/zappy_map.dart';
+
 
 class CustomerHomePage extends StatefulWidget {
   const CustomerHomePage({super.key});
@@ -35,12 +36,12 @@ class _CustomerHomePageState extends State<CustomerHomePage>
   final _searchController = TextEditingController();
 
   final List<Map<String, dynamic>> _categories = [
-    {'name': 'Food', 'emoji': '🍔', 'type': 'restaurant', 'color': const Color(0xFFFFF1F1)},
-    {'name': 'Grocery', 'emoji': '🛒', 'type': 'grocery', 'color': const Color(0xFFF1FFF1)},
-    {'name': 'Pharmacy', 'emoji': '💊', 'type': 'pharmacy', 'color': const Color(0xFFF1F7FF)},
-    {'name': 'Clothing', 'emoji': '👕', 'type': 'clothing', 'color': const Color(0xFFFFF9F1)},
-    {'name': 'Electronics', 'emoji': '📱', 'type': 'electronics', 'color': const Color(0xFFF9F1FF)},
-    {'name': 'More', 'emoji': '🛍️', 'type': 'other', 'color': const Color(0xFFF1FFF9)},
+    {'name': 'Food',        'emoji': '🍔', 'grad': [const Color(0xFFFF6B6B), const Color(0xFFEE5A24)]},
+    {'name': 'Grocery',     'emoji': '🛒', 'grad': [const Color(0xFF51CF66), const Color(0xFF2F9E44)]},
+    {'name': 'Pharmacy',    'emoji': '💊', 'grad': [const Color(0xFF4C6EF5), const Color(0xFF364FC7)]},
+    {'name': 'Clothing',    'emoji': '👕', 'grad': [const Color(0xFFFF8C42), const Color(0xFFE8590C)]},
+    {'name': 'Electronics', 'emoji': '📱', 'grad': [const Color(0xFFCC5DE8), const Color(0xFF9C36B5)]},
+    {'name': 'More',        'emoji': '🛍️', 'grad': [const Color(0xFF20C997), const Color(0xFF0CA678)]},
   ];
 
   @override
@@ -74,6 +75,8 @@ class _CustomerHomePageState extends State<CustomerHomePage>
   Future<void> _loadData(String category) async {
     setState(() => _isLoading = true);
     try {
+      final locationProvider = context.read<LocationProvider>();
+
       final shopsResponse = await _supabase
           .from('shops')
           .select()
@@ -88,9 +91,29 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           .limit(20);
 
       if (mounted) {
+        // Compute distance for each shop and filter to 15 km radius
+        final allShops = (shopsResponse as List)
+            .map((s) => ShopModel.fromMap(s))
+            .toList();
+
+        List<ShopModel> nearby;
+        if (locationProvider.hasLocation) {
+          for (final shop in allShops) {
+            shop.distanceKm = locationProvider.distanceTo(shop.location);
+          }
+          // Keep only shops within 15 km, sorted nearest-first
+          nearby = allShops
+              .where((s) => DeliveryCalculator.isWithinRange(s.distanceKm!))
+              .toList()
+            ..sort((a, b) => a.distanceKm!.compareTo(b.distanceKm!));
+        } else {
+          nearby = allShops;
+        }
+
+        final prods = (productsResponse as List).map((p) => ProductModel.fromMap(p)).toList();
         setState(() {
-          _shops = (shopsResponse as List).map((s) => ShopModel.fromMap(s)).toList();
-          _products = (productsResponse as List).map((p) => ProductModel.fromMap(p)).toList();
+          _shops = nearby;
+          _products = prods;
           _isLoading = false;
         });
       }
@@ -218,57 +241,48 @@ class _CustomerHomePageState extends State<CustomerHomePage>
 
           // ── Categories Horizontal List ──────────────────────────────
           SliverToBoxAdapter(
-            child: Container(
-              height: 110,
-              padding: const EdgeInsets.symmetric(vertical: 8),
+            child: SizedBox(
+              height: 108,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: _categories.length,
                 itemBuilder: (context, index) {
                   final cat = _categories[index];
                   final isSelected = _selectedTabIndex == index;
+                  final grad = cat['grad'] as List<Color>;
                   return GestureDetector(
-                    onTap: () {
-                      _tabController.animateTo(index);
-                    },
+                    onTap: () => _tabController.animateTo(index),
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      width: 80,
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary.withOpacity(0.05) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
+                      duration: const Duration(milliseconds: 280),
+                      width: 76,
+                      margin: const EdgeInsets.only(right: 12),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 54,
-                            height: 54,
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 280),
+                            width: 58,
+                            height: 58,
                             decoration: BoxDecoration(
-                              color: isDark ? const Color(0xFF2A2A3A) : cat['color'],
+                              gradient: isSelected
+                                  ? LinearGradient(colors: grad, begin: Alignment.topLeft, end: Alignment.bottomRight)
+                                  : null,
+                              color: isSelected ? null : (isDark ? const Color(0xFF1E1E2E) : const Color(0xFFF0F0F8)),
                               shape: BoxShape.circle,
-                              boxShadow: [
-                                if (isSelected)
-                                  BoxShadow(
-                                    color: AppColors.primary.withOpacity(0.2),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
-                                  ),
-                              ],
+                              boxShadow: isSelected
+                                  ? [BoxShadow(color: grad.first.withOpacity(0.4), blurRadius: 12, offset: const Offset(0, 4))]
+                                  : [],
                             ),
-                            child: Center(
-                              child: Text(cat['emoji'], style: const TextStyle(fontSize: 26)),
-                            ),
+                            child: Center(child: Text(cat['emoji'], style: const TextStyle(fontSize: 26))),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
                             cat['name'],
                             style: GoogleFonts.outfit(
-                              fontSize: 12,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                              fontSize: 11,
+                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                              color: isSelected ? grad.first : (isDark ? Colors.white54 : Colors.grey.shade600),
                             ),
                           ),
                         ],
@@ -295,7 +309,10 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                           
                           // Shops Section
                           if (_shops.isNotEmpty) ...[
-                            _buildSectionTitle('Recommended for you'),
+                            _buildSectionTitle(
+                              'Shops near you',
+                              subtitle: '${_shops.length} within 15 km',
+                            ),
                             const SizedBox(height: 16),
                             ..._shops
                                 .where((s) => _searchQuery.isEmpty || s.name.toLowerCase().contains(_searchQuery.toLowerCase()))
@@ -310,6 +327,8 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                                         ),
                                       ),
                                     )),
+                          ] else if (!_isLoading && locationProvider.hasLocation) ...[
+                            _buildNoShopsNearby(),
                           ],
 
                           // Products Section
@@ -348,10 +367,11 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF2A2A3A) : Colors.grey.shade100,
+          color: isDark ? const Color(0xFF1E1E2E) : const Color(0xFFF0F0F8),
           shape: BoxShape.circle,
+          border: Border.all(color: isDark ? Colors.white10 : Colors.transparent),
         ),
-        child: Icon(icon, color: isDark ? Colors.white : AppColors.textPrimary, size: 22),
+        child: Icon(icon, color: isDark ? Colors.white70 : AppColors.textPrimary, size: 20),
       ),
     );
   }
@@ -359,64 +379,53 @@ class _CustomerHomePageState extends State<CustomerHomePage>
   Widget _buildFeaturedBanner() {
     return Container(
       width: double.infinity,
-      height: 160,
+      height: 170,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryDark],
+          colors: [Color(0xFF0A1260), Color(0xFF162AC4), Color(0xFF2444E8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
+          BoxShadow(color: const Color(0xFF162AC4).withOpacity(0.4), blurRadius: 24, offset: const Offset(0, 12)),
         ],
       ),
       child: Stack(
         children: [
-          Positioned(
-            right: -20,
-            bottom: -20,
-            child: Icon(Icons.bolt, size: 180, color: Colors.white.withOpacity(0.1)),
-          ),
+          // Decorative circles
+          Positioned(right: -30, top: -30,
+            child: Container(width: 160, height: 160,
+              decoration: BoxDecoration(shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.05)))),
+          Positioned(right: 30, bottom: -40,
+            child: Container(width: 120, height: 120,
+              decoration: BoxDecoration(shape: BoxShape.circle,
+                color: const Color(0xFFF4C542).withOpacity(0.12)))),
+          Positioned(right: -10, bottom: -10,
+            child: Icon(Icons.bolt_rounded, size: 140, color: Colors.white.withOpacity(0.06))),
+          // Content
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.accent,
-                    borderRadius: BorderRadius.circular(8),
+                    color: const Color(0xFFF4C542),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Text(
-                    'WELCOME',
-                    style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w800, color: Colors.black),
-                  ),
+                  child: Text('⚡ FAST DELIVERY', style: GoogleFonts.outfit(
+                    fontSize: 10, fontWeight: FontWeight.w900, color: Colors.black, letterSpacing: 0.5)),
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  'Fast Delivery\nto your door!',
-                  style: GoogleFonts.outfit(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 1.1,
-                  ),
-                ),
+                const SizedBox(height: 14),
+                Text('Delivered at the\nspeed of life!',
+                  style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, height: 1.1)),
                 const SizedBox(height: 8),
-                Text(
-                  'Supporting local sellers directly.',
-                  style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    color: Colors.white.withOpacity(0.8),
-                  ),
-                ),
+                Text('Supporting local sellers · Zero commission',
+                  style: GoogleFonts.outfit(fontSize: 12, color: Colors.white.withOpacity(0.7))),
               ],
             ),
           ),
@@ -425,17 +434,31 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, {String? subtitle}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.outfit(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            if (subtitle != null)
+              Text(
+                subtitle,
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+          ],
         ),
         Text(
           'See all',
@@ -449,32 +472,61 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     );
   }
 
-  Widget _buildFloatingBottomNav(CartProvider cart) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-      child: Material(
-        elevation: 20,
-        shadowColor: Colors.black.withOpacity(0.4),
-        borderRadius: BorderRadius.circular(30),
-        color: AppColors.primaryDark,
-        child: Container(
-          height: 64,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildNavItem(0, Icons.home_rounded, 'Home'),
-              _buildNavItem(1, Icons.shopping_cart_rounded, 'Cart', badge: cart.totalItemCount),
-              _buildNavItem(2, Icons.receipt_long_rounded, 'Orders'),
-              _buildNavItem(3, Icons.favorite_rounded, 'Favs'),
-            ],
-          ),
+  Widget _buildNoShopsNearby() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Column(
+          children: [
+            const Text('🏪', style: TextStyle(fontSize: 64)),
+            const SizedBox(height: 16),
+            Text(
+              'No shops nearby',
+              style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No shops found within 15 km of\nyour location in this category.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.outfit(color: AppColors.textSecondary, height: 1.5),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label, {int badge = 0}) {
+  Widget _buildFloatingBottomNav(CartProvider cart) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      child: Container(
+        height: 70,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF0A1260), Color(0xFF162AC4)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(color: const Color(0xFF162AC4).withOpacity(0.5), blurRadius: 24, offset: const Offset(0, 8)),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
+            _buildNavItem(1, Icons.shopping_cart_rounded, Icons.shopping_cart_outlined, 'Cart', badge: cart.totalItemCount),
+            _buildNavItem(2, Icons.receipt_long_rounded, Icons.receipt_long_outlined, 'Orders'),
+            _buildNavItem(3, Icons.favorite_rounded, Icons.favorite_border_rounded, 'Favs'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData activeIcon, IconData inactiveIcon, String label, {int badge = 0}) {
     final isSelected = _navIndex == index;
     return GestureDetector(
       onTap: () {
@@ -482,11 +534,13 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         if (index == 1) Navigator.pushNamed(context, AppRoutes.cart);
         if (index == 2) Navigator.pushNamed(context, AppRoutes.orderHistory);
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
+          border: isSelected ? Border.all(color: Colors.white.withOpacity(0.2)) : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -494,24 +548,23 @@ class _CustomerHomePageState extends State<CustomerHomePage>
             Stack(
               clipBehavior: Clip.none,
               children: [
-                Icon(icon, color: Colors.white, size: 24),
+                Icon(isSelected ? activeIcon : inactiveIcon,
+                  color: isSelected ? Colors.white : Colors.white54, size: 22),
                 if (badge > 0)
                   Positioned(
-                    right: -6,
-                    top: -6,
+                    right: -7,
+                    top: -7,
                     child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(color: AppColors.secondary, shape: BoxShape.circle),
-                      child: Text('$badge', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+                      width: 16, height: 16,
+                      decoration: const BoxDecoration(color: Color(0xFFFF6B6B), shape: BoxShape.circle),
+                      child: Center(child: Text('$badge',
+                        style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold))),
                     ),
                   ),
               ],
             ),
-            if (isSelected)
-              Text(
-                label,
-                style: GoogleFonts.outfit(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
-              ),
+            if (isSelected) ...[const SizedBox(height: 2),
+              Text(label, style: GoogleFonts.outfit(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700))],
           ],
         ),
       ),
@@ -550,15 +603,19 @@ class _CustomerHomePageState extends State<CustomerHomePage>
   }
 
   Widget _buildShimmer() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Shimmer.fromColors(
-      baseColor: Colors.grey.shade200,
-      highlightColor: Colors.white,
+      baseColor: isDark ? const Color(0xFF1E1E2E) : Colors.grey.shade200,
+      highlightColor: isDark ? const Color(0xFF2A2A3A) : Colors.grey.shade100,
       child: Column(
         children: List.generate(3, (_) => Container(
           margin: const EdgeInsets.only(bottom: 16),
-          height: 120,
+          height: 130,
           width: double.infinity,
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+            borderRadius: BorderRadius.circular(24),
+          ),
         )),
       ),
     );

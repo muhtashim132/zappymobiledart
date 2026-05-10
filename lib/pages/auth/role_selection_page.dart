@@ -23,9 +23,9 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
   void initState() {
     super.initState();
 
-    _bgCtrl = AnimationController(
-        duration: const Duration(seconds: 5), vsync: this)
-      ..repeat(reverse: true);
+    _bgCtrl =
+        AnimationController(duration: const Duration(seconds: 5), vsync: this)
+          ..repeat(reverse: true);
     _bgAnim = CurvedAnimation(parent: _bgCtrl, curve: Curves.easeInOut);
 
     _cardCtrl = AnimationController(
@@ -42,10 +42,9 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
     _titleFade = CurvedAnimation(
         parent: _cardCtrl,
         curve: const Interval(0.0, 0.5, curve: Curves.easeIn));
-    _titleSlide = Tween<double>(begin: 24, end: 0).animate(
-        CurvedAnimation(
-            parent: _cardCtrl,
-            curve: const Interval(0.0, 0.5, curve: Curves.easeOut)));
+    _titleSlide = Tween<double>(begin: 24, end: 0).animate(CurvedAnimation(
+        parent: _cardCtrl,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeOut)));
 
     _cardCtrl.forward();
   }
@@ -79,11 +78,11 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Color.lerp(
-                    const Color(0xFF04091E), const Color(0xFF07124A), _bgAnim.value)!,
+                Color.lerp(const Color(0xFF04091E), const Color(0xFF07124A),
+                    _bgAnim.value)!,
                 const Color(0xFF02061A),
-                Color.lerp(
-                    const Color(0xFF08043E), const Color(0xFF120860), _bgAnim.value)!,
+                Color.lerp(const Color(0xFF08043E), const Color(0xFF120860),
+                    _bgAnim.value)!,
               ],
               stops: const [0.0, 0.5, 1.0],
             ),
@@ -130,29 +129,39 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                                   height: 72,
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFF1A35C8), Color(0xFF0A178C)],
+                                      colors: [
+                                        Color(0xFF1A35C8),
+                                        Color(0xFF0A178C)
+                                      ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
-                                        color: const Color(0xFFF4C542).withOpacity(0.35),
+                                        color: const Color(0xFFF4C542)
+                                            .withOpacity(0.35),
                                         width: 1.5),
                                     boxShadow: [
                                       BoxShadow(
-                                          color: const Color(0xFFF4C542).withOpacity(0.28),
+                                          color: const Color(0xFFF4C542)
+                                              .withOpacity(0.28),
                                           blurRadius: 22,
                                           spreadRadius: 2),
                                     ],
                                   ),
                                   child: const Center(
-                                    child: Text('⚡', style: TextStyle(fontSize: 34)),
+                                    child: Text('⚡',
+                                        style: TextStyle(fontSize: 34)),
                                   ),
                                 ),
                                 const SizedBox(height: 20),
                                 ShaderMask(
                                   shaderCallback: (b) => const LinearGradient(
-                                    colors: [Color(0xFFFFE566), Color(0xFFF4C542), Color(0xFFE89A00)],
+                                    colors: [
+                                      Color(0xFFFFE566),
+                                      Color(0xFFF4C542),
+                                      Color(0xFFE89A00)
+                                    ],
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                   ).createShader(b),
@@ -218,18 +227,21 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                           anim: _card1Anim,
                           icon: '🛍️',
                           title: 'Customer',
-                          subtitle: 'Shop from local stores & get\nfast doorstep delivery',
+                          subtitle:
+                              'Shop from local stores & get\nfast doorstep delivery',
                           accentColor: const Color(0xFF4C6EF5),
                           badge: 'Shop Now',
                           selected: _selectedRole == 'customer',
-                          onTap: () => setState(() => _selectedRole = 'customer'),
+                          onTap: () =>
+                              setState(() => _selectedRole = 'customer'),
                         ),
                         const SizedBox(height: 16),
                         _AnimatedRoleCard(
                           anim: _card2Anim,
                           icon: '🏪',
                           title: 'Seller',
-                          subtitle: 'List your products & grow\nyour business — zero commission',
+                          subtitle:
+                              'List your products & grow\nyour business — zero commission',
                           accentColor: const Color(0xFFF4C542),
                           badge: 'Sell Now',
                           selected: _selectedRole == 'seller',
@@ -240,11 +252,13 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                           anim: _card3Anim,
                           icon: '🏍️',
                           title: 'Delivery Partner',
-                          subtitle: 'Earn by delivering orders\nin your neighbourhood',
+                          subtitle:
+                              'Earn by delivering orders\nin your neighbourhood',
                           accentColor: const Color(0xFF51CF66),
                           badge: 'Earn Now',
                           selected: _selectedRole == 'delivery_partner',
-                          onTap: () => setState(() => _selectedRole = 'delivery_partner'),
+                          onTap: () => setState(
+                              () => _selectedRole = 'delivery_partner'),
                         ),
 
                         const SizedBox(height: 40),
@@ -258,8 +272,10 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                             height: 58,
                             decoration: BoxDecoration(
                               gradient: _selectedRole != null
-                                  ? const LinearGradient(
-                                      colors: [Color(0xFFFFD700), Color(0xFFF4A800)])
+                                  ? const LinearGradient(colors: [
+                                      Color(0xFFFFD700),
+                                      Color(0xFFF4A800)
+                                    ])
                                   : null,
                               color: _selectedRole == null
                                   ? Colors.white.withOpacity(0.08)
@@ -268,7 +284,8 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                               boxShadow: _selectedRole != null
                                   ? [
                                       BoxShadow(
-                                          color: const Color(0xFFF4C542).withOpacity(0.40),
+                                          color: const Color(0xFFF4C542)
+                                              .withOpacity(0.40),
                                           blurRadius: 20,
                                           offset: const Offset(0, 8))
                                     ]
@@ -316,10 +333,14 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
 
   String _roleName(String role) {
     switch (role) {
-      case 'customer':         return 'Customer';
-      case 'seller':           return 'Seller';
-      case 'delivery_partner': return 'Delivery Partner';
-      default:                 return role;
+      case 'customer':
+        return 'Customer';
+      case 'seller':
+        return 'Seller';
+      case 'delivery_partner':
+        return 'Delivery Partner';
+      default:
+        return role;
     }
   }
 
@@ -330,8 +351,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: RadialGradient(
-                colors: [color, color.withOpacity(0.0)]),
+            gradient: RadialGradient(colors: [color, color.withOpacity(0.0)]),
           ),
         ),
       );
@@ -467,9 +487,8 @@ class _AnimatedRoleCard extends StatelessWidget {
                   color: selected ? accentColor : Colors.transparent,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: selected
-                        ? accentColor
-                        : Colors.white.withOpacity(0.20),
+                    color:
+                        selected ? accentColor : Colors.white.withOpacity(0.20),
                     width: 2,
                   ),
                 ),
@@ -495,12 +514,14 @@ class _StarPainter extends CustomPainter {
   final double t;
   _StarPainter(this.t);
   static final _rnd = math.Random(42);
-  static final _stars = List.generate(45, (_) => [
-        _rnd.nextDouble(),
-        _rnd.nextDouble(),
-        _rnd.nextDouble() * 1.4 + 0.4,
-        _rnd.nextDouble() * math.pi * 2,
-      ]);
+  static final _stars = List.generate(
+      45,
+      (_) => [
+            _rnd.nextDouble(),
+            _rnd.nextDouble(),
+            _rnd.nextDouble() * 1.4 + 0.4,
+            _rnd.nextDouble() * math.pi * 2,
+          ]);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -508,8 +529,7 @@ class _StarPainter extends CustomPainter {
     for (final s in _stars) {
       final tw = (math.sin(t * math.pi * 2 + s[3]) + 1) / 2;
       p.color = Colors.white.withOpacity(0.03 + tw * 0.13);
-      canvas.drawCircle(
-          Offset(s[0] * size.width, s[1] * size.height), s[2], p);
+      canvas.drawCircle(Offset(s[0] * size.width, s[1] * size.height), s[2], p);
     }
   }
 

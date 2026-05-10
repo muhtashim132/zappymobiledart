@@ -1,17 +1,116 @@
+import 'dart:math' as math;
+import 'package:latlong2/latlong.dart';
+import '../models/shop_model.dart';
+
 class DeliveryCalculator {
-  static double calculateDeliveryCharges(double distance, double orderValue) {
-    if (orderValue >= 499) return 0;
-    if (distance <= 3) return 20;
-    if (distance <= 5) return 25;
-    if (distance <= 10) return 35;
-    if (distance <= 15) return 49;
-    return -1; // Out of range
+  /// Max delivery radius — shops beyond this won't be shown.
+  static const double maxRadiusKm = 15.0;
+
+  /// Per-extra-shop rate: ₹10 per km, minimum ₹10 (i.e. the ≤1 km bucket).
+  static const double _ratePerKm = 10.0;
+
+  // ---------------------------------------------------------------------------
+  // Base delivery charge (customer ↔ nearest shop)
+  // ---------------------------------------------------------------------------
+
+  /// Delivery charge slabs (flat per order, not per km):
+  ///   ≤ 5 km  → ₹25
+  ///   > 5–10 km → ₹35
+  ///   > 10–15 km → ₹45
+  ///   > 15 km  → -1 (out of delivery range)
+  ///   order ≥ ₹499 → free delivery
+  static double calculateDeliveryCharges(double distanceKm, double orderValue) {
+    if (orderValue >= 499) return 0; // free delivery on large orders
+    if (distanceKm <= 5) return 25;
+    if (distanceKm <= 10) return 35;
+    if (distanceKm <= 15) return 45;
+    return -1; // beyond 15 km — out of range
   }
 
-  static double calculateMultiShopSurcharge(List<double> interShopDistances) {
+  /// Returns the label string for the delivery charge.
+  static String deliveryChargeLabel(double distanceKm, double orderValue) {
+    final charge = calculateDeliveryCharges(distanceKm, orderValue);
+    if (charge == 0) return 'Free delivery';
+    if (charge < 0) return 'Out of range';
+    return '₹${charge.toStringAsFixed(0)} delivery';
+  }
+
+  /// Whether a shop at [distanceKm] is within the delivery zone.
+  static bool isWithinRange(double distanceKm) => distanceKm <= maxRadiusKm;
+
+  // ---------------------------------------------------------------------------
+  // Haversine distance between two LatLng points (in km)
+  // ---------------------------------------------------------------------------
+  static double haversineKm(LatLng a, LatLng b) {
+    const r = 6371.0; // Earth radius in km
+    final dLat = _toRad(b.latitude - a.latitude);
+    final dLng = _toRad(b.longitude - a.longitude);
+    final sinDLat = math.sin(dLat / 2);
+    final sinDLng = math.sin(dLng / 2);
+    final h = sinDLat * sinDLat +
+        math.cos(_toRad(a.latitude)) *
+            math.cos(_toRad(b.latitude)) *
+            sinDLng *
+            sinDLng;
+    return 2 * r * math.asin(math.sqrt(h));
+  }
+
+  static double _toRad(double deg) => deg * math.pi / 180;
+
+  // ---------------------------------------------------------------------------
+  // Multi-shop surcharge
+  // ---------------------------------------------------------------------------
+
+  /// Calculates the extra inter-shop delivery surcharge when a customer orders
+  /// from more than one shop.
+  ///
+  /// **Algorithm**
+  /// • Shop 1 — no surcharge (it's the "anchor").
+  /// • Shop 2 — distance from shop 1.
+  ///   - ≤ 1 km  → ₹10 (minimum flat charge)
+  ///   - > 1 km  → ₹10 × ceil(distanceKm)
+  /// • Shop 3, 4, … — distance from the **nearest** already-visited shop
+  ///   (greedy nearest-neighbour), same rate as above.
+  ///
+  /// [shops] must be in the order they were added to the cart (first shop first).
+  /// Returns 0 if there is only one shop.
+  static double calculateMultiShopSurcharge(List<ShopModel> shops) {
+    if (shops.length <= 1) return 0;
+
+    double total = 0;
+    // "visited" starts with just the first shop
+    final visited = <ShopModel>[shops.first];
+
+    for (int i = 1; i < shops.length; i++) {
+      final candidate = shops[i];
+
+      // Find the minimum distance from this shop to any already-visited shop
+      double minDist = double.infinity;
+      for (final v in visited) {
+        final d = haversineKm(candidate.location, v.location);
+        if (d < minDist) minDist = d;
+      }
+
+      // Charge: minimum ₹10, then ₹10 per km (ceiling)
+      final chargeForShop = _ratePerKm * math.max(1, minDist.ceil());
+      total += chargeForShop;
+
+      visited.add(candidate);
+    }
+
+    return total;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Legacy overload kept for backward compatibility
+  // (pass raw distances if you already have them)
+  // ---------------------------------------------------------------------------
+  @Deprecated('Use calculateMultiShopSurcharge(List<ShopModel>) instead')
+  static double calculateMultiShopSurchargeFromDistances(
+      List<double> interShopDistances) {
     double total = 0;
     for (double d in interShopDistances) {
-      total += d.ceil() * 10;
+      total += _ratePerKm * math.max(1, d.ceil());
     }
     return total;
   }

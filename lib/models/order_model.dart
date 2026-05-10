@@ -10,6 +10,9 @@ class OrderModel {
   String? deliveryPartnerId;
   final String? address;
   final String? deliveryNotes;
+  // Dual-acceptance flags (stored in DB columns)
+  bool sellerAccepted;
+  bool partnerAccepted;
 
   OrderModel({
     required this.id,
@@ -23,6 +26,8 @@ class OrderModel {
     this.deliveryPartnerId,
     this.address,
     this.deliveryNotes,
+    this.sellerAccepted = false,
+    this.partnerAccepted = false,
   });
 
   factory OrderModel.fromMap(Map<String, dynamic> map) {
@@ -37,19 +42,32 @@ class OrderModel {
       deliveryPartnerId: map['delivery_partner_id'],
       address: map['address'],
       deliveryNotes: map['delivery_notes'],
+      sellerAccepted: map['seller_accepted'] ?? false,
+      partnerAccepted: map['partner_accepted'] ?? false,
     );
   }
 
+  /// True when both the seller and delivery partner have accepted.
+  bool get isFullyConfirmed => sellerAccepted && partnerAccepted;
+
   String get statusDisplay {
     switch (status) {
-      case 'pending': return 'Pending';
-      case 'seller_accepted': return 'Accepted';
-      case 'partner_assigned': return 'Delivery Assigned';
-      case 'picked_up': return 'Picked Up';
-      case 'out_for_delivery': return 'Out for Delivery';
-      case 'delivered': return 'Delivered';
-      case 'cancelled': return 'Cancelled';
-      case 'seller_rejected': return 'Rejected';
+      case 'pending':
+        if (sellerAccepted && !partnerAccepted) return 'Awaiting Rider';
+        if (!sellerAccepted && partnerAccepted) return 'Awaiting Shop';
+        return 'Pending';
+      case 'confirmed':         return 'Confirmed';
+      case 'preparing':         return 'Preparing';
+      case 'ready_for_pickup':  return 'Ready for Pickup';
+      case 'picked_up':         return 'Picked Up';
+      case 'out_for_delivery':  return 'Out for Delivery';
+      case 'delivered':         return 'Delivered';
+      case 'cancelled':         return 'Cancelled';
+      case 'seller_rejected':   return 'Rejected by Shop';
+      case 'partner_rejected':  return 'Rejected by Rider';
+      // Legacy statuses (backward compat)
+      case 'seller_accepted':   return 'Shop Accepted';
+      case 'partner_assigned':  return 'Rider Assigned';
       default: return status;
     }
   }

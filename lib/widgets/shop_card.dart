@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/shop_model.dart';
 import '../theme/app_colors.dart';
+import '../utils/delivery_calculator.dart';
 
 class ShopCard extends StatelessWidget {
   final ShopModel shop;
@@ -102,7 +103,9 @@ class ShopCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 12),
-                  Row(
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
                     children: [
                       _buildChip(
                         icon: Icons.timer_outlined,
@@ -110,14 +113,15 @@ class ShopCard extends StatelessWidget {
                         color: Colors.blue.shade50,
                         textColor: Colors.blue.shade700,
                       ),
-                      const SizedBox(width: 8),
-                      if (shop.distanceKm != null)
+                      if (shop.distanceKm != null) ...[
                         _buildChip(
                           icon: Icons.location_on_outlined,
-                          label: '${shop.distanceKm!.toStringAsFixed(1)}km',
+                          label: '${shop.distanceKm!.toStringAsFixed(1)} km',
                           color: Colors.orange.shade50,
                           textColor: Colors.orange.shade700,
                         ),
+                        _buildDeliveryChip(shop.distanceKm!),
+                      ],
                     ],
                   ),
                 ],
@@ -142,6 +146,38 @@ class ShopCard extends StatelessWidget {
       child: const Center(
         child: Text('🏪', style: TextStyle(fontSize: 40)),
       ),
+    );
+  }
+
+  Widget _buildDeliveryChip(double distanceKm) {
+    final charge = DeliveryCalculator.calculateDeliveryCharges(distanceKm, 0);
+    String label;
+    Color bgColor;
+    Color textColor;
+
+    if (charge == 0) {
+      label = 'Free delivery';
+      bgColor = Colors.green.shade50;
+      textColor = Colors.green.shade700;
+    } else if (charge == 25) {
+      label = '₹25 delivery';
+      bgColor = Colors.blue.shade50;
+      textColor = Colors.blue.shade700;
+    } else if (charge == 35) {
+      label = '₹35 delivery';
+      bgColor = Colors.amber.shade50;
+      textColor = Colors.amber.shade800;
+    } else {
+      label = '₹45 delivery';
+      bgColor = Colors.orange.shade50;
+      textColor = Colors.orange.shade800;
+    }
+
+    return _buildChip(
+      icon: Icons.delivery_dining_outlined,
+      label: label,
+      color: bgColor,
+      textColor: textColor,
     );
   }
 

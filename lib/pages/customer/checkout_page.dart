@@ -33,13 +33,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     try {
       final supabase = Supabase.instance.client;
-      final deliveryCharges = cart.calculateDeliveryCharges(3.0);
+      final baseDelivery = cart.calculateDeliveryCharges(3.0);
+      final surcharge = cart.multiShopSurcharge;
+      final totalDelivery =
+          (baseDelivery >= 0 ? baseDelivery : 25.0) + surcharge;
 
       final orderResponse = await supabase.from('orders').insert({
         'customer_id': auth.currentUserId,
         'status': 'pending',
         'total_amount': cart.subtotal,
-        'delivery_charges': deliveryCharges >= 0 ? deliveryCharges : 25.0,
+        'delivery_charges': totalDelivery,
         'address': location.currentAddress,
         'delivery_notes': _notesController.text.isEmpty
             ? null
@@ -92,8 +95,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
     final location = context.watch<LocationProvider>();
-    final deliveryCharge = cart.calculateDeliveryCharges(3.0);
-    final total = cart.subtotal + (deliveryCharge >= 0 ? deliveryCharge : 25.0);
+    final baseCharge = cart.calculateDeliveryCharges(3.0);
+    final surcharge = cart.multiShopSurcharge;
+    final effectiveBase = baseCharge >= 0 ? baseCharge : 25.0;
+    final total = cart.subtotal + effectiveBase + surcharge;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -224,13 +229,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   const SizedBox(height: 8),
                   _billRow(
                     'Delivery Fee',
-                    deliveryCharge == 0
+                    baseCharge == 0
                         ? 'FREE 🎉'
-                        : '₹${deliveryCharge >= 0 ? deliveryCharge.toStringAsFixed(0) : "25"}',
-                    valueColor: deliveryCharge == 0
+                        : '₹${effectiveBase.toStringAsFixed(0)}',
+                    valueColor: baseCharge == 0
                         ? AppColors.success
                         : null,
                   ),
+                  // Multi-shop surcharge — shown only when ordering from 2+ shops
+                  if (surcharge > 0) ...
+                    [
+                      const SizedBox(height: 8),
+                      _billRow(
+                        'Multi-shop fee (${cart.shops.length} shops)',
+                        '+₹${surcharge.toStringAsFixed(0)}',
+                        valueColor: Colors.orange.shade700,
+                        hint: '₹10/km between shops',
+                      ),
+                    ],
                   const Divider(height: 20),
                   _billRow(
                     'Grand Total',
@@ -360,16 +376,28 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Widget _billRow(String label, String value,
-      {bool isBold = false, Color? valueColor}) {
+      {bool isBold = false, Color? valueColor, String? hint}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: TextStyle(
-              color: isBold ? AppColors.textPrimary : AppColors.textSecondary,
-              fontSize: isBold ? 15 : 13,
-              fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
-            )),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label,
+                style: TextStyle(
+                  color: isBold ? AppColors.textPrimary : AppColors.textSecondary,
+                  fontSize: isBold ? 15 : 13,
+                  fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
+                )),
+            if (hint != null)
+              Text(hint,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 10,
+                  )),
+          ],
+        ),
         Text(value,
             style: TextStyle(
               color: valueColor ?? AppColors.textPrimary,

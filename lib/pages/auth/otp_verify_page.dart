@@ -738,15 +738,20 @@ class _OtpBox extends StatelessWidget {
           controller: controller,
           focusNode: focusNode,
           textAlign: TextAlign.center,
+          textAlignVertical: TextAlignVertical.center,
+          cursorColor: const Color(0xFFF4C542),
           keyboardType: TextInputType.number,
           maxLength: 1,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          style: const TextStyle(
-              color: Color(0xFFF4C542),
+          style: GoogleFonts.outfit(
+              color: const Color(0xFFF4C542),
               fontSize: 22,
               fontWeight: FontWeight.w800),
           decoration: const InputDecoration(
-              counterText: '', border: InputBorder.none),
+              counterText: '', 
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.zero,
+              filled: false),
           onChanged: onChanged,
         ),
       ),

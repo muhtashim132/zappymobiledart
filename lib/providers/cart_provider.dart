@@ -19,6 +19,7 @@ class CartProvider extends ChangeNotifier {
   double get subtotal =>
       _items.fold(0.0, (sum, item) => sum + item.totalPrice);
 
+  /// Unique shops in the order they were first added to the cart.
   List<ShopModel> get shops {
     final seen = <String>{};
     return _items
@@ -28,6 +29,9 @@ class CartProvider extends ChangeNotifier {
   }
 
   bool get meetsMinimumOrder => subtotal >= PaymentConfig.minimumOrderValue;
+
+  /// True when items come from more than one shop.
+  bool get isMultiShopOrder => shops.length > 1;
 
   String? addItem(ProductModel product, ShopModel shop,
       {int quantity = 1}) {
@@ -74,8 +78,31 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ---------------------------------------------------------------------------
+  // Delivery charge helpers
+  // ---------------------------------------------------------------------------
+
+  /// Base delivery charge based on customer-to-shop distance and order value.
   double calculateDeliveryCharges(double distanceKm) {
     return DeliveryCalculator.calculateDeliveryCharges(distanceKm, subtotal);
+  }
+
+  /// Extra surcharge for ordering from multiple shops.
+  ///
+  /// Rules:
+  ///   • 1 shop  → ₹0 surcharge
+  ///   • 2nd shop → ₹10 × max(1, ceil(distance from 1st shop))
+  ///   • 3rd+ shops → ₹10 × max(1, ceil(distance from nearest already-visited shop))
+  double get multiShopSurcharge =>
+      DeliveryCalculator.calculateMultiShopSurcharge(shops);
+
+  /// Combined total including base delivery + inter-shop surcharge.
+  double totalDeliveryCharges(double baseDistanceKm) {
+    final base = calculateDeliveryCharges(baseDistanceKm);
+    final surcharge = multiShopSurcharge;
+    // If base is -1 (out of range) keep it as-is; surcharge still applies.
+    if (base < 0) return base;
+    return base + surcharge;
   }
 
   int getItemQuantity(String productId) {

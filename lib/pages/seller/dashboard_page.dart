@@ -1,21 +1,23 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
-import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
 
 class SellerDashboardPage extends StatefulWidget {
   const SellerDashboardPage({super.key});
-
   @override
   State<SellerDashboardPage> createState() => _SellerDashboardPageState();
 }
 
-class _SellerDashboardPageState extends State<SellerDashboardPage> {
+class _SellerDashboardPageState extends State<SellerDashboardPage>
+    with TickerProviderStateMixin {
   final _supabase = Supabase.instance.client;
+
   Map<String, dynamic> _stats = {
     'total_orders': 0,
     'pending_orders': 0,
@@ -24,10 +26,32 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
   };
   bool _isLoading = true;
 
+  late AnimationController _bgCtrl;
+  late AnimationController _entryCtrl;
+  late Animation<double> _bgAnim;
+  late Animation<double> _fadeAnim;
+  late Animation<Offset> _slideAnim;
+
   @override
   void initState() {
     super.initState();
+    _bgCtrl = AnimationController(duration: const Duration(seconds: 6), vsync: this)
+      ..repeat(reverse: true);
+    _bgAnim = CurvedAnimation(parent: _bgCtrl, curve: Curves.easeInOut);
+
+    _entryCtrl = AnimationController(duration: const Duration(milliseconds: 900), vsync: this);
+    _fadeAnim = CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOut);
+    _slideAnim = Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _entryCtrl, curve: Curves.easeOut));
+
     _loadStats();
+  }
+
+  @override
+  void dispose() {
+    _bgCtrl.dispose();
+    _entryCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _loadStats() async {
@@ -40,6 +64,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
 
       if ((shopsResp as List).isEmpty) {
         if (mounted) setState(() => _isLoading = false);
+        _entryCtrl.forward();
         return;
       }
 
@@ -55,12 +80,8 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
           .select('id')
           .eq('shop_id', shopId);
 
-      final pending = (ordersResp as List)
-          .where((o) => o['status'] == 'pending')
-          .length;
-
-      final revenue = (ordersResp)
-          .fold<double>(0, (sum, o) => sum + (o['total_amount'] ?? 0.0));
+      final pending = (ordersResp as List).where((o) => o['status'] == 'pending').length;
+      final revenue = ordersResp.fold<double>(0, (s, o) => s + (o['total_amount'] ?? 0.0));
 
       if (mounted) {
         setState(() {
@@ -72,9 +93,13 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
           };
           _isLoading = false;
         });
+        _entryCtrl.forward();
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _entryCtrl.forward();
+      }
     }
   }
 
@@ -83,119 +108,120 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
     final auth = context.watch<AuthProvider>();
     final themeProvider = context.watch<ThemeProvider>();
     final isDark = themeProvider.isDarkMode;
+    final size = MediaQuery.of(context).size;
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: CustomScrollView(
-        slivers: [
-          // ── Premium Modern Header ─────────────────────────────────────
-          SliverAppBar(
-            expandedHeight: 220,
-            pinned: true,
-            elevation: 0,
-            backgroundColor: AppColors.primary,
-            surfaceTintColor: Colors.transparent,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.primary, Color(0xFF071D6B)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: isDark ? const Color(0xFF0A0A14) : const Color(0xFFF4F6FB),
+        body: CustomScrollView(
+          slivers: [
+            // ── Animated Hero Header ──────────────────────────────────────
+            SliverAppBar(
+              expandedHeight: 280,
+              pinned: true,
+              elevation: 0,
+              backgroundColor: const Color(0xFF0A1260),
+              surfaceTintColor: Colors.transparent,
+              leading: const SizedBox.shrink(),
+              flexibleSpace: FlexibleSpaceBar(
+                background: AnimatedBuilder(
+                  animation: _bgCtrl,
+                  builder: (_, __) => Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Color.lerp(const Color(0xFF0A1260), const Color(0xFF1A2E9E), _bgAnim.value)!,
+                          Color.lerp(const Color(0xFF050A3A), const Color(0xFF0D1870), _bgAnim.value)!,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Stack(
                       children: [
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 30,
-                              backgroundColor: Colors.white.withOpacity(0.1),
-                              child: Text(
-                                auth.user?.initials ?? 'S',
-                                style: GoogleFonts.outfit(
-                                  color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Hi, ${auth.user?.fullName.split(' ').first ?? 'Seller'}! 👋',
-                                    style: GoogleFonts.outfit(
-                                      color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  // ── Role Badge ──────────────────────────
-                                  Container(
-                                    margin: const EdgeInsets.only(top: 4),
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF4C542).withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: const Color(0xFFF4C542).withOpacity(0.5)),
-                                    ),
-                                    child: Text(
-                                      auth.user?.roleDisplay ?? 'Seller',
-                                      style: GoogleFonts.outfit(
-                                        color: const Color(0xFFF4C542), fontSize: 11, fontWeight: FontWeight.w700,
+                        // Decorative blobs
+                        Positioned(top: -40, right: -40,
+                          child: _blob(200, const Color(0xFF4C6EF5), 0.15 + _bgAnim.value * 0.08)),
+                        Positioned(bottom: -60, left: -30,
+                          child: _blob(180, const Color(0xFFF4C542), 0.10 + (1-_bgAnim.value) * 0.06)),
+                        // Stars
+                        CustomPaint(size: Size(size.width, 280), painter: _StarPainter(_bgCtrl.value)),
+                        // Content
+                        SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Top bar
+                                Row(
+                                  children: [
+                                    _avatar(auth.user?.initials ?? 'S'),
+                                    const SizedBox(width: 14),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text('Hi, ${auth.user?.fullName.split(' ').first ?? 'Seller'}! 👋',
+                                            style: GoogleFonts.outfit(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+                                          const SizedBox(height: 4),
+                                          _roleBadge('🏪  Seller', const Color(0xFFF4C542)),
+                                        ],
                                       ),
                                     ),
+                                    _headerIcon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                                        () => themeProvider.toggleTheme()),
+                                    _headerIcon(Icons.settings_outlined,
+                                        () => Navigator.pushNamed(context, AppRoutes.settings)),
+                                    _headerIcon(Icons.logout_rounded, () async {
+                                      await auth.signOut();
+                                      if (mounted) Navigator.pushNamedAndRemoveUntil(context, AppRoutes.roleSelect, (_) => false);
+                                    }),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                // Zero commission banner
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.08),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: Colors.white.withOpacity(0.12)),
                                   ),
-                                ],
-                              ),
+                                  child: Row(children: [
+                                    Container(width: 10, height: 10,
+                                      decoration: const BoxDecoration(color: Color(0xFF51CF66), shape: BoxShape.circle)),
+                                    const SizedBox(width: 10),
+                                    Text('🎉  ZERO COMMISSION  ·  Keep 100% of revenue',
+                                      style: GoogleFonts.outfit(color: Colors.white.withOpacity(0.9),
+                                        fontSize: 13, fontWeight: FontWeight.w600)),
+                                  ]),
+                                ),
+                                const SizedBox(height: 20),
+                                // Revenue hero number
+                                if (!_isLoading)
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                        Text('Total Revenue', style: GoogleFonts.outfit(
+                                          color: Colors.white.withOpacity(0.65), fontSize: 13)),
+                                        Text('₹${(_stats['revenue'] as double).toStringAsFixed(0)}',
+                                          style: GoogleFonts.outfit(color: Colors.white, fontSize: 36,
+                                            fontWeight: FontWeight.w900, letterSpacing: -1)),
+                                      ]),
+                                      const Spacer(),
+                                      _miniStatPill('${_stats['pending_orders']}', 'Pending',
+                                        const Color(0xFFFF8C42)),
+                                      const SizedBox(width: 8),
+                                      _miniStatPill('${_stats['total_orders']}', 'Orders',
+                                        const Color(0xFF4C6EF5)),
+                                    ],
+                                  ),
+                              ],
                             ),
-                            IconButton(
-                              icon: Icon(
-                                isDark ? Icons.light_mode : Icons.dark_mode,
-                                color: Colors.white,
-                              ),
-                              onPressed: () {
-                                themeProvider.toggleTheme();
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.settings_outlined, color: Colors.white),
-                              onPressed: () {
-                                Navigator.pushNamed(context, AppRoutes.settings);
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.logout_rounded, color: Colors.white),
-                              onPressed: () async {
-                                await auth.signOut();
-                                if (mounted) Navigator.pushNamedAndRemoveUntil(context, AppRoutes.roleSelect, (_) => false);
-                              },
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        // ── Zero Commission Banner (Sellers only) ─────────
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.10),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.white.withOpacity(0.15)),
                           ),
-                          child: Row(children: [
-                            Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFF51CF66), shape: BoxShape.circle)),
-                            const SizedBox(width: 10),
-                            Text(
-                              '🎉  ZERO COMMISSION  ·  Keep 100% of your sales',
-                              style: GoogleFonts.outfit(
-                                color: Colors.white.withOpacity(0.85),
-                                fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 0.4,
-                              ),
-                            ),
-                          ]),
                         ),
                       ],
                     ),
@@ -203,156 +229,261 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
                 ),
               ),
             ),
-          ),
 
-
-          // ── Stats Section ──────────────────────────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.all(20),
-            sliver: SliverToBoxAdapter(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 1.3,
-                      children: [
-                        _buildStatCard('Revenue', '₹${(_stats['revenue'] as double).toStringAsFixed(0)}', Icons.currency_rupee_rounded, Colors.green),
-                        _buildStatCard('Pending', '${_stats['pending_orders']}', Icons.pending_actions_rounded, Colors.orange),
-                        _buildStatCard('Orders', '${_stats['total_orders']}', Icons.receipt_long_rounded, Colors.blue),
-                        _buildStatCard('Products', '${_stats['products']}', Icons.inventory_2_rounded, Colors.purple),
-                      ],
-                    ),
+            // ── Stat Cards ────────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: FadeTransition(
+                opacity: _fadeAnim,
+                child: SlideTransition(
+                  position: _slideAnim,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+                    child: _isLoading
+                        ? _buildShimmer()
+                        : Column(
+                            children: [
+                              Row(children: [
+                                Expanded(child: _statCard('Revenue', '₹${(_stats['revenue'] as double).toStringAsFixed(0)}',
+                                  Icons.trending_up_rounded, const Color(0xFF51CF66), const Color(0xFF2F9E44))),
+                                const SizedBox(width: 14),
+                                Expanded(child: _statCard('Pending', '${_stats['pending_orders']}',
+                                  Icons.pending_actions_rounded, const Color(0xFFFF8C42), const Color(0xFFE8590C))),
+                              ]),
+                              const SizedBox(height: 14),
+                              Row(children: [
+                                Expanded(child: _statCard('Orders', '${_stats['total_orders']}',
+                                  Icons.receipt_long_rounded, const Color(0xFF4C6EF5), const Color(0xFF364FC7))),
+                                const SizedBox(width: 14),
+                                Expanded(child: _statCard('Products', '${_stats['products']}',
+                                  Icons.inventory_2_rounded, const Color(0xFFCC5DE8), const Color(0xFF9C36B5))),
+                              ]),
+                            ],
+                          ),
+                  ),
+                ),
+              ),
             ),
-          ),
 
-          // ── Quick Actions ──────────────────────────────────────────
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                const SizedBox(height: 8),
-                Text(
-                  'Quick Actions',
-                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w700),
+            // ── Quick Actions ─────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: FadeTransition(
+                opacity: _fadeAnim,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+                  child: Text('Quick Actions',
+                    style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w800,
+                      color: isDark ? Colors.white : const Color(0xFF0A0A14))),
                 ),
-                const SizedBox(height: 16),
-                _buildActionTile(
-                  icon: Icons.add_box_rounded,
-                  color: AppColors.primary,
-                  title: 'Add New Product',
-                  subtitle: 'List items in your catalog',
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.addProduct),
-                ),
-                _buildActionTile(
-                  icon: Icons.inventory_2_rounded,
-                  color: Colors.purple,
-                  title: 'Manage Inventory',
-                  subtitle: 'Update stock and prices',
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.manageProducts),
-                ),
-                _buildActionTile(
-                  icon: Icons.receipt_long_rounded,
-                  color: Colors.orange,
-                  title: 'Order Status',
-                  subtitle: 'Accept or process orders',
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.sellerOrders),
-                ),
-                _buildActionTile(
-                  icon: Icons.insights_rounded,
-                  color: Colors.green,
-                  title: 'Store Analytics',
-                  subtitle: 'Sales and customer trends',
-                  onTap: () => Navigator.pushNamed(context, AppRoutes.analytics),
-                ),
-                const SizedBox(height: 100),
-              ]),
+              ),
             ),
-          ),
-        ],
+
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _actionTile(
+                    icon: Icons.add_box_rounded,
+                    gradient: const [Color(0xFF4C6EF5), Color(0xFF364FC7)],
+                    title: 'Add New Product',
+                    subtitle: 'List items in your catalog',
+                    badge: null,
+                    isDark: isDark,
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.addProduct),
+                  ),
+                  _actionTile(
+                    icon: Icons.inventory_2_rounded,
+                    gradient: const [Color(0xFFCC5DE8), Color(0xFF9C36B5)],
+                    title: 'Manage Inventory',
+                    subtitle: 'Update stock & prices',
+                    badge: null,
+                    isDark: isDark,
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.manageProducts),
+                  ),
+                  _actionTile(
+                    icon: Icons.receipt_long_rounded,
+                    gradient: const [Color(0xFFFF8C42), Color(0xFFE8590C)],
+                    title: 'Orders',
+                    subtitle: 'Accept and track orders',
+                    badge: _stats['pending_orders'] > 0 ? '${_stats['pending_orders']} new' : null,
+                    isDark: isDark,
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.sellerOrders),
+                  ),
+                  _actionTile(
+                    icon: Icons.insights_rounded,
+                    gradient: const [Color(0xFF51CF66), Color(0xFF2F9E44)],
+                    title: 'Store Analytics',
+                    subtitle: 'Sales & customer trends',
+                    badge: null,
+                    isDark: isDark,
+                    onTap: () => Navigator.pushNamed(context, AppRoutes.analytics),
+                  ),
+                ]),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  Widget _avatar(String initials) => Container(
+    width: 52, height: 52,
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(colors: [Color(0xFFF4C542), Color(0xFFE8A000)]),
+      shape: BoxShape.circle,
+      boxShadow: [BoxShadow(color: const Color(0xFFF4C542).withOpacity(0.4), blurRadius: 12, offset: const Offset(0, 4))],
+    ),
+    child: Center(child: Text(initials, style: GoogleFonts.outfit(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w900))),
+  );
+
+  Widget _roleBadge(String label, Color color) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+    decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: color.withOpacity(0.5))),
+    child: Text(label, style: GoogleFonts.outfit(color: color, fontSize: 11, fontWeight: FontWeight.w700)),
+  );
+
+  Widget _headerIcon(IconData icon, VoidCallback onTap) => IconButton(
+    icon: Icon(icon, color: Colors.white70, size: 22),
+    onPressed: onTap,
+    splashRadius: 20,
+  );
+
+  Widget _miniStatPill(String value, String label, Color color) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+    decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: color.withOpacity(0.4))),
+    child: Column(children: [
+      Text(value, style: GoogleFonts.outfit(color: color, fontSize: 18, fontWeight: FontWeight.w900)),
+      Text(label, style: GoogleFonts.outfit(color: color.withOpacity(0.85), fontSize: 10, fontWeight: FontWeight.w600)),
+    ]),
+  );
+
+  Widget _statCard(String title, String value, IconData icon, Color light, Color dark) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color ?? Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.03), 
-            blurRadius: 15, 
-            offset: const Offset(0, 5)
-          ),
-        ],
+        color: isDark ? const Color(0xFF141425) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [BoxShadow(color: light.withOpacity(0.12), blurRadius: 16, offset: const Offset(0, 6))],
+        border: Border.all(color: light.withOpacity(isDark ? 0.15 : 0.08)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          width: 42, height: 42,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [light, dark]),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [BoxShadow(color: light.withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 3))],
+          ),
+          child: Icon(icon, color: Colors.white, size: 20),
+        ),
+        const SizedBox(height: 16),
+        Text(value, style: GoogleFonts.outfit(fontSize: 26, fontWeight: FontWeight.w900,
+          color: isDark ? Colors.white : const Color(0xFF0A0A14))),
+        const SizedBox(height: 2),
+        Text(title, style: GoogleFonts.outfit(fontSize: 12, color: isDark ? Colors.white54 : Colors.grey.shade600,
+          fontWeight: FontWeight.w600)),
+      ]),
+    );
+  }
+
+  Widget _actionTile({
+    required IconData icon,
+    required List<Color> gradient,
+    required String title,
+    required String subtitle,
+    required String? badge,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF141425) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(isDark ? 0.3 : 0.05), blurRadius: 12, offset: const Offset(0, 4))],
+        ),
+        child: Row(children: [
           Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: color, size: 20),
+            width: 50, height: 50,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: gradient, begin: Alignment.topLeft, end: Alignment.bottomRight),
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [BoxShadow(color: gradient.first.withOpacity(0.35), blurRadius: 10, offset: const Offset(0, 4))],
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(value, style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w800, color: Theme.of(context).textTheme.bodyLarge?.color)),
-              Text(title, style: GoogleFonts.outfit(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color, fontWeight: FontWeight.w600)),
-            ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 16,
+                color: isDark ? Colors.white : const Color(0xFF0A0A14))),
+              Text(subtitle, style: GoogleFonts.outfit(fontSize: 12,
+                color: isDark ? Colors.white38 : Colors.grey.shade600)),
+            ]),
           ),
-        ],
+          if (badge != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(color: const Color(0xFFFF8C42), borderRadius: BorderRadius.circular(20)),
+              child: Text(badge, style: GoogleFonts.outfit(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Icon(Icons.arrow_forward_ios_rounded, size: 15,
+            color: isDark ? Colors.white24 : Colors.grey.shade400),
+        ]),
       ),
     );
   }
 
-  Widget _buildActionTile({required IconData icon, required Color color, required String title, required String subtitle, required VoidCallback onTap}) {
+  Widget _buildShimmer() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color ?? Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.02), 
-              blurRadius: 10, 
-              offset: const Offset(0, 4)
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(16)),
-              child: Icon(icon, color: color, size: 26),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 16, color: Theme.of(context).textTheme.bodyLarge?.color)),
-                  Text(subtitle, style: GoogleFonts.outfit(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 13)),
-                ],
-              ),
-            ),
-            Icon(Icons.arrow_forward_ios_rounded, size: 16, color: isDark ? Colors.grey.shade500 : Colors.grey),
-          ],
-        ),
-      ),
-    );
+    final shimColor = isDark ? const Color(0xFF1E1E2E) : Colors.grey.shade200;
+    return Column(children: [
+      Row(children: [
+        Expanded(child: Container(height: 110, decoration: BoxDecoration(color: shimColor, borderRadius: BorderRadius.circular(24)))),
+        const SizedBox(width: 14),
+        Expanded(child: Container(height: 110, decoration: BoxDecoration(color: shimColor, borderRadius: BorderRadius.circular(24)))),
+      ]),
+      const SizedBox(height: 14),
+      Row(children: [
+        Expanded(child: Container(height: 110, decoration: BoxDecoration(color: shimColor, borderRadius: BorderRadius.circular(24)))),
+        const SizedBox(width: 14),
+        Expanded(child: Container(height: 110, decoration: BoxDecoration(color: shimColor, borderRadius: BorderRadius.circular(24)))),
+      ]),
+    ]);
   }
+
+  Widget _blob(double size, Color color, double opacity) => Opacity(
+    opacity: opacity.clamp(0.0, 1.0),
+    child: Container(width: size, height: size,
+      decoration: BoxDecoration(shape: BoxShape.circle,
+        gradient: RadialGradient(colors: [color, color.withOpacity(0)]))),
+  );
+}
+
+class _StarPainter extends CustomPainter {
+  final double t;
+  _StarPainter(this.t);
+  static final _rnd = math.Random(99);
+  static final _stars = List.generate(30, (_) => [_rnd.nextDouble(), _rnd.nextDouble(), _rnd.nextDouble() * 1.2 + 0.4, _rnd.nextDouble() * math.pi * 2]);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()..style = PaintingStyle.fill;
+    for (final s in _stars) {
+      final tw = (math.sin(t * math.pi * 2 + s[3]) + 1) / 2;
+      p.color = Colors.white.withOpacity(0.03 + tw * 0.12);
+      canvas.drawCircle(Offset(s[0] * size.width, s[1] * size.height), s[2], p);
+    }
+  }
+  @override
+  bool shouldRepaint(_StarPainter o) => o.t != t;
 }

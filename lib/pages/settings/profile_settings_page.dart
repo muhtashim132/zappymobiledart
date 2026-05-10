@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 
@@ -162,21 +163,21 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           title: 'Personal Information',
           subtitle: 'Update your name, email and phone',
           isDark: isDark,
-          onTap: () {},
+          onTap: _showEditProfileDialog,
         ),
         _buildSettingTile(
           icon: Icons.location_on_outlined,
           title: 'Saved Addresses',
           subtitle: 'Manage delivery locations',
           isDark: isDark,
-          onTap: () {},
+          onTap: () => _showComingSoon('Saved Addresses'),
         ),
         _buildSettingTile(
           icon: Icons.payment_outlined,
           title: 'Payment Methods',
           subtitle: 'Manage saved cards and UPI',
           isDark: isDark,
-          onTap: () {},
+          onTap: () => _showComingSoon('Payment Methods'),
         ),
         const SizedBox(height: 24),
       ],
@@ -194,21 +195,21 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           title: 'Shop Details',
           subtitle: 'Name, description, and categories',
           isDark: isDark,
-          onTap: () {},
+          onTap: _showShopDetailsDialog,
         ),
         _buildSettingTile(
           icon: Icons.access_time,
           title: 'Business Hours',
           subtitle: 'Set opening and closing times',
           isDark: isDark,
-          onTap: () {},
+          onTap: () => _showComingSoon('Business Hours'),
         ),
         _buildSettingTile(
           icon: Icons.account_balance_outlined,
           title: 'Payout Settings',
           subtitle: 'Bank accounts for settlements',
           isDark: isDark,
-          onTap: () {},
+          onTap: () => _showComingSoon('Payout Settings'),
         ),
         const SizedBox(height: 24),
       ],
@@ -226,21 +227,21 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           title: 'Vehicle Information',
           subtitle: 'Update vehicle type and reg no',
           isDark: isDark,
-          onTap: () {},
+          onTap: _showVehicleDetailsDialog,
         ),
         _buildSettingTile(
           icon: Icons.badge_outlined,
           title: 'Documents',
           subtitle: 'License, Aadhar, and approvals',
           isDark: isDark,
-          onTap: () {},
+          onTap: () => _showComingSoon('Documents'),
         ),
         _buildSettingTile(
           icon: Icons.account_balance_outlined,
           title: 'Bank Details',
           subtitle: 'Manage weekly payout account',
           isDark: isDark,
-          onTap: () {},
+          onTap: () => _showComingSoon('Bank Details'),
         ),
         const SizedBox(height: 24),
       ],
@@ -320,5 +321,139 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         ),
       ),
     );
+  }
+
+  void _showComingSoon(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('$feature settings coming soon!'),
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
+  void _showEditProfileDialog() {
+    final auth = context.read<AuthProvider>();
+    final user = auth.user;
+    if (user == null) return;
+    final nameCtrl = TextEditingController(text: user.fullName);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Personal Information', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 20),
+            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Full Name')),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () async {
+                if (nameCtrl.text.trim().isEmpty) return;
+                await auth.createProfile(fullName: nameCtrl.text.trim(), role: user.activeSessionRole);
+                if (ctx.mounted) Navigator.pop(ctx);
+              },
+              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 56)),
+              child: const Text('Save Changes'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showShopDetailsDialog() async {
+    final auth = context.read<AuthProvider>();
+    if (auth.user == null) return;
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    try {
+      final res = await Supabase.instance.client.from('shops').select().eq('seller_id', auth.currentUserId ?? '').maybeSingle();
+      if (mounted) Navigator.pop(context); // close loader
+      if (res != null) {
+        final nameCtrl = TextEditingController(text: res['name']);
+        final addrCtrl = TextEditingController(text: res['address']);
+        if (!mounted) return;
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          builder: (ctx) => Padding(
+            padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Shop Details', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 20),
+                TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Shop Name')),
+                const SizedBox(height: 16),
+                TextField(controller: addrCtrl, decoration: const InputDecoration(labelText: 'Shop Address')),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (nameCtrl.text.trim().isEmpty) return;
+                    await Supabase.instance.client.from('shops').update({'name': nameCtrl.text.trim(), 'address': addrCtrl.text.trim()}).eq('id', res['id']);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                  style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 56)),
+                  child: const Text('Save Changes'),
+                ),
+              ],
+            ),
+          ),
+        );
+      } else {
+        _showComingSoon('Shop not found');
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+    }
+  }
+
+  Future<void> _showVehicleDetailsDialog() async {
+    final auth = context.read<AuthProvider>();
+    if (auth.user == null) return;
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+    try {
+      final res = await Supabase.instance.client.from('delivery_partners').select().eq('id', auth.currentUserId ?? '').maybeSingle();
+      if (mounted) Navigator.pop(context); // close loader
+      if (res != null) {
+        final typeCtrl = TextEditingController(text: res['vehicle_type'] ?? '');
+        final regCtrl = TextEditingController(text: res['vehicle_reg_number'] ?? '');
+        if (!mounted) return;
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          builder: (ctx) => Padding(
+            padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Vehicle Information', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 20),
+                TextField(controller: typeCtrl, decoration: const InputDecoration(labelText: 'Vehicle Type')),
+                const SizedBox(height: 16),
+                TextField(controller: regCtrl, decoration: const InputDecoration(labelText: 'Registration Number')),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () async {
+                    await Supabase.instance.client.from('delivery_partners').update({'vehicle_type': typeCtrl.text.trim(), 'vehicle_reg_number': regCtrl.text.trim()}).eq('id', auth.currentUserId!);
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                  style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 56)),
+                  child: const Text('Save Changes'),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+    }
   }
 }

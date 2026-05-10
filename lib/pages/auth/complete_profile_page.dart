@@ -577,6 +577,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
                           contentPadding: const EdgeInsets.symmetric(
                               horizontal: 18, vertical: 14),
                           border: InputBorder.none,
+                          filled: true,
+                          fillColor: Colors.transparent,
                         ),
                       ),
                     ),
