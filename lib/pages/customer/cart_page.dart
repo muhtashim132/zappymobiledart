@@ -236,8 +236,11 @@ class CartPage extends StatelessWidget {
     const baseDistanceKm = 3.0;
     final baseCharge = cart.calculateDeliveryCharges(baseDistanceKm);
     final surcharge = cart.multiShopSurcharge;
+    final heavyFee = cart.heavyOrderFee;
+    final discount = cart.calculateDeliveryDiscount(baseDistanceKm);
     final effectiveBase = baseCharge >= 0 ? baseCharge : 0.0;
-    final total = cart.subtotal + effectiveBase + surcharge;
+    final totalDelivery = effectiveBase + surcharge + heavyFee + cart.smallCartFee - discount;
+    final total = cart.subtotal + totalDelivery + cart.platformFee;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
@@ -269,15 +272,35 @@ class CartPage extends StatelessWidget {
           const SizedBox(height: 6),
           _summaryRow(
             'Delivery Charges',
-            baseCharge == 0
-                ? 'FREE 🎉'
-                : baseCharge < 0
-                    ? 'Out of range'
-                    : '₹${baseCharge.toStringAsFixed(0)}',
-            valueColor: baseCharge == 0
-                ? AppColors.success
-                : AppColors.textSecondary,
+            baseCharge < 0 ? 'Out of range' : '₹${effectiveBase.toStringAsFixed(0)}',
+            valueColor: baseCharge < 0 ? AppColors.textSecondary : AppColors.textPrimary,
           ),
+          if (discount > 0) ...[
+            const SizedBox(height: 6),
+            _summaryRow(
+              'Delivery Discount',
+              '-₹${discount.toStringAsFixed(0)}',
+              valueColor: AppColors.success,
+            ),
+          ],
+          if (cart.smallCartFee > 0) ...[
+            const SizedBox(height: 6),
+            _summaryRow(
+              'Small Cart Fee',
+              '+₹${cart.smallCartFee.toStringAsFixed(0)}',
+              hint: 'For orders under ₹99',
+              valueColor: Colors.orange.shade700,
+            ),
+          ],
+          if (heavyFee > 0) ...[
+            const SizedBox(height: 6),
+            _summaryRow(
+              'Heavy Order Fee',
+              '+₹${heavyFee.toStringAsFixed(0)}',
+              hint: 'For orders over 10 kg',
+              valueColor: Colors.orange.shade700,
+            ),
+          ],
           // Multi-shop surcharge row — only visible when ordering from 2+ shops
           if (surcharge > 0) ...
             [
@@ -286,9 +309,15 @@ class CartPage extends StatelessWidget {
                 'Multi-shop fee (${cart.shops.length} shops)',
                 '+₹${surcharge.toStringAsFixed(0)}',
                 valueColor: Colors.orange.shade700,
-                hint: '₹10/km between shops',
+                hint: '₹7/km between shops',
               ),
             ],
+          const SizedBox(height: 6),
+          _summaryRow(
+            'Handling/Platform Fee',
+            '+₹${cart.platformFee.toStringAsFixed(0)}',
+            hint: 'Supports app operations',
+          ),
           const Divider(height: 20),
           _summaryRow(
             'Total',

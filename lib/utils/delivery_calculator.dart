@@ -4,33 +4,30 @@ import '../models/shop_model.dart';
 
 class DeliveryCalculator {
   /// Max delivery radius — shops beyond this won't be shown.
-  static const double maxRadiusKm = 15.0;
+  static const double maxRadiusKm = 9.0;
 
-  /// Per-extra-shop rate: ₹10 per km, minimum ₹10 (i.e. the ≤1 km bucket).
-  static const double _ratePerKm = 10.0;
+  /// Per-extra-shop rate: ₹7 per km, minimum ₹7 (i.e. the ≤1 km bucket).
+  static const double _ratePerKm = 7.0;
 
   // ---------------------------------------------------------------------------
   // Base delivery charge (customer ↔ nearest shop)
   // ---------------------------------------------------------------------------
 
   /// Delivery charge slabs (flat per order, not per km):
-  ///   ≤ 5 km  → ₹25
-  ///   > 5–10 km → ₹35
-  ///   > 10–15 km → ₹45
-  ///   > 15 km  → -1 (out of delivery range)
-  ///   order ≥ ₹499 → free delivery
+  ///   ≤ 3 km  → ₹25
+  ///   > 3–6 km → ₹35
+  ///   > 6–9 km → ₹45
+  ///   > 9 km  → -1 (out of delivery range)
   static double calculateDeliveryCharges(double distanceKm, double orderValue) {
-    if (orderValue >= 499) return 0; // free delivery on large orders
-    if (distanceKm <= 5) return 25;
-    if (distanceKm <= 10) return 35;
-    if (distanceKm <= 15) return 45;
-    return -1; // beyond 15 km — out of range
+    if (distanceKm <= 3) return 25;
+    if (distanceKm <= 6) return 35;
+    if (distanceKm <= 9) return 45;
+    return -1; // beyond 9 km — out of range
   }
 
   /// Returns the label string for the delivery charge.
   static String deliveryChargeLabel(double distanceKm, double orderValue) {
     final charge = calculateDeliveryCharges(distanceKm, orderValue);
-    if (charge == 0) return 'Free delivery';
     if (charge < 0) return 'Out of range';
     return '₹${charge.toStringAsFixed(0)} delivery';
   }
@@ -67,8 +64,8 @@ class DeliveryCalculator {
   /// **Algorithm**
   /// • Shop 1 — no surcharge (it's the "anchor").
   /// • Shop 2 — distance from shop 1.
-  ///   - ≤ 1 km  → ₹10 (minimum flat charge)
-  ///   - > 1 km  → ₹10 × ceil(distanceKm)
+  ///   - ≤ 1 km  → ₹7 (minimum flat charge)
+  ///   - > 1 km  → ₹7 × ceil(distanceKm)
   /// • Shop 3, 4, … — distance from the **nearest** already-visited shop
   ///   (greedy nearest-neighbour), same rate as above.
   ///
@@ -91,7 +88,7 @@ class DeliveryCalculator {
         if (d < minDist) minDist = d;
       }
 
-      // Charge: minimum ₹10, then ₹10 per km (ceiling)
+      // Charge: minimum ₹7, then ₹7 per km (ceiling)
       final chargeForShop = _ratePerKm * math.max(1, minDist.ceil());
       total += chargeForShop;
 

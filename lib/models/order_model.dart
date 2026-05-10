@@ -1,3 +1,5 @@
+import '../config/payment_config.dart';
+
 class OrderModel {
   final String id;
   final String customerId;
@@ -5,6 +7,7 @@ class OrderModel {
   final double totalAmount;
   final double deliveryCharges;
   final double multiShopSurcharge;
+  final double platformFee;
   final DateTime createdAt;
   List<OrderItem> items;
   String? deliveryPartnerId;
@@ -13,6 +16,12 @@ class OrderModel {
   // Dual-acceptance flags (stored in DB columns)
   bool sellerAccepted;
   bool partnerAccepted;
+  
+  // Wait-time compensation fields
+  DateTime? arrivedAtShopTime;
+  DateTime? orderReadyTime;
+  double waitTimePenalty;
+  bool waitTimeDisputed;
 
   OrderModel({
     required this.id,
@@ -21,6 +30,7 @@ class OrderModel {
     required this.totalAmount,
     required this.deliveryCharges,
     this.multiShopSurcharge = 0,
+    this.platformFee = 0,
     required this.createdAt,
     this.items = const [],
     this.deliveryPartnerId,
@@ -28,6 +38,10 @@ class OrderModel {
     this.deliveryNotes,
     this.sellerAccepted = false,
     this.partnerAccepted = false,
+    this.arrivedAtShopTime,
+    this.orderReadyTime,
+    this.waitTimePenalty = 0.0,
+    this.waitTimeDisputed = false,
   });
 
   factory OrderModel.fromMap(Map<String, dynamic> map) {
@@ -38,12 +52,17 @@ class OrderModel {
       totalAmount: (map['total_amount'] ?? 0.0).toDouble(),
       deliveryCharges: (map['delivery_charges'] ?? 0.0).toDouble(),
       multiShopSurcharge: (map['multi_shop_surcharge'] ?? 0.0).toDouble(),
+      platformFee: (map['platform_fee'] ?? 0.0).toDouble(),
       createdAt: DateTime.tryParse(map['created_at'] ?? '') ?? DateTime.now(),
       deliveryPartnerId: map['delivery_partner_id'],
       address: map['address'],
       deliveryNotes: map['delivery_notes'],
       sellerAccepted: map['seller_accepted'] ?? false,
       partnerAccepted: map['partner_accepted'] ?? false,
+      arrivedAtShopTime: map['arrived_at_shop_time'] != null ? DateTime.tryParse(map['arrived_at_shop_time']) : null,
+      orderReadyTime: map['order_ready_time'] != null ? DateTime.tryParse(map['order_ready_time']) : null,
+      waitTimePenalty: (map['wait_time_penalty'] ?? 0.0).toDouble(),
+      waitTimeDisputed: map['wait_time_disputed'] ?? false,
     );
   }
 
@@ -72,7 +91,12 @@ class OrderModel {
     }
   }
 
-  double get grandTotal => totalAmount + deliveryCharges + multiShopSurcharge;
+  double get grandTotal => totalAmount + deliveryCharges + multiShopSurcharge + platformFee;
+
+  double get sellerPayout {
+    final commission = totalAmount * PaymentConfig.platformCommission;
+    return totalAmount - waitTimePenalty - commission;
+  }
 }
 
 class OrderItem {

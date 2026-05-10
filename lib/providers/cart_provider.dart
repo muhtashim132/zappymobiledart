@@ -30,6 +30,25 @@ class CartProvider extends ChangeNotifier {
 
   bool get meetsMinimumOrder => subtotal >= PaymentConfig.minimumOrderValue;
 
+  double get platformFee => PaymentConfig.platformFee;
+
+  double get smallCartFee =>
+      subtotal < PaymentConfig.smallCartThreshold && subtotal > 0
+          ? PaymentConfig.smallCartFee
+          : 0.0;
+
+  double calculateDeliveryDiscount(double distanceKm) {
+    if (subtotal >= PaymentConfig.discountDeliveryThreshold && distanceKm <= 5.0) {
+      return PaymentConfig.deliveryDiscountAmount;
+    }
+    return 0.0;
+  }
+
+  double get heavyOrderFee =>
+      totalWeight > PaymentConfig.heavyOrderThreshold
+          ? PaymentConfig.heavyOrderFee
+          : 0.0;
+
   /// True when items come from more than one shop.
   bool get isMultiShopOrder => shops.length > 1;
 
@@ -37,6 +56,11 @@ class CartProvider extends ChangeNotifier {
       {int quantity = 1}) {
     if (totalItemCount + quantity > PaymentConfig.maxItemsPerOrder) {
       return 'Maximum ${PaymentConfig.maxItemsPerOrder} items allowed per order';
+    }
+
+    final tempItem = CartItem(product: product, shop: shop, quantity: quantity);
+    if (totalWeight + tempItem.weightKg > PaymentConfig.maxWeightKg) {
+      return 'Maximum weight of ${PaymentConfig.maxWeightKg} kg allowed per order';
     }
 
     final existingIdx = _items.indexWhere(
@@ -96,13 +120,13 @@ class CartProvider extends ChangeNotifier {
   double get multiShopSurcharge =>
       DeliveryCalculator.calculateMultiShopSurcharge(shops);
 
-  /// Combined total including base delivery + inter-shop surcharge.
+  /// Combined total including base delivery + inter-shop surcharge + small cart fee - discount.
   double totalDeliveryCharges(double baseDistanceKm) {
     final base = calculateDeliveryCharges(baseDistanceKm);
     final surcharge = multiShopSurcharge;
-    // If base is -1 (out of range) keep it as-is; surcharge still applies.
+    // If base is -1 (out of range) keep it as-is
     if (base < 0) return base;
-    return base + surcharge;
+    return base + surcharge + heavyOrderFee + smallCartFee - calculateDeliveryDiscount(baseDistanceKm);
   }
 
   int getItemQuantity(String productId) {

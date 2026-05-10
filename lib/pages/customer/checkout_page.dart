@@ -33,16 +33,23 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     try {
       final supabase = Supabase.instance.client;
-      final baseDelivery = cart.calculateDeliveryCharges(3.0);
+      double distanceKm = 3.0;
+      if (location.currentLocation != null && cart.shops.isNotEmpty) {
+        distanceKm = location.distanceTo(cart.shops.first.location);
+      }
+      final baseDelivery = cart.calculateDeliveryCharges(distanceKm);
       final surcharge = cart.multiShopSurcharge;
+      final heavyFee = cart.heavyOrderFee;
+      final discount = cart.calculateDeliveryDiscount(distanceKm);
       final totalDelivery =
-          (baseDelivery >= 0 ? baseDelivery : 25.0) + surcharge;
+          (baseDelivery >= 0 ? baseDelivery : 25.0) + surcharge + heavyFee + cart.smallCartFee - discount;
 
       final orderResponse = await supabase.from('orders').insert({
         'customer_id': auth.currentUserId,
         'status': 'pending',
         'total_amount': cart.subtotal,
         'delivery_charges': totalDelivery,
+        'platform_fee': cart.platformFee,
         'address': location.currentAddress,
         'delivery_notes': _notesController.text.isEmpty
             ? null
@@ -95,10 +102,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
     final location = context.watch<LocationProvider>();
-    final baseCharge = cart.calculateDeliveryCharges(3.0);
+    
+    double distanceKm = 3.0;
+    if (location.currentLocation != null && cart.shops.isNotEmpty) {
+      distanceKm = location.distanceTo(cart.shops.first.location);
+    }
+    
+    final baseCharge = cart.calculateDeliveryCharges(distanceKm);
     final surcharge = cart.multiShopSurcharge;
+    final heavyFee = cart.heavyOrderFee;
+    final discount = cart.calculateDeliveryDiscount(distanceKm);
     final effectiveBase = baseCharge >= 0 ? baseCharge : 25.0;
-    final total = cart.subtotal + effectiveBase + surcharge;
+    final totalDelivery = effectiveBase + surcharge + heavyFee + cart.smallCartFee - discount;
+    final total = cart.subtotal + totalDelivery + cart.platformFee;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -229,13 +245,34 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   const SizedBox(height: 8),
                   _billRow(
                     'Delivery Fee',
-                    baseCharge == 0
-                        ? 'FREE 🎉'
-                        : '₹${effectiveBase.toStringAsFixed(0)}',
-                    valueColor: baseCharge == 0
-                        ? AppColors.success
-                        : null,
+                    '₹${effectiveBase.toStringAsFixed(0)}',
                   ),
+                  if (discount > 0) ...[
+                    const SizedBox(height: 8),
+                    _billRow(
+                      'Delivery Discount',
+                      '-₹${discount.toStringAsFixed(0)}',
+                      valueColor: AppColors.success,
+                    ),
+                  ],
+                  if (cart.smallCartFee > 0) ...[
+                    const SizedBox(height: 8),
+                    _billRow(
+                      'Small Cart Fee',
+                      '+₹${cart.smallCartFee.toStringAsFixed(0)}',
+                      hint: 'For orders under ₹99',
+                      valueColor: Colors.orange.shade700,
+                    ),
+                  ],
+                  if (heavyFee > 0) ...[
+                    const SizedBox(height: 8),
+                    _billRow(
+                      'Heavy Order Fee',
+                      '+₹${heavyFee.toStringAsFixed(0)}',
+                      hint: 'For orders over 10 kg',
+                      valueColor: Colors.orange.shade700,
+                    ),
+                  ],
                   // Multi-shop surcharge — shown only when ordering from 2+ shops
                   if (surcharge > 0) ...
                     [
@@ -244,9 +281,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         'Multi-shop fee (${cart.shops.length} shops)',
                         '+₹${surcharge.toStringAsFixed(0)}',
                         valueColor: Colors.orange.shade700,
-                        hint: '₹10/km between shops',
+                        hint: '₹7/km between shops',
                       ),
                     ],
+                  const SizedBox(height: 8),
+                  _billRow(
+                    'Handling/Platform Fee',
+                    '+₹${cart.platformFee.toStringAsFixed(0)}',
+                    hint: 'Supports app operations',
+                  ),
                   const Divider(height: 20),
                   _billRow(
                     'Grand Total',

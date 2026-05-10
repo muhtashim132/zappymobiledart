@@ -100,13 +100,57 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
     }
   }
 
-  Future<void> _updateStatus(String orderId, String status) async {
+  Future<void> _updateStatus(OrderModel order, String status) async {
     try {
-      await _supabase.from('orders').update({'status': status}).eq('id', orderId);
+      if (status == 'arrived') {
+        await _supabase.from('orders').update({
+          'arrived_at_shop_time': DateTime.now().toIso8601String(),
+        }).eq('id', order.id);
+      } else if (status == 'reassign' || status == 'reassign_disputed') {
+        double penalty = 0.0;
+        if (order.arrivedAtShopTime != null) {
+          final waitMinutes = DateTime.now().difference(order.arrivedAtShopTime!).inMinutes;
+          final paidMinutes = math.max(0, math.min(10, waitMinutes - 10));
+          penalty = paidMinutes * 1.5;
+        }
+        await _supabase.from('orders').update({
+          'delivery_partner_id': null,
+          'partner_accepted': false,
+          'status': 'pending',
+          'wait_time_penalty': penalty,
+          'wait_time_disputed': status == 'reassign_disputed',
+        }).eq('id', order.id);
+      } else {
+        await _supabase.from('orders').update({'status': status}).eq('id', order.id);
+      }
       _loadOrders();
     } catch (e) {
       debugPrint('Status update error: $e');
     }
+  }
+
+  void _showDisputeDialog(OrderModel order) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Dispute Order', style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
+        content: Text('Report shop delay or missing items. You will keep your wait penalty pay and the order will be reassigned.', style: GoogleFonts.outfit()),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () {
+               Navigator.pop(ctx);
+               _updateStatus(order, 'reassign_disputed');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.danger,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Dispute & Reassign'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showSnack(String msg) {
@@ -405,21 +449,51 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
   }
 
   Widget _activeOrderCard(OrderModel order, bool isDark) {
-    final nextStatus = order.status == 'confirmed' || order.status == 'ready_for_pickup'
-        ? 'picked_up'
-        : order.status == 'picked_up'
-            ? 'out_for_delivery'
-            : order.status == 'out_for_delivery'
-                ? 'delivered'
-                : null;
+    String? nextStatus;
+    String? nextLabel;
+    
+    // Wait-time variables
+    final now = DateTime.now();
+    bool showWaitTimer = false;
+    int waitMinutes = 0;
+    double waitPenalty = 0.0;
+    bool canReassign = false;
 
-    final nextLabel = order.status == 'confirmed' || order.status == 'ready_for_pickup'
-        ? '📦 Mark Picked Up'
-        : order.status == 'picked_up'
-            ? '🚀 Out for Delivery'
-            : order.status == 'out_for_delivery'
-                ? '✅ Mark Delivered'
-                : null;
+    if (order.arrivedAtShopTime != null) {
+      if (order.status == 'confirmed' || order.status == 'preparing' || order.status == 'ready_for_pickup') {
+        showWaitTimer = true;
+        // If shop marked ready, calculate wait time up to orderReadyTime. Else up to now.
+        final endTime = order.orderReadyTime ?? now;
+        waitMinutes = endTime.difference(order.arrivedAtShopTime!).inMinutes;
+        final paidMinutes = math.max(0, math.min(10, waitMinutes - 10));
+        waitPenalty = paidMinutes * 1.5;
+        canReassign = now.difference(order.arrivedAtShopTime!).inMinutes >= 20;
+      }
+    }
+
+    if (order.status == 'confirmed' || order.status == 'preparing') {
+      if (order.arrivedAtShopTime == null) {
+        nextStatus = 'arrived';
+        nextLabel = '📍 Mark Arrived at Shop';
+      } else {
+        if (canReassign) {
+           nextStatus = 'reassign';
+           nextLabel = '⚠️ Wait Time Exceeded - Reassign';
+        } else {
+           nextLabel = 'Waiting for Shop to Pack...';
+           nextStatus = null; // disabled
+        }
+      }
+    } else if (order.status == 'ready_for_pickup') {
+      nextStatus = 'picked_up';
+      nextLabel = '✅ Confirm Received (Mark Picked Up)';
+    } else if (order.status == 'picked_up') {
+      nextStatus = 'out_for_delivery';
+      nextLabel = '🚀 Out for Delivery';
+    } else if (order.status == 'out_for_delivery') {
+      nextStatus = 'delivered';
+      nextLabel = '✅ Mark Delivered';
+    }
 
     final statusGradient = order.status == 'out_for_delivery'
         ? [const Color(0xFF4C6EF5), const Color(0xFF364FC7)]
@@ -461,15 +535,60 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                 style: GoogleFonts.outfit(color: isDark ? Colors.white60 : Colors.grey.shade600, fontSize: 13),
                 maxLines: 1, overflow: TextOverflow.ellipsis)),
             ]),
-            if (nextStatus != null) ...[
+            if (showWaitTimer) ...[
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: waitMinutes >= 10 ? Colors.orange.withOpacity(0.1) : Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: waitMinutes >= 10 ? Colors.orange : Colors.blue),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.timer_outlined, color: waitMinutes >= 10 ? Colors.orange : Colors.blue),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Wait Time: $waitMinutes mins', 
+                            style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: waitMinutes >= 10 ? Colors.orange : Colors.blue)),
+                          Text(order.orderReadyTime != null 
+                            ? 'Timer stopped by shop'
+                            : (waitMinutes < 10 
+                                ? 'Grace period (10 mins)' 
+                                : 'Earning ₹1.5/min delay penalty'),
+                            style: GoogleFonts.outfit(fontSize: 12, color: isDark ? Colors.white70 : Colors.black87)),
+                        ],
+                      ),
+                    ),
+                    Text('+₹${waitPenalty.toStringAsFixed(1)}',
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.success)),
+                  ],
+                ),
+              ),
+            ],
+            if (nextLabel != null) ...[
               const SizedBox(height: 14),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => _updateStatus(order.id, nextStatus),
+                  onPressed: nextStatus == null ? null : () {
+                     if (nextStatus == 'arrived') {
+                        // Geofence mock: within 100 meters
+                        _showSnack('📍 GPS verified: At Shop');
+                        _updateStatus(order, nextStatus!);
+                     } else if (nextStatus == 'reassign') {
+                        _showDisputeDialog(order);
+                     } else {
+                        _updateStatus(order, nextStatus!);
+                     }
+                  },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: statusGradient.first,
+                    backgroundColor: nextStatus == 'reassign' ? AppColors.danger : statusGradient.first,
                     foregroundColor: Colors.white,
+                    disabledBackgroundColor: isDark ? Colors.white10 : Colors.grey.shade300,
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     elevation: 0,
@@ -477,6 +596,15 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                   child: Text(nextLabel!, style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 14)),
                 ),
               ),
+            ],
+            if (showWaitTimer) ...[
+               const SizedBox(height: 8),
+               TextButton.icon(
+                 onPressed: () => _showDisputeDialog(order),
+                 icon: const Icon(Icons.report_problem_outlined, color: AppColors.danger, size: 16),
+                 label: Text(order.orderReadyTime != null ? 'Shop Lied - Items Not Received' : 'Shop Lied / Items Not Given', 
+                   style: GoogleFonts.outfit(color: AppColors.danger, fontSize: 12)),
+               ),
             ],
           ]),
         ),

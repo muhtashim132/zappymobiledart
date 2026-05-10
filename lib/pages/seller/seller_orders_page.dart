@@ -89,7 +89,11 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
 
   Future<void> _updateOrderStatus(String orderId, String status) async {
     try {
-      await _supabase.from('orders').update({'status': status}).eq('id', orderId);
+      final updates = <String, dynamic>{'status': status};
+      if (status == 'ready_for_pickup') {
+        updates['order_ready_time'] = DateTime.now().toIso8601String();
+      }
+      await _supabase.from('orders').update(updates).eq('id', orderId);
       _loadOrders();
       _showSnack('Status → ${status.replaceAll('_', ' ')}', isError: false);
     } catch (e) {
@@ -240,9 +244,19 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '₹${order.grandTotal.toStringAsFixed(0)}',
-                style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '₹${order.sellerPayout.toStringAsFixed(0)} payout',
+                    style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.primary),
+                  ),
+                  if (order.waitTimePenalty > 0)
+                    Text(
+                      '-₹${order.waitTimePenalty.toStringAsFixed(0)} delay penalty',
+                      style: GoogleFonts.outfit(fontSize: 10, color: AppColors.danger, fontWeight: FontWeight.w600),
+                    ),
+                ],
               ),
               _statusBadge(order, statusColor),
             ],

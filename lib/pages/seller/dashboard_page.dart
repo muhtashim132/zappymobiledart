@@ -7,6 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../config/routes.dart';
+import '../../models/order_model.dart';
+import '../../config/payment_config.dart';
 
 class SellerDashboardPage extends StatefulWidget {
   const SellerDashboardPage({super.key});
@@ -81,7 +83,10 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
           .eq('shop_id', shopId);
 
       final pending = (ordersResp as List).where((o) => o['status'] == 'pending').length;
-      final revenue = ordersResp.fold<double>(0, (s, o) => s + (o['total_amount'] ?? 0.0));
+      final revenue = ordersResp.fold<double>(0, (s, o) {
+        final order = OrderModel.fromMap(o);
+        return s + order.sellerPayout;
+      });
 
       if (mounted) {
         setState(() {
