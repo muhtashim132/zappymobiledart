@@ -18,6 +18,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
   final _supabase = Supabase.instance.client;
   List<OrderModel> _orders = [];
   bool _isLoading = true;
+  final Set<String> _cancellingIds = {}; // track which orders are being cancelled
 
   @override
   void initState() {
@@ -60,6 +61,69 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
       case 'out_for_delivery': return Icons.delivery_dining;
       case 'pending': return Icons.access_time;
       default: return Icons.receipt_long_outlined;
+    }
+  }
+
+  Future<void> _cancelOrder(OrderModel order) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text('Cancel Order?',
+            style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w700)),
+        content: const Text(
+            'Are you sure you want to cancel this order?',
+            style: TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep Order'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            child: const Text('Yes, Cancel',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _cancellingIds.add(order.id));
+    try {
+      await _supabase
+          .from('orders')
+          .update({'status': 'cancelled'})
+          .eq('id', order.id);
+      if (mounted) {
+        setState(() {
+          final idx = _orders.indexWhere((o) => o.id == order.id);
+          if (idx != -1) _orders[idx].status = 'cancelled';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Order cancelled.'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to cancel. Please try again.'),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _cancellingIds.remove(order.id));
     }
   }
 
@@ -180,9 +244,42 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                     fontFamily: 'Poppins',
                   ),
                 ),
-                const Row(
+                Row(
                   children: [
-                    Text(
+                    // Cancel chip — only for pending orders
+                    if (order.status == 'pending') ...[
+                      _cancellingIds.contains(order.id)
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: AppColors.danger),
+                            )
+                          : GestureDetector(
+                              onTap: () => _cancelOrder(order),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: AppColors.danger.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: AppColors.danger.withOpacity(0.4)),
+                                ),
+                                child: const Text(
+                                  'Cancel',
+                                  style: TextStyle(
+                                    color: AppColors.danger,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              ),
+                            ),
+                      const SizedBox(width: 8),
+                    ],
+                    const Text(
                       'View Details',
                       style: TextStyle(
                         color: AppColors.primary,
@@ -191,8 +288,8 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                         fontFamily: 'Poppins',
                       ),
                     ),
-                    SizedBox(width: 4),
-                    Icon(Icons.arrow_forward_ios,
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_forward_ios,
                         size: 12, color: AppColors.primary),
                   ],
                 ),

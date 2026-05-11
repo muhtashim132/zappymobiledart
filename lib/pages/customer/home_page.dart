@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
 import '../../models/product_model.dart';
@@ -16,6 +17,7 @@ import '../../utils/delivery_calculator.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/shop_card.dart';
 import '../../widgets/restaurant_shop_card.dart';
+import '../../widgets/common/notification_bell.dart';
 
 class CustomerHomePage extends StatefulWidget {
   const CustomerHomePage({super.key});
@@ -31,7 +33,9 @@ class _CustomerHomePageState extends State<CustomerHomePage>
   int _selectedTabIndex = 0;
   int _navIndex = 0;
   bool _isLoading = true;
+  bool _isSearching = false;
   List<ShopModel> _shops = [];
+  List<ShopModel> _searchResults = [];
   List<ProductModel> _products = [];
   String _searchQuery = '';
   final _searchController = TextEditingController();
@@ -83,6 +87,16 @@ class _CustomerHomePageState extends State<CustomerHomePage>
       }
     });
     _checkLocationAndLoad();
+    _startNotifications();
+  }
+
+  void _startNotifications() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId != null) {
+        context.read<NotificationProvider>().listenAsCustomer(userId);
+      }
+    });
   }
 
   @override
@@ -90,6 +104,54 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// Runs a Supabase text search for shops by name across all categories.
+  Future<void> _searchShops(String query) async {
+    if (query.trim().isEmpty) {
+      setState(() {
+        _searchQuery = '';
+        _searchResults = [];
+        _isSearching = false;
+      });
+      return;
+    }
+    setState(() {
+      _searchQuery = query;
+      _isSearching = true;
+    });
+    try {
+      final locationProvider = context.read<LocationProvider>();
+      final response = await _supabase
+          .from('shops')
+          .select()
+          .ilike('name', '%$query%');
+
+      final allShops =
+          (response as List).map((s) => ShopModel.fromMap(s)).toList();
+
+      List<ShopModel> results;
+      if (locationProvider.hasLocation) {
+        for (final shop in allShops) {
+          shop.distanceKm = locationProvider.distanceTo(shop.location);
+        }
+        results = allShops
+            .where((s) => DeliveryCalculator.isWithinRange(s.distanceKm!))
+            .toList()
+          ..sort((a, b) => a.distanceKm!.compareTo(b.distanceKm!));
+      } else {
+        results = allShops;
+      }
+
+      if (mounted) {
+        setState(() {
+          _searchResults = results;
+          _isSearching = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isSearching = false);
+    }
   }
 
   Future<void> _checkLocationAndLoad() async {
@@ -219,10 +281,9 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                             ),
                           ),
                         ),
-                        _buildCircleAction(
-                          icon: Icons.notifications_none_outlined,
-                          isDark: isDark,
-                          onTap: () {},
+                        NotificationBell(
+                          iconColor: isDark ? Colors.white70 : AppColors.textPrimary,
+                          containerColor: isDark ? const Color(0xFF1E1E2E) : const Color(0xFFF0F0F8),
                         ),
                         const SizedBox(width: 8),
                         _buildCircleAction(
@@ -253,7 +314,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                     color: Colors.transparent,
                     child: TextField(
                       controller: _searchController,
-                      onChanged: (v) => setState(() => _searchQuery = v),
+                      onChanged: (v) => _searchShops(v),
                       decoration: InputDecoration(
                         hintText: 'Search "Milk", "Pizza" or "Medicines"',
                         hintStyle: GoogleFonts.outfit(
@@ -370,7 +431,68 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                           const SizedBox(height: 24),
 
                           // Shops Section
-                          if (_shops.isNotEmpty) ...[
+                          // ── Search Results (Supabase live search) ──────
+                          if (_searchQuery.isNotEmpty) ...[
+                            _buildSectionTitle(
+                              'Search results',
+                              subtitle: _isSearching
+                                  ? 'Searching...'
+                                  : '${_searchResults.length} result${_searchResults.length == 1 ? '' : 's'}',
+                            ),
+                            const SizedBox(height: 16),
+                            if (_isSearching)
+                              const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 24),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              )
+                            else if (_searchResults.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 32),
+                                child: Center(
+                                  child: Column(
+                                    children: [
+                                      const Text('🔍', style: TextStyle(fontSize: 48)),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'No shops found for "$_searchQuery"',
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.outfit(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textSecondary),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                            else
+                              ..._searchResults.map((shop) {
+                                final isFood = AppCategories.groupFor(shop.category) == CategoryGroup.food;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: isFood
+                                      ? RestaurantShopCard(
+                                          shop: shop,
+                                          onTap: () => Navigator.pushNamed(
+                                            context,
+                                            AppRoutes.restaurantDashboard,
+                                            arguments: {'shopId': shop.id},
+                                          ),
+                                        )
+                                      : ShopCard(
+                                          shop: shop,
+                                          onTap: () => Navigator.pushNamed(
+                                            context,
+                                            AppRoutes.restaurant,
+                                            arguments: {'shopId': shop.id},
+                                          ),
+                                        ),
+                                );
+                              }),
+                          ] else if (_shops.isNotEmpty) ...[
+                            // ── Normal category browse ───────────────────
                             _buildSectionTitle(
                               _isFoodTab
                                   ? 'Restaurants near you'
@@ -378,35 +500,29 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                               subtitle: '${_shops.length} within ${DeliveryCalculator.maxRadiusKm.toInt()} km',
                             ),
                             const SizedBox(height: 16),
-                            ..._shops
-                                .where((s) =>
-                                    _searchQuery.isEmpty ||
-                                    s.name
-                                        .toLowerCase()
-                                        .contains(_searchQuery.toLowerCase()))
-                                .map((shop) {
-                                      final isFood = AppCategories.groupFor(shop.category) == CategoryGroup.food;
-                                      return Padding(
-                                        padding: const EdgeInsets.only(bottom: 16),
-                                        child: isFood
-                                            ? RestaurantShopCard(
-                                                shop: shop,
-                                                onTap: () => Navigator.pushNamed(
-                                                  context,
-                                                  AppRoutes.restaurantDashboard,
-                                                  arguments: {'shopId': shop.id},
-                                                ),
-                                              )
-                                            : ShopCard(
-                                                shop: shop,
-                                                onTap: () => Navigator.pushNamed(
-                                                  context,
-                                                  AppRoutes.restaurant,
-                                                  arguments: {'shopId': shop.id},
-                                                ),
-                                              ),
-                                      );
-                                    }),
+                            ..._shops.map((shop) {
+                              final isFood = AppCategories.groupFor(shop.category) == CategoryGroup.food;
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: isFood
+                                    ? RestaurantShopCard(
+                                        shop: shop,
+                                        onTap: () => Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.restaurantDashboard,
+                                          arguments: {'shopId': shop.id},
+                                        ),
+                                      )
+                                    : ShopCard(
+                                        shop: shop,
+                                        onTap: () => Navigator.pushNamed(
+                                          context,
+                                          AppRoutes.restaurant,
+                                          arguments: {'shopId': shop.id},
+                                        ),
+                                      ),
+                              );
+                            }),
                           ] else if (!_isLoading &&
                               locationProvider.hasLocation) ...[
                             _buildNoShopsNearby(),

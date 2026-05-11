@@ -20,6 +20,8 @@ class CheckoutPage extends StatefulWidget {
 class _CheckoutPageState extends State<CheckoutPage> {
   bool _isProcessing = false;
   final _notesController = TextEditingController();
+  // Payment method: 'cod' | 'upi' | null (not yet selected)
+  String? _selectedPaymentMethod;
 
   @override
   void dispose() {
@@ -28,6 +30,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Future<void> _placeOrder() async {
+    if (_selectedPaymentMethod == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please select a payment method to continue.'),
+          backgroundColor: Colors.orange.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
     setState(() => _isProcessing = true);
     final cart = context.read<CartProvider>();
     final auth = context.read<AuthProvider>();
@@ -78,6 +91,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
               'address': location.currentAddress,
               'delivery_notes':
                   _notesController.text.isEmpty ? null : _notesController.text,
+              'payment_method': _selectedPaymentMethod,
+              'payment_status': _selectedPaymentMethod == 'cod'
+                  ? 'pending_cod'
+                  : 'pending_upi',
             })
             .select()
             .single();
@@ -276,31 +293,42 @@ class _CheckoutPageState extends State<CheckoutPage> {
               title: 'Payment Method',
               icon: Icons.payments_outlined,
               iconColor: AppColors.warning,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.warning.withOpacity(0.3)),
-                ),
-                child: const Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.money_off, color: AppColors.warning, size: 20),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Cash on Delivery is temporarily disabled. Please pay online via UPI or Card upon order confirmation.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w500,
-                          height: 1.4,
-                        ),
+              child: Column(
+                children: [
+                  _paymentOption(
+                    value: 'cod',
+                    icon: Icons.money_rounded,
+                    label: 'Cash on Delivery',
+                    subtitle: 'Pay in cash when your order arrives',
+                    iconColor: AppColors.success,
+                  ),
+                  const SizedBox(height: 10),
+                  _paymentOption(
+                    value: 'upi',
+                    icon: Icons.account_balance_wallet_outlined,
+                    label: 'UPI / Online',
+                    subtitle: 'Pay via any UPI app (GPay, PhonePe, etc.)',
+                    iconColor: AppColors.primary,
+                  ),
+                  if (_selectedPaymentMethod == null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline,
+                              size: 13, color: Colors.orange.shade700),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Select a payment method to proceed',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.orange.shade700,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
@@ -419,7 +447,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ],
               ),
               child: ElevatedButton(
-                onPressed: _isProcessing ? null : _placeOrder,
+                onPressed: (_isProcessing || _selectedPaymentMethod == null)
+                    ? null
+                    : _placeOrder,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   shadowColor: Colors.transparent,
@@ -433,9 +463,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2.5),
                       )
-                    : const Text(
-                        'PLACE ORDER',
-                        style: TextStyle(
+                    : Text(
+                        _selectedPaymentMethod == null
+                            ? 'SELECT PAYMENT METHOD'
+                            : 'PLACE ORDER',
+                        style: const TextStyle(
                             fontSize: 16,
                             color: Colors.white,
                             fontWeight: FontWeight.w700),
@@ -485,6 +517,79 @@ class _CheckoutPageState extends State<CheckoutPage> {
           const SizedBox(height: 12),
           child,
         ],
+      ),
+    );
+  }
+
+  Widget _paymentOption({
+    required String value,
+    required IconData icon,
+    required String label,
+    required String subtitle,
+    required Color iconColor,
+  }) {
+    final isSelected = _selectedPaymentMethod == value;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedPaymentMethod = value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? iconColor.withOpacity(0.07)
+              : AppColors.background,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? iconColor : AppColors.divider,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: isSelected
+                            ? iconColor
+                            : AppColors.textPrimary,
+                      )),
+                  Text(subtitle,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      )),
+                ],
+              ),
+            ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: isSelected
+                  ? Icon(Icons.check_circle_rounded,
+                      key: const ValueKey('checked'),
+                      color: iconColor,
+                      size: 22)
+                  : Icon(Icons.radio_button_unchecked,
+                      key: const ValueKey('unchecked'),
+                      color: AppColors.divider,
+                      size: 22),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -6,8 +6,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../config/routes.dart';
 import '../../config/app_categories.dart';
+import '../../widgets/common/notification_bell.dart';
 
 class SellerDashboardPage extends StatefulWidget {
   const SellerDashboardPage({super.key});
@@ -75,6 +77,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
 
       final shopData = shopsResp.first;
       final shopId = shopData['id'];
+      _startNotifications(shopId as String);
 
       final rawCat = shopData['category'] ?? 
           (shopData['categories'] != null && (shopData['categories'] as List).isNotEmpty 
@@ -120,6 +123,14 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
         _entryCtrl.forward();
       }
     }
+  }
+
+  void _startNotifications(String shopId) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<NotificationProvider>().listenAsSeller(shopId);
+      }
+    });
   }
 
   @override
@@ -206,22 +217,28 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                         ],
                                       ),
                                     ),
-                                    _headerIcon(
-                                        isDark
-                                            ? Icons.light_mode_outlined
-                                            : Icons.dark_mode_outlined,
-                                        () => themeProvider.toggleTheme()),
+                                     _headerIcon(
+                                         isDark
+                                             ? Icons.light_mode_outlined
+                                             : Icons.dark_mode_outlined,
+                                         () => themeProvider.toggleTheme()),
+                                     const NotificationBell(
+                                       iconColor: Colors.white70,
+                                       containerColor: Colors.transparent,
+                                       badgeColor: Color(0xFFFF6B6B),
+                                     ),
                                     _headerIcon(
                                         Icons.settings_outlined,
                                         () => Navigator.pushNamed(
                                             context, AppRoutes.settings)),
                                     _headerIcon(Icons.logout_rounded, () async {
                                       await auth.signOut();
-                                      if (mounted)
+                                      if (mounted) {
                                         Navigator.pushNamedAndRemoveUntil(
                                             context,
                                             AppRoutes.roleSelect,
                                             (_) => false);
+                                      }
                                     }),
                                   ],
                                 ),

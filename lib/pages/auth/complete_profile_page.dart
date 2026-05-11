@@ -9,8 +9,6 @@ import '../../config/routes.dart';
 import '../../config/app_categories.dart';
 import '../../widgets/seller/category_extra_fields.dart';
 
-
-
 enum _Role { customer, seller, delivery }
 
 class CompleteProfilePage extends StatefulWidget {
@@ -616,20 +614,18 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
             children: [
               Expanded(
                   child: Container(
-                      height: 1,
-                      color: Colors.white.withOpacity(0.08))),
+                      height: 1, color: Colors.white.withOpacity(0.08))),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
                   '${AppCategories.groupInfo(_shopGroup)["emoji"]} Business Details',
-                  style: GoogleFonts.outfit(
-                      color: Colors.white38, fontSize: 12),
+                  style:
+                      GoogleFonts.outfit(color: Colors.white38, fontSize: 12),
                 ),
               ),
               Expanded(
                   child: Container(
-                      height: 1,
-                      color: Colors.white.withOpacity(0.08))),
+                      height: 1, color: Colors.white.withOpacity(0.08))),
             ],
           ),
           const SizedBox(height: 20),

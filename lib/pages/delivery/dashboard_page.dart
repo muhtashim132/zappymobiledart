@@ -6,10 +6,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
 import '../../widgets/common/rating_bottom_sheet.dart';
+import '../../widgets/common/notification_bell.dart';
 
 class DeliveryDashboardPage extends StatefulWidget {
   const DeliveryDashboardPage({super.key});
@@ -43,6 +45,18 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         .animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
     _loadOrders();
+    _initNotifications();
+  }
+
+  void _initNotifications() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = context.read<AuthProvider>();
+      final userId = auth.currentUserId;
+      if (userId != null) {
+        context.read<NotificationProvider>().listenAsDelivery(userId);
+      }
+    });
   }
 
   @override
@@ -324,6 +338,11 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                                   ),
                                   _iconBtn(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
                                       () => themeProvider.toggleTheme()),
+                                  const NotificationBell(
+                                    iconColor: Colors.white70,
+                                    containerColor: Colors.transparent,
+                                    badgeColor: Color(0xFFFF6B6B),
+                                  ),
                                   _iconBtn(Icons.settings_outlined,
                                       () => Navigator.pushNamed(context, AppRoutes.settings)),
                                   _iconBtn(Icons.logout_rounded, () async {
@@ -483,9 +502,9 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         // Header strip
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFF0D2137), Color(0xFF1A3A5C)]),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(colors: [Color(0xFF0D2137), Color(0xFF1A3A5C)]),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
           ),
           child: Row(children: [
             const Icon(Icons.storefront_outlined, color: Colors.white70, size: 16),
@@ -683,7 +702,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     elevation: 0,
                   ),
-                  child: Text(nextLabel!, style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 14)),
+                  child: Text(nextLabel, style: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 14)),
                 ),
               ),
             ],

@@ -208,7 +208,7 @@ class _AddProductPageState extends State<AddProductPage> {
               _card(
                 children: [
                   DropdownButtonFormField<String>(
-                    value: AppCategories.names.contains(_productCategory) 
+                    initialValue: AppCategories.names.contains(_productCategory) 
                         ? _productCategory 
                         : AppCategories.names.first,
                     isExpanded: true,

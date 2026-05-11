@@ -1,0 +1,320 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+/// A single in-app notification entry.
+class AppNotification {
+  final String id;
+  final String title;
+  final String body;
+  final String? orderId;
+  final DateTime createdAt;
+  bool isRead;
+
+  AppNotification({
+    required this.id,
+    required this.title,
+    required this.body,
+    this.orderId,
+    DateTime? createdAt,
+    this.isRead = false,
+  }) : createdAt = createdAt ?? DateTime.now();
+}
+
+/// Manages real-time in-app notifications for all roles by listening to
+/// Supabase Realtime order changes.
+///
+/// Usage:
+///   - Call [listenAsCustomer], [listenAsSeller], or [listenAsDelivery]
+///     once after login to subscribe.
+///   - Call [stopListening] on logout / role change.
+///   - Call [markAllRead] / [markRead] to manage unread state.
+class NotificationProvider extends ChangeNotifier {
+  final _supabase = Supabase.instance.client;
+
+  final List<AppNotification> _notifications = [];
+  RealtimeChannel? _channel;
+  String? _listeningUserId;
+  String? _listeningRole;
+
+  List<AppNotification> get notifications =>
+      List.unmodifiable(_notifications.reversed.toList());
+
+  int get unreadCount => _notifications.where((n) => !n.isRead).length;
+
+  // ── Start listening ───────────────────────────────────────────────────────
+
+  /// Customer: watches their own orders for status changes.
+  void listenAsCustomer(String customerId) {
+    if (_listeningUserId == customerId && _listeningRole == 'customer') return;
+    stopListening();
+    _listeningUserId = customerId;
+    _listeningRole = 'customer';
+
+    _channel = _supabase
+        .channel('notif-customer-$customerId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'orders',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'customer_id',
+            value: customerId,
+          ),
+          callback: (payload) {
+            if (payload.newRecord.isEmpty) return;
+            final newStatus = payload.newRecord['status'] as String?;
+            final oldStatus = payload.oldRecord['status'] as String?;
+            final orderId = payload.newRecord['id'] as String?;
+            if (newStatus == null || newStatus == oldStatus) return;
+
+            final (title, body) = _customerStatusMessage(newStatus, orderId);
+            if (title != null) {
+              _add(AppNotification(
+                id: '${orderId}_$newStatus',
+                title: title,
+                body: body!,
+                orderId: orderId,
+              ));
+            }
+          },
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'orders',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'customer_id',
+            value: customerId,
+          ),
+          callback: (payload) {
+            // Order placed confirmation
+            final orderId = payload.newRecord['id'] as String?;
+            _add(AppNotification(
+              id: '${orderId}_placed',
+              title: '🛍️ Order Placed!',
+              body: 'Your order has been placed. Waiting for shop & rider to accept.',
+              orderId: orderId,
+            ));
+          },
+        )
+        .subscribe();
+  }
+
+  /// Seller: watches orders for their shops (new orders arriving).
+  void listenAsSeller(String shopId) {
+    if (_listeningUserId == shopId && _listeningRole == 'seller') return;
+    stopListening();
+    _listeningUserId = shopId;
+    _listeningRole = 'seller';
+
+    _channel = _supabase
+        .channel('notif-seller-$shopId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'orders',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'shop_id',
+            value: shopId,
+          ),
+          callback: (payload) {
+            final orderId = payload.newRecord['id'] as String?;
+            final amount = (payload.newRecord['total_amount'] ?? 0.0).toDouble();
+            _add(AppNotification(
+              id: '${orderId}_new',
+              title: '🔔 New Order!',
+              body:
+                  'You have a new order of ₹${amount.toStringAsFixed(0)} waiting for your acceptance.',
+              orderId: orderId,
+            ));
+          },
+        )
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'orders',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'shop_id',
+            value: shopId,
+          ),
+          callback: (payload) {
+            if (payload.newRecord.isEmpty) return;
+            final newStatus = payload.newRecord['status'] as String?;
+            final oldStatus = payload.oldRecord['status'] as String?;
+            final orderId = payload.newRecord['id'] as String?;
+            if (newStatus == null || newStatus == oldStatus) return;
+
+            final (title, body) = _sellerStatusMessage(newStatus, orderId);
+            if (title != null) {
+              _add(AppNotification(
+                id: '${orderId}_$newStatus',
+                title: title,
+                body: body!,
+                orderId: orderId,
+              ));
+            }
+          },
+        )
+        .subscribe();
+  }
+
+  /// Delivery partner: watches for new available orders and their active ones.
+  void listenAsDelivery(String partnerId) {
+    if (_listeningUserId == partnerId && _listeningRole == 'delivery') return;
+    stopListening();
+    _listeningUserId = partnerId;
+    _listeningRole = 'delivery';
+
+    _channel = _supabase
+        .channel('notif-delivery-$partnerId')
+        // New orders becoming available (seller accepted, no partner yet)
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'orders',
+          callback: (payload) {
+            if (payload.newRecord.isEmpty) return;
+            final newRecord = payload.newRecord;
+            final oldRecord = payload.oldRecord;
+
+            final sellerAcceptedNow = newRecord['seller_accepted'] == true;
+            final sellerAcceptedBefore = oldRecord['seller_accepted'] == true;
+            final partnerIdNow = newRecord['delivery_partner_id'];
+            final orderId = newRecord['id'] as String?;
+            final newStatus = newRecord['status'] as String?;
+            final oldStatus = oldRecord['status'] as String?;
+
+            // A new order just became available for delivery partners
+            if (sellerAcceptedNow && !sellerAcceptedBefore && partnerIdNow == null) {
+              final amount = (newRecord['total_amount'] ?? 0.0).toDouble();
+              _add(AppNotification(
+                id: '${orderId}_available',
+                title: '🚚 New Delivery Available!',
+                body:
+                    'An order of ₹${amount.toStringAsFixed(0)} is waiting for a rider. Tap to accept!',
+                orderId: orderId,
+              ));
+              return;
+            }
+
+            // Status changes for orders assigned to this partner
+            final deliveryPartnerId = newRecord['delivery_partner_id'];
+            if (deliveryPartnerId != partnerId) return;
+            if (newStatus == null || newStatus == oldStatus) return;
+
+            final (title, body) = _deliveryStatusMessage(newStatus, orderId);
+            if (title != null) {
+              _add(AppNotification(
+                id: '${orderId}_$newStatus',
+                title: title,
+                body: body!,
+                orderId: orderId,
+              ));
+            }
+          },
+        )
+        .subscribe();
+  }
+
+  // ── Stop listening ────────────────────────────────────────────────────────
+
+  void stopListening() {
+    _channel?.unsubscribe();
+    _channel = null;
+    _listeningUserId = null;
+    _listeningRole = null;
+  }
+
+  // ── Manage notifications ──────────────────────────────────────────────────
+
+  void markRead(String notificationId) {
+    final idx = _notifications.indexWhere((n) => n.id == notificationId);
+    if (idx != -1) {
+      _notifications[idx].isRead = true;
+      notifyListeners();
+    }
+  }
+
+  void markAllRead() {
+    for (final n in _notifications) {
+      n.isRead = true;
+    }
+    notifyListeners();
+  }
+
+  void clearAll() {
+    _notifications.clear();
+    notifyListeners();
+  }
+
+  void _add(AppNotification notification) {
+    // Deduplicate by id
+    if (_notifications.any((n) => n.id == notification.id)) return;
+    _notifications.add(notification);
+    notifyListeners();
+  }
+
+  // ── Status message helpers ────────────────────────────────────────────────
+
+  (String?, String?) _customerStatusMessage(String status, String? orderId) {
+    switch (status) {
+      case 'confirmed':
+        return ('✅ Order Confirmed!', 'Both the shop and rider have accepted your order.');
+      case 'preparing':
+        return ('👨‍🍳 Order Being Prepared', 'The shop is now preparing your order.');
+      case 'ready_for_pickup':
+        return ('📦 Ready for Pickup', 'Your order is packed and waiting for the rider.');
+      case 'picked_up':
+        return ('🛵 Rider Picked Up', 'Your order is on its way!');
+      case 'out_for_delivery':
+        return ('🚀 Out for Delivery!', 'Your order is almost there. Get ready!');
+      case 'delivered':
+        return ('🎉 Order Delivered!', 'Your order has been delivered. Enjoy!');
+      case 'cancelled':
+        return ('❌ Order Cancelled', 'Your order has been cancelled.');
+      case 'seller_rejected':
+        return ('😔 Order Rejected', 'The shop could not accept your order.');
+      default:
+        return (null, null);
+    }
+  }
+
+  (String?, String?) _sellerStatusMessage(String status, String? orderId) {
+    switch (status) {
+      case 'confirmed':
+        return ('✅ Order Confirmed!', 'A rider has accepted the order. Start preparing.');
+      case 'cancelled':
+        return ('❌ Order Cancelled', 'A customer cancelled their order.');
+      case 'picked_up':
+        return ('✅ Order Picked Up', 'The rider has collected the order from your shop.');
+      case 'delivered':
+        return ('🎉 Order Delivered', 'The order was delivered successfully!');
+      default:
+        return (null, null);
+    }
+  }
+
+  (String?, String?) _deliveryStatusMessage(String status, String? orderId) {
+    switch (status) {
+      case 'cancelled':
+        return ('❌ Order Cancelled', 'The order you accepted has been cancelled by the customer.');
+      case 'preparing':
+        return ('👨‍🍳 Shop Preparing', 'The shop has started preparing the order. Head over!');
+      case 'ready_for_pickup':
+        return ('📦 Ready for Pickup!', 'The order is ready. Go pick it up now!');
+      default:
+        return (null, null);
+    }
+  }
+
+  @override
+  void dispose() {
+    stopListening();
+    super.dispose();
+  }
+}

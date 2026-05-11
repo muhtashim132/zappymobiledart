@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/common/rating_bottom_sheet.dart';
+import '../../widgets/common/notification_bell.dart';
 
 class SellerOrdersPage extends StatefulWidget {
   const SellerOrdersPage({super.key});
@@ -247,6 +248,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
           ],
         ),
         actions: [
+          const NotificationBell(),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadOrders),
         ],
       ),
@@ -456,6 +458,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
                         fontWeight: FontWeight.w600)),
               ],
             ),
+          ],
         ],
       ),
     );
@@ -570,8 +573,9 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
       case 'cancelled':
         return AppColors.danger;
       default:
-        if (order.sellerAccepted || order.partnerAccepted)
+        if (order.sellerAccepted || order.partnerAccepted) {
           return Colors.amber.shade700;
+        }
         return AppColors.textSecondary;
     }
   }

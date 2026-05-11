@@ -20,6 +20,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
   final _supabase = Supabase.instance.client;
   OrderModel? _order;
   bool _isLoading = true;
+  bool _isCancelling = false;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
   RealtimeChannel? _channel;
@@ -135,6 +136,67 @@ class _TrackOrderPageState extends State<TrackOrderPage>
           },
         )
         .subscribe();
+  }
+
+  /// Shows a confirmation dialog then cancels the order in Supabase.
+  Future<void> _cancelOrder() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text('Cancel Order?',
+            style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w700)),
+        content: const Text(
+            'Are you sure you want to cancel this order? This action cannot be undone.',
+            style: TextStyle(fontFamily: 'Poppins', fontSize: 13)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep Order'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            child: const Text('Yes, Cancel', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isCancelling = true);
+    try {
+      await _supabase
+          .from('orders')
+          .update({'status': 'cancelled'})
+          .eq('id', widget.orderId);
+      if (mounted) {
+        setState(() => _order = _order?.copyWith(status: 'cancelled'));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Order cancelled successfully.'),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Cancel order error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to cancel order. Please try again.'),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCancelling = false);
+    }
   }
 
   /// Step 1: Rate the Shop. Step 2 (if partner assigned): Rate the Rider.
@@ -436,6 +498,30 @@ class _TrackOrderPageState extends State<TrackOrderPage>
                 minimumSize: const Size(double.infinity, 52),
               ),
             ),
+            // Cancel button — only for pending orders
+            if (_order!.status == 'pending') ...[
+              const SizedBox(height: 12),
+              _isCancelling
+                  ? const SizedBox(
+                      height: 52,
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : OutlinedButton.icon(
+                      onPressed: _cancelOrder,
+                      icon: const Icon(Icons.cancel_outlined,
+                          color: AppColors.danger),
+                      label: const Text('Cancel Order',
+                          style: TextStyle(
+                              color: AppColors.danger,
+                              fontWeight: FontWeight.w700)),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 52),
+                        side: const BorderSide(color: AppColors.danger),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+            ],
             if (isDelivered && !(_order!.hasCustomerRated)) ...[
               const SizedBox(height: 12),
               OutlinedButton.icon(
