@@ -5,7 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:latlong2/latlong.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/notification_provider.dart';
@@ -15,6 +14,7 @@ import '../../config/payment_config.dart';
 import '../../config/routes.dart';
 import '../../widgets/common/rating_bottom_sheet.dart';
 import '../../widgets/common/notification_bell.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DeliveryDashboardPage extends StatefulWidget {
   const DeliveryDashboardPage({super.key});
@@ -146,8 +146,9 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
           ? allAvailable.where((order) {
               final lat = order.deliveryLat;
               final lng = order.deliveryLng;
-              if (lat == null || lng == null)
+              if (lat == null || lng == null) {
                 return true; // no coords → include (legacy order)
+              }
               final distM =
                   Geolocator.distanceBetween(_riderLat!, _riderLng!, lat, lng);
               return distM / 1000 <= PaymentConfig.maxDeliveryRadiusKm;
@@ -457,9 +458,10 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                                           context, AppRoutes.settings)),
                                   _iconBtn(Icons.logout_rounded, () async {
                                     await auth.signOut();
-                                    if (mounted)
+                                    if (mounted) {
                                       Navigator.pushNamedAndRemoveUntil(context,
                                           AppRoutes.roleSelect, (_) => false);
+                                    }
                                   }),
                                 ]),
                                 const SizedBox(height: 24),
@@ -930,6 +932,43 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis)),
             ]),
+            const SizedBox(height: 12),
+            Row(children: [
+              if (order.customerPhone != null)
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _callPhone(order.customerPhone!),
+                    icon: const Icon(Icons.phone_outlined, size: 16),
+                    label: Text('Customer',
+                        style: GoogleFonts.outfit(fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.primary),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              if (order.customerPhone != null && order.shopPhone != null)
+                const SizedBox(width: 8),
+              if (order.shopPhone != null)
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _callPhone(order.shopPhone!),
+                    icon: const Icon(Icons.store_outlined, size: 16),
+                    label:
+                        Text('Shop', style: GoogleFonts.outfit(fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.accent,
+                      side: const BorderSide(color: AppColors.accent),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+            ]),
             if (showWaitTimer) ...[
               const SizedBox(height: 14),
               Container(
@@ -1180,6 +1219,15 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                 gradient:
                     RadialGradient(colors: [color, color.withOpacity(0)]))),
       );
+
+  Future<void> _callPhone(String phone) async {
+    final uri = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      _showSnack('Could not launch dialer');
+    }
+  }
 }
 
 class _MiniStarPainter extends CustomPainter {

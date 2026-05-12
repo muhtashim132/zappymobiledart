@@ -24,7 +24,6 @@ class _AddProductPageState extends State<AddProductPage> {
   bool _isVeg = true;
   bool _isAvailable = true;
   bool _isSaving = false;
-  String _shopCategory = 'Food';
   String _productCategory = 'Food';
   bool _isFoodGroup = true;
   String? _shopId;
@@ -52,7 +51,6 @@ class _AddProductPageState extends State<AddProductPage> {
 
       setState(() {
         _shopId = resp['id'];
-        _shopCategory = cat;
         if (_productCategory == 'Food' && cat != 'Food') {
           _productCategory = cat;
         }

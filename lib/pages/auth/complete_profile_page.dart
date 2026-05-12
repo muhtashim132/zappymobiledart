@@ -35,11 +35,19 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
   final _vehicleRegCtrl = TextEditingController();
   final _licenseCtrl = TextEditingController();
   final _aadharCtrl = TextEditingController();
+  final _insuranceCtrl = TextEditingController();
+  final _bankAccountCtrl = TextEditingController();
+  final _ifscCtrl = TextEditingController();
+  final _accountHolderCtrl = TextEditingController();
+  
+  // Seller specific extra
+  final _panCtrl = TextEditingController();
+  final _gstCtrl = TextEditingController();
+  final _tradeLicenseCtrl = TextEditingController();
 
   bool _loading = false;
   int _step = 0; // 0=role select, 1=details
   bool _showWelcome = false;
-  bool _isAddingRole = false;
   bool _argsRead = false; // guard so didChangeDependencies only reads args once
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
@@ -62,7 +70,6 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     if (args == null) return;
     final roleArg = args['role'] as String?;
-    _isAddingRole = args['isAddingRole'] as bool? ?? false;
     if (roleArg != null) {
       switch (roleArg) {
         case 'customer':
@@ -91,7 +98,14 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
       _vehicleTypeCtrl,
       _vehicleRegCtrl,
       _licenseCtrl,
-      _aadharCtrl
+      _aadharCtrl,
+      _insuranceCtrl,
+      _bankAccountCtrl,
+      _ifscCtrl,
+      _accountHolderCtrl,
+      _panCtrl,
+      _gstCtrl,
+      _tradeLicenseCtrl,
     ]) {
       c.dispose();
     }
@@ -170,6 +184,22 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           return;
         }
         final categoryExtra = _extraFieldsKey.currentState?.collectData() ?? {};
+        if (_aadharCtrl.text.trim().isEmpty) {
+          _showSnack('Aadhaar Number is required', isError: true);
+          setState(() => _loading = false);
+          return;
+        }
+        if (_panCtrl.text.trim().isEmpty) {
+          _showSnack('PAN Number is required', isError: true);
+          setState(() => _loading = false);
+          return;
+        }
+        if (_accountHolderCtrl.text.trim().isEmpty || _bankAccountCtrl.text.trim().isEmpty || _ifscCtrl.text.trim().isEmpty) {
+          _showSnack('All Bank Details are required', isError: true);
+          setState(() => _loading = false);
+          return;
+        }
+
         roleName = 'seller';
         extra = {
           'name': _shopNameCtrl.text.trim().isEmpty
@@ -178,6 +208,13 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           'category': _shopCategory,
           'address': _shopAddressCtrl.text.trim(),
           'is_active': false,
+          'aadhar_number': _aadharCtrl.text.trim(),
+          'pan_number': _panCtrl.text.trim(),
+          'gst_number': _gstCtrl.text.trim(),
+          'trade_license': _tradeLicenseCtrl.text.trim(),
+          'bank_account_number': _bankAccountCtrl.text.trim(),
+          'bank_ifsc': _ifscCtrl.text.trim(),
+          'bank_account_holder': _accountHolderCtrl.text.trim(),
           // Merge the group-specific fields directly into the shops row.
           // Supabase ignores keys that don't exist as columns, so unknown
           // fields will be silently dropped unless you add a `metadata` JSONB
@@ -186,12 +223,27 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         };
         break;
       case _Role.delivery:
+        if (_aadharCtrl.text.trim().isEmpty || _licenseCtrl.text.trim().isEmpty || _vehicleRegCtrl.text.trim().isEmpty) {
+          _showSnack('Please fill all mandatory KYC fields', isError: true);
+          setState(() => _loading = false);
+          return;
+        }
+        if (_accountHolderCtrl.text.trim().isEmpty || _bankAccountCtrl.text.trim().isEmpty || _ifscCtrl.text.trim().isEmpty) {
+          _showSnack('All Bank Details are required', isError: true);
+          setState(() => _loading = false);
+          return;
+        }
+
         roleName = 'delivery_partner';
         extra = {
           'vehicle_type': _vehicleTypeCtrl.text.trim(),
-          'vehicle_reg_number': _vehicleRegCtrl.text.trim(),
+          'vehicle_reg_number': _vehicleRegCtrl.text.trim(), // RC
           'driving_license': _licenseCtrl.text.trim(),
           'aadhar_number': _aadharCtrl.text.trim(),
+          'insurance_number': _insuranceCtrl.text.trim(),
+          'bank_account_number': _bankAccountCtrl.text.trim(),
+          'bank_ifsc': _ifscCtrl.text.trim(),
+          'bank_account_holder': _accountHolderCtrl.text.trim(),
           'is_available': false,
         };
         break;
@@ -257,7 +309,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
+                      color: Colors.white.withValues(alpha: 0.08),
                       shape: BoxShape.circle),
                   child: const Icon(Icons.arrow_back_ios_new,
                       color: Colors.white, size: 16),
@@ -491,9 +543,10 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
               const SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.06),
+                  color: Colors.white.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.12)),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.12)),
                 ),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: DropdownButtonHideUnderline(
@@ -553,10 +606,10 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
                   Expanded(
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
+                        color: Colors.white.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(16),
-                        border:
-                            Border.all(color: Colors.white.withOpacity(0.12)),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.12)),
                       ),
                       child: TextField(
                         controller: _shopAddressCtrl,
@@ -614,7 +667,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
             children: [
               Expanded(
                   child: Container(
-                      height: 1, color: Colors.white.withOpacity(0.08))),
+                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
@@ -625,7 +678,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
               ),
               Expanded(
                   child: Container(
-                      height: 1, color: Colors.white.withOpacity(0.08))),
+                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
             ],
           ),
           const SizedBox(height: 20),
@@ -635,19 +688,110 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
             group: _shopGroup,
             category: _shopCategory,
           ),
+          const SizedBox(height: 24),
+
+          // ── KYC & Legal Details ──────────────────────────────────────
+          Row(
+            children: [
+              Expanded(
+                  child: Container(
+                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text('KYC & Legal Details',
+                    style: GoogleFonts.outfit(
+                        color: Colors.white38, fontSize: 12)),
+              ),
+              Expanded(
+                  child: Container(
+                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _DarkField(
+              label: 'Aadhaar Last 4 Digits *',
+              controller: _aadharCtrl,
+              hint: 'e.g. 9012',
+              number: true),
+          const SizedBox(height: 16),
+          _DarkField(
+              label: 'PAN Number *',
+              controller: _panCtrl,
+              hint: 'ABCDE1234F',
+              caps: true),
+          const SizedBox(height: 16),
+          _DarkField(
+              label: 'GSTIN (Optional)',
+              controller: _gstCtrl,
+              hint: '22AAAAA0000A1Z5',
+              caps: true),
+          const SizedBox(height: 16),
+          _DarkField(
+              label: 'Shop/Trade License (Optional)',
+              controller: _tradeLicenseCtrl,
+              hint: 'e.g. 1234567890'),
+          const SizedBox(height: 24),
+
+          // ── Bank Details ──────────────────────────────────────────────
+          Row(
+            children: [
+              Expanded(
+                  child: Container(
+                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text('Bank Details',
+                    style: GoogleFonts.outfit(
+                        color: Colors.white38, fontSize: 12)),
+              ),
+              Expanded(
+                  child: Container(
+                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _DarkField(
+              label: 'Account Holder Name *',
+              controller: _accountHolderCtrl,
+              hint: 'Name on bank account'),
+          const SizedBox(height: 16),
+          _DarkField(
+              label: 'Bank Account Number *',
+              controller: _bankAccountCtrl,
+              hint: 'e.g. 1234567890',
+              number: true),
+          const SizedBox(height: 16),
+          _DarkField(
+              label: 'IFSC Code *',
+              controller: _ifscCtrl,
+              hint: 'SBIN0001234',
+              caps: true),
         ];
       case _Role.delivery:
         return [
+          // ── Vehicle & KYC Details ──────────────────────────────────────
+          Row(
+            children: [
+              Expanded(
+                  child: Container(
+                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text('Vehicle & KYC Details',
+                    style: GoogleFonts.outfit(
+                        color: Colors.white38, fontSize: 12)),
+              ),
+              Expanded(
+                  child: Container(
+                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
+            ],
+          ),
+          const SizedBox(height: 20),
           _DarkField(
-              label: 'Vehicle Type *',
-              controller: _vehicleTypeCtrl,
-              hint: 'Bike / Scooter / Car'),
-          const SizedBox(height: 16),
-          _DarkField(
-              label: 'Vehicle Reg. Number *',
-              controller: _vehicleRegCtrl,
-              hint: 'MH02AB1234',
-              caps: true),
+              label: 'Aadhaar Last 4 Digits *',
+              controller: _aadharCtrl,
+              hint: 'e.g. 9012',
+              number: true),
           const SizedBox(height: 16),
           _DarkField(
               label: 'Driving License Number *',
@@ -656,10 +800,57 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
               caps: true),
           const SizedBox(height: 16),
           _DarkField(
-              label: 'Aadhar Number *',
-              controller: _aadharCtrl,
-              hint: '1234 5678 9012',
+              label: 'Vehicle Reg. Number (RC) *',
+              controller: _vehicleRegCtrl,
+              hint: 'MH02AB1234',
+              caps: true),
+          const SizedBox(height: 16),
+          _DarkField(
+              label: 'Vehicle Insurance Number (Optional)',
+              controller: _insuranceCtrl,
+              hint: 'e.g. INS12345678',
+              caps: true),
+          const SizedBox(height: 16),
+          _DarkField(
+              label: 'Vehicle Type *',
+              controller: _vehicleTypeCtrl,
+              hint: 'Bike / Scooter / Car'),
+          const SizedBox(height: 24),
+
+          // ── Bank Details ──────────────────────────────────────────────
+          Row(
+            children: [
+              Expanded(
+                  child: Container(
+                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text('Bank Details',
+                    style: GoogleFonts.outfit(
+                        color: Colors.white38, fontSize: 12)),
+              ),
+              Expanded(
+                  child: Container(
+                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _DarkField(
+              label: 'Account Holder Name *',
+              controller: _accountHolderCtrl,
+              hint: 'Name on bank account'),
+          const SizedBox(height: 16),
+          _DarkField(
+              label: 'Bank Account Number *',
+              controller: _bankAccountCtrl,
+              hint: 'e.g. 1234567890',
               number: true),
+          const SizedBox(height: 16),
+          _DarkField(
+              label: 'IFSC Code *',
+              controller: _ifscCtrl,
+              hint: 'SBIN0001234',
+              caps: true),
         ];
     }
   }
@@ -671,7 +862,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           height: size,
           decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: RadialGradient(colors: [color, color.withOpacity(0)])),
+              gradient:
+                  RadialGradient(colors: [color, color.withValues(alpha: 0)])),
         ),
       );
 }
@@ -698,13 +890,13 @@ class _RoleCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFF1A35C8).withOpacity(0.25)
-              : Colors.white.withOpacity(0.05),
+              ? const Color(0xFF1A35C8).withValues(alpha: 0.25)
+              : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected
                 ? const Color(0xFFF4C542)
-                : Colors.white.withOpacity(0.10),
+                : Colors.white.withValues(alpha: 0.10),
             width: selected ? 2.0 : 1.0,
           ),
         ),
@@ -769,9 +961,9 @@ class _DarkField extends StatelessWidget {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
+            color: Colors.white.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.12)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
           ),
           child: TextField(
             controller: controller,
@@ -819,7 +1011,7 @@ class _GoldButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-                color: const Color(0xFFF4C542).withOpacity(0.4),
+                color: const Color(0xFFF4C542).withValues(alpha: 0.4),
                 blurRadius: 20,
                 offset: const Offset(0, 8))
           ],

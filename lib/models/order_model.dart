@@ -13,6 +13,9 @@ class OrderModel {
   final String? shopId;
   final String? address;
   final String? deliveryNotes;
+  final String? customerPhone;
+  final String? shopPhone;
+  final String? riderPhone;
   // Dual-acceptance flags (stored in DB columns)
   bool sellerAccepted;
   bool partnerAccepted;
@@ -47,6 +50,9 @@ class OrderModel {
     this.shopId,
     this.address,
     this.deliveryNotes,
+    this.customerPhone,
+    this.shopPhone,
+    this.riderPhone,
     this.sellerAccepted = false,
     this.partnerAccepted = false,
     this.arrivedAtShopTime,
@@ -75,6 +81,9 @@ class OrderModel {
       shopId: map['shop_id'],
       address: map['address'],
       deliveryNotes: map['delivery_notes'],
+      customerPhone: map['customer_phone'],
+      shopPhone: map['shop_phone'],
+      riderPhone: map['rider_phone'],
       sellerAccepted: map['seller_accepted'] ?? false,
       partnerAccepted: map['partner_accepted'] ?? false,
       arrivedAtShopTime: map['arrived_at_shop_time'] != null
@@ -100,6 +109,9 @@ class OrderModel {
     String? status,
     String? deliveryPartnerId,
     String? shopId,
+    String? customerPhone,
+    String? shopPhone,
+    String? riderPhone,
     bool? sellerAccepted,
     bool? partnerAccepted,
     bool? hasCustomerRated,
@@ -123,6 +135,9 @@ class OrderModel {
       shopId: shopId ?? this.shopId,
       address: address,
       deliveryNotes: deliveryNotes,
+      customerPhone: customerPhone ?? this.customerPhone,
+      shopPhone: shopPhone ?? this.shopPhone,
+      riderPhone: riderPhone ?? this.riderPhone,
       sellerAccepted: sellerAccepted ?? this.sellerAccepted,
       partnerAccepted: partnerAccepted ?? this.partnerAccepted,
       arrivedAtShopTime: arrivedAtShopTime,

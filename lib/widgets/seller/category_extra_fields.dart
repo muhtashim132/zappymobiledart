@@ -36,19 +36,29 @@ class CategoryExtraFieldsState extends State<CategoryExtraFields>
   String _cutoffTime = '6:00 PM';
 
   // ── Retail fields ────────────────────────────────────────────────────────
-  final _gstCtrl = TextEditingController();
   String _returnPolicy = '7 Days';
 
   late AnimationController _anim;
   late Animation<double> _fade;
 
   static const _cutoffOptions = [
-    '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM',
-    '4:00 PM',  '5:00 PM', '6:00 PM', '7:00 PM', '8:00 PM',
+    '12:00 PM',
+    '1:00 PM',
+    '2:00 PM',
+    '3:00 PM',
+    '4:00 PM',
+    '5:00 PM',
+    '6:00 PM',
+    '7:00 PM',
+    '8:00 PM',
   ];
 
   static const _returnOptions = [
-    'Non-Returnable', '3 Days', '7 Days', '14 Days', '30 Days',
+    'Non-Returnable',
+    '3 Days',
+    '7 Days',
+    '14 Days',
+    '30 Days',
   ];
 
   static const _foodTypeOptions = ['Pure Veg', 'Non-Veg', 'Both'];
@@ -73,10 +83,12 @@ class CategoryExtraFieldsState extends State<CategoryExtraFields>
   @override
   void dispose() {
     for (final c in [
-      _fssaiCtrl, _prepTimeCtrl, _packagingChargeCtrl,
-      _drugLicCtrl, _pharmacistCtrl,
+      _fssaiCtrl,
+      _prepTimeCtrl,
+      _packagingChargeCtrl,
+      _drugLicCtrl,
+      _pharmacistCtrl,
       _perishFssaiCtrl,
-      _gstCtrl,
     ]) {
       c.dispose();
     }
@@ -89,16 +101,17 @@ class CategoryExtraFieldsState extends State<CategoryExtraFields>
     switch (widget.group) {
       case CategoryGroup.food:
         return {
-          'fssai_number':       _fssaiCtrl.text.trim(),
-          'food_type':          _foodType,
+          'fssai_number': _fssaiCtrl.text.trim(),
+          'food_type': _foodType,
           'avg_prep_time_mins': int.tryParse(_prepTimeCtrl.text.trim()) ?? 30,
-          'packaging_charge':   double.tryParse(_packagingChargeCtrl.text.trim()) ?? 0,
+          'packaging_charge':
+              double.tryParse(_packagingChargeCtrl.text.trim()) ?? 0,
         };
       case CategoryGroup.pharmacy:
         return {
           'drug_license_number': _drugLicCtrl.text.trim(),
-          'pharmacist_name':     _pharmacistCtrl.text.trim(),
-          'accepts_returns':     _acceptsReturns,
+          'pharmacist_name': _pharmacistCtrl.text.trim(),
+          'accepts_returns': _acceptsReturns,
         };
       case CategoryGroup.perishable:
         return {
@@ -107,7 +120,6 @@ class CategoryExtraFieldsState extends State<CategoryExtraFields>
         };
       case CategoryGroup.retail:
         return {
-          'gst_number':    _gstCtrl.text.trim(),
           'return_policy': _returnPolicy,
         };
     }
@@ -309,14 +321,6 @@ class CategoryExtraFieldsState extends State<CategoryExtraFields>
 
   // ── Retail ─────────────────────────────────────────────────────────────────
   List<Widget> _retailFields() => [
-        _DarkField(
-          label: 'GST Number (optional)',
-          controller: _gstCtrl,
-          hint: '22AAAAA0000A1Z5',
-          caps: true,
-          icon: Icons.receipt_long_outlined,
-        ),
-        const SizedBox(height: 16),
         _DropdownField<String>(
           label: 'Return Policy',
           value: _returnPolicy,
@@ -329,10 +333,14 @@ class CategoryExtraFieldsState extends State<CategoryExtraFields>
 
   Color _groupAccent(CategoryGroup g) {
     switch (g) {
-      case CategoryGroup.food:       return const Color(0xFFFF6B35);
-      case CategoryGroup.pharmacy:   return const Color(0xFF2F9E44);
-      case CategoryGroup.perishable: return const Color(0xFF1C7ED6);
-      case CategoryGroup.retail:     return const Color(0xFF9C36B5);
+      case CategoryGroup.food:
+        return const Color(0xFFFF6B35);
+      case CategoryGroup.pharmacy:
+        return const Color(0xFF2F9E44);
+      case CategoryGroup.perishable:
+        return const Color(0xFF1C7ED6);
+      case CategoryGroup.retail:
+        return const Color(0xFF9C36B5);
     }
   }
 }
@@ -387,7 +395,8 @@ class _DarkField extends StatelessWidget {
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: GoogleFonts.outfit(color: Colors.white24, fontSize: 14),
+              hintStyle:
+                  GoogleFonts.outfit(color: Colors.white24, fontSize: 14),
               prefixIcon: icon != null
                   ? Icon(icon, color: Colors.white38, size: 20)
                   : null,
@@ -453,7 +462,8 @@ class _DropdownField<T> extends StatelessWidget {
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
               ),
-              icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
+              icon:
+                  const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
               items: items
                   .map((item) => DropdownMenuItem<T>(
                         value: item,

@@ -13,29 +13,19 @@ class EarningsPage extends StatefulWidget {
   State<EarningsPage> createState() => _EarningsPageState();
 }
 
-class _EarningsPageState extends State<EarningsPage>
-    with SingleTickerProviderStateMixin {
+class _EarningsPageState extends State<EarningsPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = true;
   double _todayEarnings = 0;
-  double _weekEarnings = 0;
   double _totalEarnings = 0;
   int _totalDeliveries = 0;
   double _averageRating = 0.0;
-  late TabController _tabController;
   List<Map<String, dynamic>> _recentDeliveries = [];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _loadEarnings();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadEarnings() async {
@@ -44,8 +34,6 @@ class _EarningsPageState extends State<EarningsPage>
       final now = DateTime.now();
       final todayStart =
           DateTime(now.year, now.month, now.day).toIso8601String();
-      final weekStart =
-          DateTime(now.year, now.month, now.day - 7).toIso8601String();
 
       final allDeliveries = await _supabase
           .from('orders')
@@ -55,14 +43,13 @@ class _EarningsPageState extends State<EarningsPage>
           .order('created_at', ascending: false);
 
       final deliveries = allDeliveries as List;
-      double today = 0, week = 0, total = 0;
+      double today = 0, total = 0;
 
       for (final d in deliveries) {
         final charge = (d['rider_earnings'] ?? d['delivery_charges'] ?? 0.0).toDouble();
         final createdAt =
             DateTime.tryParse(d['created_at'] ?? '') ?? DateTime(2000);
         total += charge;
-        if (createdAt.isAfter(DateTime.parse(weekStart))) week += charge;
         if (createdAt.isAfter(DateTime.parse(todayStart))) today += charge;
       }
 
@@ -81,7 +68,6 @@ class _EarningsPageState extends State<EarningsPage>
       if (mounted) {
         setState(() {
           _todayEarnings = today;
-          _weekEarnings = week;
           _totalEarnings = total;
           _totalDeliveries = deliveries.length;
           _averageRating = avgRating;

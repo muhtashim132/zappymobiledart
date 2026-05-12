@@ -65,6 +65,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final cartGroupId = const Uuid().v4();
       final numShops = cart.shops.length;
 
+      // Fetch customer phone
+      String? customerPhone;
+      try {
+        final profile = await supabase.from('profiles').select('phone').eq('id', auth.currentUserId ?? '').maybeSingle();
+        if (profile != null) customerPhone = profile['phone'];
+      } catch (_) {}
+
+      // Fetch shop phones (which are the sellers' phones)
+      final shopPhones = <String, String?>{};
+      for (final shop in cart.shops) {
+        try {
+          final profile = await supabase.from('profiles').select('phone').eq('id', shop.sellerId).maybeSingle();
+          if (profile != null) shopPhones[shop.id] = profile['phone'];
+        } catch (_) {}
+      }
+
       final List<String> orderIds = [];
 
       for (final shop in cart.shops) {
@@ -96,6 +112,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
               'payment_status': _selectedPaymentMethod == 'cod'
                   ? 'pending_cod'
                   : 'pending_upi',
+              'customer_phone': customerPhone,
+              'shop_phone': shopPhones[shop.id],
             })
             .select()
             .single();

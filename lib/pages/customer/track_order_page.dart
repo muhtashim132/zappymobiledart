@@ -6,6 +6,7 @@ import '../../config/routes.dart';
 import '../../widgets/common/zappy_map.dart';
 import '../../widgets/common/rating_bottom_sheet.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class TrackOrderPage extends StatefulWidget {
   final String orderId;
@@ -424,6 +425,45 @@ class _TrackOrderPageState extends State<TrackOrderPage>
             ),
             const SizedBox(height: 20),
 
+            const SizedBox(height: 20),
+
+            // Contact Buttons
+            if (!isCancelled && (_order!.shopPhone != null || _order!.riderPhone != null)) ...[
+              Row(children: [
+                if (_order!.shopPhone != null)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _callPhone(_order!.shopPhone!),
+                      icon: const Icon(Icons.store_outlined, size: 16),
+                      label: const Text('Call Shop', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                        side: const BorderSide(color: AppColors.primary),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+                if (_order!.shopPhone != null && _order!.riderPhone != null)
+                  const SizedBox(width: 12),
+                if (_order!.riderPhone != null)
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _callPhone(_order!.riderPhone!),
+                      icon: const Icon(Icons.delivery_dining_outlined, size: 16),
+                      label: const Text('Call Rider', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.accent,
+                        side: const BorderSide(color: AppColors.accent),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                    ),
+                  ),
+              ]),
+              const SizedBox(height: 20),
+            ],
+
             // Tracking Steps
             if (!isCancelled)
               Container(
@@ -674,5 +714,21 @@ class _TrackOrderPageState extends State<TrackOrderPage>
             )),
       ],
     );
+  }
+
+  Future<void> _callPhone(String phone) async {
+    final uri = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text('Could not launch dialer'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ));
+      }
+    }
   }
 }

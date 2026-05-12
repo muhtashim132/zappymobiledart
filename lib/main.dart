@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'theme/app_theme.dart';
 import 'config/routes.dart';
@@ -14,6 +15,10 @@ import 'providers/notification_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Disable runtime fetching to prevent ClientException when network is unstable
+  // or blocked. This avoids "Connection closed before full header was received" errors.
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   await dotenv.load(fileName: '.env');
 

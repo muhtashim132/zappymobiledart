@@ -8,6 +8,7 @@ import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/common/rating_bottom_sheet.dart';
 import '../../widgets/common/notification_bell.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SellerOrdersPage extends StatefulWidget {
   const SellerOrdersPage({super.key});
@@ -117,9 +118,12 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
 
   Future<void> _updateOrderStatus(String orderId, String status) async {
     try {
-      await _supabase
-          .from('orders')
-          .update({'status': status}).eq('id', orderId);
+      final updateData = <String, dynamic>{'status': status};
+      if (status == 'ready_for_pickup') {
+        updateData['order_ready_time'] = DateTime.now().toIso8601String();
+      }
+
+      await _supabase.from('orders').update(updateData).eq('id', orderId);
       _loadOrders();
       _showSnack('Status → ${status.replaceAll('_', ' ')}', isError: false);
     } catch (e) {
@@ -407,6 +411,43 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
             _buildAcceptanceProgress(order),
           ],
 
+          // Contact Buttons
+          if (order.customerPhone != null || order.riderPhone != null) ...[
+            const SizedBox(height: 12),
+            Row(children: [
+              if (order.customerPhone != null)
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _callPhone(order.customerPhone!),
+                    icon: const Icon(Icons.phone_outlined, size: 16),
+                    label: Text('Customer', style: GoogleFonts.outfit(fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: const BorderSide(color: AppColors.primary),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+              if (order.customerPhone != null && order.riderPhone != null)
+                const SizedBox(width: 8),
+              if (order.riderPhone != null)
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _callPhone(order.riderPhone!),
+                    icon: const Icon(Icons.delivery_dining_outlined, size: 16),
+                    label: Text('Rider', style: GoogleFonts.outfit(fontSize: 12)),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.accent,
+                      side: const BorderSide(color: AppColors.accent),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                ),
+            ]),
+          ],
+
           // Action buttons
           if (tab == 'pending') ...[
             const Divider(height: 20),
@@ -626,6 +667,15 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
           return Colors.amber.shade700;
         }
         return AppColors.textSecondary;
+    }
+  }
+
+  Future<void> _callPhone(String phone) async {
+    final uri = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      _showSnack('Could not launch dialer', isError: true);
     }
   }
 }
