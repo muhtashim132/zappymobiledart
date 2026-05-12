@@ -46,7 +46,8 @@ class _EarningsPageState extends State<EarningsPage> {
       double today = 0, total = 0;
 
       for (final d in deliveries) {
-        final charge = (d['rider_earnings'] ?? d['delivery_charges'] ?? 0.0).toDouble();
+        final charge =
+            (d['rider_earnings'] ?? d['delivery_charges'] ?? 0.0).toDouble();
         final createdAt =
             DateTime.tryParse(d['created_at'] ?? '') ?? DateTime(2000);
         total += charge;
@@ -74,7 +75,8 @@ class _EarningsPageState extends State<EarningsPage> {
           _recentDeliveries = deliveries.take(20).map((d) {
             return {
               'id': d['id'],
-              'amount': (d['rider_earnings'] ?? d['delivery_charges'] ?? 0.0).toDouble(),
+              'amount': (d['rider_earnings'] ?? d['delivery_charges'] ?? 0.0)
+                  .toDouble(),
               'date': d['created_at'],
             };
           }).toList();
@@ -170,7 +172,8 @@ class _EarningsPageState extends State<EarningsPage> {
                                       width: 1,
                                       height: 30,
                                       color: Colors.white24),
-                                  _buildStatItem('Rating', '${_averageRating > 0 ? _averageRating.toStringAsFixed(1) : 'New'} ⭐'),
+                                  _buildStatItem('Rating',
+                                      '${_averageRating > 0 ? _averageRating.toStringAsFixed(1) : 'New'} ⭐'),
                                 ],
                               ),
                             ),
@@ -193,7 +196,9 @@ class _EarningsPageState extends State<EarningsPage> {
                               color: AppColors.secondary,
                               onTap: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Withdraw feature coming soon!')),
+                                  const SnackBar(
+                                      content: Text(
+                                          'Withdraw feature coming soon!')),
                                 );
                               },
                             ),
@@ -206,7 +211,9 @@ class _EarningsPageState extends State<EarningsPage> {
                               color: Colors.blue,
                               onTap: () {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Insights feature coming soon!')),
+                                  const SnackBar(
+                                      content: Text(
+                                          'Insights feature coming soon!')),
                                 );
                               },
                             ),
@@ -351,7 +358,10 @@ class _EarningsPageState extends State<EarningsPage> {
   }
 
   Widget _buildQuickAction(
-      {required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+      {required IconData icon,
+      required String label,
+      required Color color,
+      required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
