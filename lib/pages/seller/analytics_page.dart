@@ -19,6 +19,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   int _totalOrders = 0;
   int _deliveredOrders = 0;
   final List<FlSpot> _revenueSpots = [];
+  List<DateTime> _last7DaysDates = [];
 
   @override
   void initState() {
@@ -43,27 +44,59 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
       final shopId = shopsResp.first['id'];
 
+      final now = DateTime.now();
+      final todayDate = DateTime(now.year, now.month, now.day);
+      final startDate = todayDate.subtract(const Duration(days: 6));
+
       final orders = await _supabase
           .from('orders')
           .select()
           .eq('shop_id', shopId)
+          .gte('created_at', startDate.toIso8601String())
           .order('created_at', ascending: true);
 
       double total = 0;
       int delivered = 0;
-      final List<FlSpot> spots = [];
+      
+      final Map<DateTime, double> dailyRevenue = {};
+      final List<DateTime> dates = [];
+      for (int i = 6; i >= 0; i--) {
+        final d = todayDate.subtract(Duration(days: i));
+        dailyRevenue[d] = 0.0;
+        dates.add(d);
+      }
 
-      for (int i = 0; i < (orders as List).length && i < 7; i++) {
-        total += (orders[i]['total_amount'] ?? 0.0);
-        if (orders[i]['status'] == 'delivered') delivered++;
-        spots.add(FlSpot(i.toDouble(), total / 100));
+      for (final order in (orders as List)) {
+        final status = order['status'];
+        final amount = (order['total_amount'] ?? 0.0).toDouble();
+
+        if (status == 'delivered') {
+          total += amount;
+          delivered++;
+          
+          final createdAtStr = order['created_at'];
+          if (createdAtStr != null) {
+            final createdAt = DateTime.tryParse(createdAtStr) ?? now;
+            final orderDate = DateTime(createdAt.year, createdAt.month, createdAt.day);
+            if (dailyRevenue.containsKey(orderDate)) {
+              dailyRevenue[orderDate] = dailyRevenue[orderDate]! + amount;
+            }
+          }
+        }
+      }
+
+      final List<FlSpot> spots = [];
+      for (int i = 0; i < dates.length; i++) {
+        spots.add(FlSpot(i.toDouble(), dailyRevenue[dates[i]]!));
       }
 
       setState(() {
         _totalRevenue = total;
-        _totalOrders = orders.length;
+        _totalOrders = orders.length; // Count of all orders in last 7 days
         _deliveredOrders = delivered;
+        _revenueSpots.clear();
         _revenueSpots.addAll(spots);
+        _last7DaysDates = dates;
         _isLoading = false;
       });
     } catch (e) {
@@ -178,12 +211,21 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                                       bottomTitles: AxisTitles(
                                         sideTitles: SideTitles(
                                           showTitles: true,
-                                          getTitlesWidget: (v, meta) => Text(
-                                            'D${v.toInt() + 1}',
-                                            style: const TextStyle(
-                                                fontSize: 10,
-                                                color: AppColors.textSecondary),
-                                          ),
+                                          reservedSize: 22,
+                                          getTitlesWidget: (v, meta) {
+                                            final int index = v.toInt();
+                                            if (index < 0 || index >= _last7DaysDates.length) return const SizedBox.shrink();
+                                            final date = _last7DaysDates[index];
+                                            return Padding(
+                                              padding: const EdgeInsets.only(top: 8.0),
+                                              child: Text(
+                                                '${date.day}/${date.month}',
+                                                style: const TextStyle(
+                                                    fontSize: 10,
+                                                    color: AppColors.textSecondary),
+                                              ),
+                                            );
+                                          },
                                         ),
                                       ),
                                       leftTitles: const AxisTitles(

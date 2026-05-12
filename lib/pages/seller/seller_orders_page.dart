@@ -55,14 +55,18 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
 
       final response = await _supabase
           .from('orders')
-          .select()
+          .select('*, order_items(*)')
           .eq('shop_id', shopId)
           .order('created_at', ascending: false);
 
       if (mounted) {
         setState(() {
-          _orders =
-              (response as List).map((o) => OrderModel.fromMap(o)).toList();
+          _orders = (response as List).map((o) {
+            final model = OrderModel.fromMap(o);
+            final rawItems = o['order_items'] as List? ?? [];
+            model.items = rawItems.map((i) => OrderItem.fromMap(i)).toList();
+            return model;
+          }).toList();
           _isLoading = false;
         });
       }
@@ -350,6 +354,50 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
               _statusBadge(order, statusColor),
             ],
           ),
+
+          // ── Order Items ─────────────────────────────────────────────────
+          if (order.items.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Items (${order.items.length})',
+                      style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary)),
+                  const SizedBox(height: 6),
+                  ...order.items.map((item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 3),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.circle, size: 5, color: AppColors.textSecondary),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                '${item.quantity}x ${item.productName}',
+                                style: GoogleFonts.outfit(fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Text(
+                              '₹${item.totalPrice.toStringAsFixed(0)}',
+                              style: GoogleFonts.outfit(
+                                  fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      )),
+                ],
+              ),
+            ),
+          ],
 
           // Dual-acceptance progress bar (for pending-but-one-accepted)
           if (order.status == 'pending' &&

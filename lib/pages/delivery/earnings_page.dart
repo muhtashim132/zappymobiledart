@@ -21,6 +21,7 @@ class _EarningsPageState extends State<EarningsPage>
   double _weekEarnings = 0;
   double _totalEarnings = 0;
   int _totalDeliveries = 0;
+  double _averageRating = 0.0;
   late TabController _tabController;
   List<Map<String, dynamic>> _recentDeliveries = [];
 
@@ -65,12 +66,25 @@ class _EarningsPageState extends State<EarningsPage>
         if (createdAt.isAfter(DateTime.parse(todayStart))) today += charge;
       }
 
+      double avgRating = 0.0;
+      try {
+        final profile = await _supabase
+            .from('profiles')
+            .select('average_rating')
+            .eq('id', auth.currentUserId ?? '')
+            .maybeSingle();
+        if (profile != null && profile['average_rating'] != null) {
+          avgRating = (profile['average_rating'] as num).toDouble();
+        }
+      } catch (_) {}
+
       if (mounted) {
         setState(() {
           _todayEarnings = today;
           _weekEarnings = week;
           _totalEarnings = total;
           _totalDeliveries = deliveries.length;
+          _averageRating = avgRating;
           _recentDeliveries = deliveries.take(20).map((d) {
             return {
               'id': d['id'],
@@ -170,7 +184,7 @@ class _EarningsPageState extends State<EarningsPage>
                                       width: 1,
                                       height: 30,
                                       color: Colors.white24),
-                                  _buildStatItem('Rating', '4.9 ⭐'),
+                                  _buildStatItem('Rating', '${_averageRating > 0 ? _averageRating.toStringAsFixed(1) : 'New'} ⭐'),
                                 ],
                               ),
                             ),
@@ -191,6 +205,11 @@ class _EarningsPageState extends State<EarningsPage>
                               icon: Icons.account_balance_wallet_rounded,
                               label: 'Withdraw',
                               color: AppColors.secondary,
+                              onTap: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Withdraw feature coming soon!')),
+                                );
+                              },
                             ),
                           ),
                           const SizedBox(width: 16),
@@ -199,6 +218,11 @@ class _EarningsPageState extends State<EarningsPage>
                               icon: Icons.analytics_rounded,
                               label: 'Insights',
                               color: Colors.blue,
+                              onTap: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Insights feature coming soon!')),
+                                );
+                              },
                             ),
                           ),
                         ],
@@ -341,22 +365,25 @@ class _EarningsPageState extends State<EarningsPage>
   }
 
   Widget _buildQuickAction(
-      {required IconData icon, required String label, required Color color}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withOpacity(0.2)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 8),
-          Text(label,
-              style: GoogleFonts.outfit(
-                  color: color, fontWeight: FontWeight.w700, fontSize: 14)),
-        ],
+      {required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(label,
+                style: GoogleFonts.outfit(
+                    color: color, fontWeight: FontWeight.w700, fontSize: 14)),
+          ],
+        ),
       ),
     );
   }

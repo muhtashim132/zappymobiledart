@@ -72,20 +72,28 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
     try {
       final available = await _supabase
           .from('orders')
-          .select()
+          .select('*, order_items(*)')
           .eq('seller_accepted', true)
           .isFilter('delivery_partner_id', null)
           .inFilter('status', ['pending', 'confirmed']);
 
       final myOrders = await _supabase
           .from('orders')
-          .select()
+          .select('*, order_items(*)')
           .eq('delivery_partner_id', auth.currentUserId ?? '')
           .not('status', 'in', '("delivered","cancelled","seller_rejected","partner_rejected")');
 
       setState(() {
-        _availableOrders = (available as List).map((o) => OrderModel.fromMap(o)).toList();
-        _myOrders = (myOrders as List).map((o) => OrderModel.fromMap(o)).toList();
+        _availableOrders = (available as List).map((o) {
+          final model = OrderModel.fromMap(o);
+          model.items = (o['order_items'] as List? ?? []).map((i) => OrderItem.fromMap(i)).toList();
+          return model;
+        }).toList();
+        _myOrders = (myOrders as List).map((o) {
+          final model = OrderModel.fromMap(o);
+          model.items = (o['order_items'] as List? ?? []).map((i) => OrderItem.fromMap(i)).toList();
+          return model;
+        }).toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -138,7 +146,6 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
       } else if (status == 'delivered') {
         await _supabase.from('orders').update({
           'status': status,
-          'seller_payout': order.totalAmount,
         }).eq('id', order.id);
         _loadOrders();
         // Show rating prompt after delivering
@@ -532,6 +539,33 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                 style: GoogleFonts.outfit(color: isDark ? Colors.white60 : Colors.grey.shade600, fontSize: 13),
                 maxLines: 1, overflow: TextOverflow.ellipsis)),
             ]),
+            // Order items
+            if (order.items.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: (isDark ? Colors.white : Colors.black).withOpacity(0.04),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Items (${order.items.length})',
+                        style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white54 : Colors.grey.shade600)),
+                    const SizedBox(height: 4),
+                    ...order.items.map((item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Text('${item.quantity}x ${item.productName}',
+                              style: GoogleFonts.outfit(fontSize: 12,
+                                  color: isDark ? Colors.white70 : Colors.black87),
+                              overflow: TextOverflow.ellipsis),
+                        )),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             Row(children: [
               Text('₹${order.grandTotal.toStringAsFixed(0)}',

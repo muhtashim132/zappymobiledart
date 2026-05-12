@@ -30,6 +30,8 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
   bool _isLoading = true;
   String _shopBadgeName = 'Seller';
   String _shopEmoji = '🏪';
+  bool _shopIsActive = false;
+  String _shopRating = '--';
 
   late AnimationController _bgCtrl;
   late AnimationController _entryCtrl;
@@ -66,7 +68,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
     try {
       final shopsResp = await _supabase
           .from('shops')
-          .select('id, category, categories')
+          .select('id, category, categories, is_active, average_rating')
           .eq('seller_id', auth.currentUserId ?? '');
 
       if ((shopsResp as List).isEmpty) {
@@ -113,6 +115,11 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
             'revenue': revenue,
             'products': (productsResp as List).length,
           };
+          _shopIsActive = shopData['is_active'] ?? false;
+          final rawRating = shopData['average_rating'];
+          _shopRating = rawRating != null
+              ? (rawRating as num).toStringAsFixed(1)
+              : '--';
           _isLoading = false;
         });
         _entryCtrl.forward();
@@ -302,7 +309,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                 Expanded(
                                     child: _statCard(
                                         'Rating',
-                                        '⭐ 4.5',
+                                        '⭐ $_shopRating',
                                         Icons.star_rounded,
                                         const Color(0xFF51CF66),
                                         const Color(0xFF2F9E44))),
@@ -401,6 +408,21 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                     isDark: isDark,
                     onTap: () =>
                         Navigator.pushNamed(context, AppRoutes.analytics),
+                  ),
+                  _actionTile(
+                    icon: Icons.settings_outlined,
+                    gradient: const [Color(0xFF00B4D8), Color(0xFF0077A8)],
+                    title: 'Manage Shop',
+                    subtitle: _shopIsActive
+                        ? 'Shop is Open — tap to edit settings'
+                        : 'Shop is Closed — tap to open or edit',
+                    badge: _shopIsActive ? null : 'Closed',
+                    isDark: isDark,
+                    onTap: () async {
+                      await Navigator.pushNamed(
+                          context, AppRoutes.shopManagement);
+                      _loadStats(); // refresh after returning
+                    },
                   ),
                 ]),
               ),

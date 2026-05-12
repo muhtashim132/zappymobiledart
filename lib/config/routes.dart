@@ -20,6 +20,7 @@ import '../pages/seller/seller_orders_page.dart';
 import '../pages/seller/analytics_page.dart';
 import '../pages/delivery/dashboard_page.dart';
 import '../pages/delivery/earnings_page.dart';
+import '../pages/seller/shop_management_page.dart';
 import '../pages/settings/profile_settings_page.dart';
 
 class AppRoutes {
@@ -44,6 +45,7 @@ class AppRoutes {
   static const String analytics = '/seller/analytics';
   static const String deliveryDashboard = '/delivery/dashboard';
   static const String earnings = '/delivery/earnings';
+  static const String shopManagement = '/seller/shop-management';
   static const String settings = '/settings';
 
   static Route<dynamic> generateRoute(RouteSettings routeSettings) {
@@ -98,6 +100,8 @@ class AppRoutes {
         return _build(const DeliveryDashboardPage(), routeSettings);
       case earnings:
         return _build(const EarningsPage(), routeSettings);
+      case shopManagement:
+        return _build(const ShopManagementPage(), routeSettings);
       case settings:
         return _build(const ProfileSettingsPage(), routeSettings);
       default:
