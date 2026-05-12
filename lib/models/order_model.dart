@@ -28,6 +28,10 @@ class OrderModel {
   bool hasSellerRated;
   bool hasDeliveryRated;
 
+  // Delivery location (stored at checkout, used by track order map)
+  final double? deliveryLat;
+  final double? deliveryLng;
+
   OrderModel({
     required this.id,
     required this.customerId,
@@ -52,6 +56,8 @@ class OrderModel {
     this.hasCustomerRated = false,
     this.hasSellerRated = false,
     this.hasDeliveryRated = false,
+    this.deliveryLat,
+    this.deliveryLng,
   });
 
   factory OrderModel.fromMap(Map<String, dynamic> map) {
@@ -82,6 +88,8 @@ class OrderModel {
       hasCustomerRated: map['has_customer_rated'] ?? false,
       hasSellerRated: map['has_seller_rated'] ?? false,
       hasDeliveryRated: map['has_delivery_rated'] ?? false,
+      deliveryLat: (map['delivery_lat'] as num?)?.toDouble(),
+      deliveryLng: (map['delivery_lng'] as num?)?.toDouble(),
     );
   }
 
@@ -97,6 +105,8 @@ class OrderModel {
     bool? hasCustomerRated,
     bool? hasSellerRated,
     bool? hasDeliveryRated,
+    double? deliveryLat,
+    double? deliveryLng,
   }) {
     return OrderModel(
       id: id,
@@ -122,6 +132,8 @@ class OrderModel {
       hasCustomerRated: hasCustomerRated ?? this.hasCustomerRated,
       hasSellerRated: hasSellerRated ?? this.hasSellerRated,
       hasDeliveryRated: hasDeliveryRated ?? this.hasDeliveryRated,
+      deliveryLat: deliveryLat ?? this.deliveryLat,
+      deliveryLng: deliveryLng ?? this.deliveryLng,
     );
   }
 

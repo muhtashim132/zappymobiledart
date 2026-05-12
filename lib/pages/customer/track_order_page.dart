@@ -291,6 +291,16 @@ class _TrackOrderPageState extends State<TrackOrderPage>
     }
   }
 
+  /// Returns the best available map centre for this order.
+  /// Priority: persisted delivery coords → Delhi fallback.
+  LatLng _mapCenter() {
+    if (_order?.deliveryLat != null && _order?.deliveryLng != null) {
+      return LatLng(_order!.deliveryLat!, _order!.deliveryLng!);
+    }
+    // Last-resort fallback – will be replaced once delivery_lat/lng columns exist
+    return const LatLng(28.6139, 77.2090);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -337,8 +347,8 @@ class _TrackOrderPageState extends State<TrackOrderPage>
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
-                child: const ZappyMap(
-                  center: LatLng(28.6139, 77.2090), // Default to Delhi for demo
+                child: ZappyMap(
+                  center: _mapCenter(),
                   zoom: 14,
                   interactive: true,
                 ),

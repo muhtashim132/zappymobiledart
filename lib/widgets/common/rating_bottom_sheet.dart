@@ -61,6 +61,8 @@ class _RatingBottomSheetState extends State<RatingBottomSheet> {
           Text(
             widget.subtitle,
             style: GoogleFonts.outfit(
+              // Bug #21 verified: AppColors.textSecondary = Color(0xFF6B7280)
+              // defined in lib/theme/app_colors.dart line 43 ✓
               color: AppColors.textSecondary,
               fontSize: 14,
             ),

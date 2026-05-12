@@ -1,7 +1,10 @@
 class PaymentConfig {
   static const double platformFee = 5.0;
+  // platformCommission: 0.0 = no extra platform cut on order subtotal
   static const double platformCommission = 0.00;
-  static const double sellerPayout = 1.00;
+  // Bug #22: removed dead `sellerPayout = 1.00` — it was never used and
+  // was misleadingly named (unclear if it meant ₹1.00 or 100% payout fraction).
+
   static const double minimumOrderValue = 1.0; // Reduced to allow small carts
   static const double discountDeliveryThreshold = 499.0;
   static const double deliveryDiscountAmount = 15.0;

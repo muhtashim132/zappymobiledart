@@ -32,18 +32,24 @@ void main() async {
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  runApp(const ZappyApp());
+  // Bug #20: load persisted cart before first frame
+  final cartProvider = CartProvider();
+  await cartProvider.loadCart();
+
+  runApp(ZappyApp(cartProvider: cartProvider));
 }
 
 class ZappyApp extends StatelessWidget {
-  const ZappyApp({super.key});
+  final CartProvider cartProvider;
+  const ZappyApp({super.key, required this.cartProvider});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => CartProvider()),
+        // Bug #20: use the pre-loaded cartProvider instance
+        ChangeNotifierProvider<CartProvider>.value(value: cartProvider),
         ChangeNotifierProvider(create: (_) => LocationProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),

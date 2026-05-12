@@ -51,12 +51,13 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
         return;
       }
 
-      final shopId = shopsResp.first['id'];
+      // Collect ALL shop IDs for this seller — not just the first one
+      final shopIds = (shopsResp as List).map((s) => s['id'] as String).toList();
 
       final response = await _supabase
           .from('orders')
           .select('*, order_items(*)')
-          .eq('shop_id', shopId)
+          .inFilter('shop_id', shopIds)
           .order('created_at', ascending: false);
 
       if (mounted) {

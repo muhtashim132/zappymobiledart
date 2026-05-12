@@ -36,7 +36,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
           content: const Text('Please select a payment method to continue.'),
           backgroundColor: Colors.orange.shade700,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       );
       return;
@@ -360,7 +361,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     _billRow(
                       'Small Cart Fee',
                       '+₹${cart.smallCartFee.toStringAsFixed(0)}',
-                      hint: 'For orders under ₹${PaymentConfig.smallCartThreshold.toInt()}',
+                      hint:
+                          'For orders under ₹${PaymentConfig.smallCartThreshold.toInt()}',
                       valueColor: Colors.orange.shade700,
                     ),
                   ],
@@ -369,7 +371,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     _billRow(
                       'Heavy Order Fee',
                       '+₹${heavyFee.toStringAsFixed(0)}',
-                      hint: 'For orders over ${PaymentConfig.heavyOrderThreshold.toInt()} kg',
+                      hint:
+                          'For orders over ${PaymentConfig.heavyOrderThreshold.toInt()} kg',
                       valueColor: Colors.orange.shade700,
                     ),
                   ],
@@ -535,9 +538,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected
-              ? iconColor.withOpacity(0.07)
-              : AppColors.background,
+          color:
+              isSelected ? iconColor.withOpacity(0.07) : AppColors.background,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected ? iconColor : AppColors.divider,
@@ -564,9 +566,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
-                        color: isSelected
-                            ? iconColor
-                            : AppColors.textPrimary,
+                        color: isSelected ? iconColor : AppColors.textPrimary,
                       )),
                   Text(subtitle,
                       style: const TextStyle(
@@ -583,8 +583,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       key: const ValueKey('checked'),
                       color: iconColor,
                       size: 22)
-                  : Icon(Icons.radio_button_unchecked,
-                      key: const ValueKey('unchecked'),
+                  : const Icon(Icons.radio_button_unchecked,
+                      key: ValueKey('unchecked'),
                       color: AppColors.divider,
                       size: 22),
             ),

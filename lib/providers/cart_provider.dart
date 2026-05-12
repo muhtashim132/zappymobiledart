@@ -1,11 +1,94 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:latlong2/latlong.dart';
 import '../models/cart_item_model.dart';
 import '../models/product_model.dart';
 import '../models/shop_model.dart';
 import '../config/payment_config.dart';
 import '../utils/delivery_calculator.dart';
 
+// ---------------------------------------------------------------------------
+// Serialization helpers (Bug #20)
+// ---------------------------------------------------------------------------
+
+Map<String, dynamic> _productToJson(ProductModel p) => {
+  'id': p.id,
+  'shop_id': p.shopId,
+  'name': p.name,
+  'category': p.category,
+  'sub_category': p.subCategory,
+  'brand': p.brand,
+  'price': p.price,
+  'original_price': p.originalPrice,
+  'total_quantity': p.totalQuantity,
+  'weight_per_unit': p.weightPerUnit,
+  'unit_type': p.unitType,
+  'description': p.description,
+  'images': p.images,
+  'is_veg': p.isVeg,
+  'menu_category': p.menuCategory,
+  'prep_time_minutes': p.prepTimeMinutes,
+  'special_tags': p.specialTags,
+  'is_available': p.isAvailable,
+  'rating': p.rating,
+};
+
+ProductModel _productFromJson(Map<String, dynamic> m) => ProductModel.fromMap({
+  ...m,
+  'id': m['id'] ?? '',
+});
+
+Map<String, dynamic> _shopToJson(ShopModel s) => {
+  'id': s.id,
+  'seller_id': s.sellerId,
+  'name': s.name,
+  'shop_type': s.shopType,
+  'cuisine_type': s.cuisineType,
+  'fssai_number': s.fssaiNumber,
+  'prep_time_minutes': s.prepTimeMinutes,
+  'is_veg_only': s.isVegOnly,
+  'opening_hours': s.openingHours,
+  'address': s.address,
+  // Store lat/lng manually since ShopModel uses POINT format in DB
+  '_lat': s.location.latitude,
+  '_lng': s.location.longitude,
+  'category': s.category,
+  'categories': s.categories,
+  'is_active': s.isActive,
+  'rating': s.rating,
+  'total_reviews': s.totalReviews,
+  'total_orders': s.totalOrders,
+  'banner_image': s.bannerImage,
+};
+
+ShopModel _shopFromJson(Map<String, dynamic> m) {
+  final lat = (m['_lat'] as num?)?.toDouble() ?? 0.0;
+  final lng = (m['_lng'] as num?)?.toDouble() ?? 0.0;
+  return ShopModel(
+    id: m['id'] ?? '',
+    sellerId: m['seller_id'] ?? '',
+    name: m['name'] ?? '',
+    shopType: m['shop_type'] ?? 'shop',
+    cuisineType: m['cuisine_type'],
+    fssaiNumber: m['fssai_number'],
+    prepTimeMinutes: m['prep_time_minutes'] ?? 30,
+    isVegOnly: m['is_veg_only'] ?? false,
+    openingHours: m['opening_hours'],
+    address: m['address'] ?? '',
+    location: LatLng(lat, lng),
+    category: m['category'] ?? 'Other',
+    categories: List<String>.from(m['categories'] ?? []),
+    isActive: m['is_active'] ?? true,
+    rating: (m['rating'] ?? 4.0).toDouble(),
+    totalReviews: m['total_reviews'] ?? 0,
+    totalOrders: m['total_orders'] ?? 0,
+    bannerImage: m['banner_image'],
+  );
+}
+
 class CartProvider extends ChangeNotifier {
+  static const String _cartKey = 'zappy_cart_v1'; // Bug #20: persistence key
   final List<CartItem> _items = [];
 
   List<CartItem> get items => List.unmodifiable(_items);
@@ -76,12 +159,14 @@ class CartProvider extends ChangeNotifier {
       _items[existingIdx].quantity += quantity;
     }
 
+    _saveCart(); // Bug #20
     notifyListeners();
     return null;
   }
 
   void removeItem(String productId) {
     _items.removeWhere((item) => item.product.id == productId);
+    _saveCart(); // Bug #20
     notifyListeners();
   }
 
@@ -93,13 +178,69 @@ class CartProvider extends ChangeNotifier {
       } else {
         _items[idx].quantity = quantity;
       }
+      _saveCart(); // Bug #20
       notifyListeners();
     }
   }
 
   void clear() {
     _items.clear();
+    _saveCart(); // Bug #20
     notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Bug #20: Persistence — save & load cart via shared_preferences
+  // ---------------------------------------------------------------------------
+
+  /// Serialises the current cart to shared_preferences.
+  Future<void> _saveCart() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final encoded = jsonEncode(_items.map((item) => {
+        'product': _productToJson(item.product),
+        'shop': _shopToJson(item.shop),
+        'quantity': item.quantity,
+        'special_instructions': item.specialInstructions,
+      }).toList());
+      await prefs.setString(_cartKey, encoded);
+    } catch (e) {
+      debugPrint('CartProvider: failed to save cart: $e');
+    }
+  }
+
+  /// Restores the cart from shared_preferences.
+  /// Call this once during app startup (e.g., after MultiProvider is set up).
+  Future<void> loadCart() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_cartKey);
+      if (raw == null || raw.isEmpty) return;
+
+      final List<dynamic> list = jsonDecode(raw) as List<dynamic>;
+      _items.clear();
+      for (final entry in list) {
+        final map = entry as Map<String, dynamic>;
+        final product = _productFromJson(map['product'] as Map<String, dynamic>);
+        final shop = _shopFromJson(map['shop'] as Map<String, dynamic>);
+        final qty = (map['quantity'] as num?)?.toInt() ?? 1;
+        final instructions = map['special_instructions'] as String?;
+        _items.add(CartItem(
+          product: product,
+          shop: shop,
+          quantity: qty,
+          specialInstructions: instructions,
+        ));
+      }
+      notifyListeners();
+    } catch (e) {
+      debugPrint('CartProvider: failed to load cart: $e');
+      // Corrupted data — wipe it
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_cartKey);
+      } catch (_) {}
+    }
   }
 
   // ---------------------------------------------------------------------------
