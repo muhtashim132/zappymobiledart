@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,11 +22,12 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
   String? _shopId;
   bool _isActive = false;
 
-  final _nameCtrl = TextEditingController();
-  final _addressCtrl = TextEditingController();
   final _bannerCtrl = TextEditingController();
   final _openTimeCtrl = TextEditingController();
   final _closeTimeCtrl = TextEditingController();
+
+  File? _selectedImage;
+  final _picker = ImagePicker();
 
   @override
   void initState() {
@@ -34,8 +37,6 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
-    _addressCtrl.dispose();
     _bannerCtrl.dispose();
     _openTimeCtrl.dispose();
     _closeTimeCtrl.dispose();
@@ -59,8 +60,6 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
       setState(() {
         _shopId = resp['id'];
         _isActive = resp['is_active'] ?? false;
-        _nameCtrl.text = resp['name'] ?? '';
-        _addressCtrl.text = resp['address'] ?? '';
         _bannerCtrl.text = resp['banner_url'] ?? '';
         _openTimeCtrl.text = resp['open_time'] ?? '09:00';
         _closeTimeCtrl.text = resp['close_time'] ?? '21:00';
@@ -85,19 +84,32 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
     }
   }
 
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (pickedFile != null && mounted) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
   Future<void> _saveDetails() async {
     if (_shopId == null) return;
-    if (_nameCtrl.text.trim().isEmpty) {
-      _showSnack('Shop name cannot be empty', isError: true);
-      return;
-    }
     setState(() => _isSaving = true);
     try {
+      String? uploadedUrl = _bannerCtrl.text.trim().isEmpty ? null : _bannerCtrl.text.trim();
+      
+      if (_selectedImage != null) {
+        final fileExt = _selectedImage!.path.split('.').last;
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExt';
+        final filePath = 'banners/$_shopId/$fileName';
+        await _supabase.storage.from('shops').upload(filePath, _selectedImage!);
+        uploadedUrl = _supabase.storage.from('shops').getPublicUrl(filePath);
+        _bannerCtrl.text = uploadedUrl;
+      }
+
       await _supabase.from('shops').update({
-        'name': _nameCtrl.text.trim(),
-        'address': _addressCtrl.text.trim(),
-        'banner_url':
-            _bannerCtrl.text.trim().isEmpty ? null : _bannerCtrl.text.trim(),
+        'banner_url': uploadedUrl,
         'open_time': _openTimeCtrl.text.trim(),
         'close_time': _closeTimeCtrl.text.trim(),
       }).eq('id', _shopId!);
@@ -164,31 +176,6 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ── Banner Preview ──────────────────────────────────
-                        if (_bannerCtrl.text.isNotEmpty)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.network(
-                              _bannerCtrl.text,
-                              height: 160,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                height: 160,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Center(
-                                  child: Icon(Icons.broken_image_outlined,
-                                      color: AppColors.textSecondary, size: 40),
-                                ),
-                              ),
-                            ),
-                          ),
-                        if (_bannerCtrl.text.isNotEmpty)
-                          const SizedBox(height: 20),
-
                         // ── Open / Closed Toggle ────────────────────────────
                         _sectionCard(
                           isDark: isDark,
@@ -249,46 +236,44 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
                         ),
                         const SizedBox(height: 16),
 
-                        // ── Shop Details ────────────────────────────────────
+                        // ── Banner Image Upload ────────────────────────────────────
                         _sectionCard(
                           isDark: isDark,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _label('Shop Name', isDark),
-                              const SizedBox(height: 6),
-                              _inputField(
-                                controller: _nameCtrl,
-                                hint: 'e.g. Fresh Bites Kitchen',
-                                icon: Icons.storefront_outlined,
-                                isDark: isDark,
+                              _label('Banner Image', isDark),
+                              const SizedBox(height: 12),
+                              GestureDetector(
+                                onTap: _pickImage,
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 160,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                                  ),
+                                  child: _selectedImage != null
+                                      ? ClipRRect(
+                                          borderRadius: BorderRadius.circular(15),
+                                          child: Image.file(_selectedImage!, fit: BoxFit.cover),
+                                        )
+                                      : _bannerCtrl.text.isNotEmpty
+                                          ? ClipRRect(
+                                              borderRadius: BorderRadius.circular(15),
+                                              child: Image.network(_bannerCtrl.text, fit: BoxFit.cover),
+                                            )
+                                          : Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(Icons.add_photo_alternate_outlined, size: 40, color: AppColors.primary),
+                                                const SizedBox(height: 8),
+                                                Text('Tap to upload banner', style: GoogleFonts.outfit(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                                              ],
+                                            ),
+                                ),
                               ),
-                              const SizedBox(height: 16),
-                              _label('Address', isDark),
-                              const SizedBox(height: 6),
-                              _inputField(
-                                controller: _addressCtrl,
-                                hint: 'Shop street address',
-                                icon: Icons.location_on_outlined,
-                                isDark: isDark,
-                                maxLines: 2,
-                              ),
-                              const SizedBox(height: 16),
-                              _label('Banner Image URL', isDark),
-                              const SizedBox(height: 6),
-                              _inputField(
-                                controller: _bannerCtrl,
-                                hint: 'https://...',
-                                icon: Icons.image_outlined,
-                                isDark: isDark,
-                                onSubmitted: (_) => setState(() {}),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                  'Paste a public image URL for your shop banner',
-                                  style: GoogleFonts.outfit(
-                                      fontSize: 11,
-                                      color: AppColors.textSecondary)),
                             ],
                           ),
                         ),

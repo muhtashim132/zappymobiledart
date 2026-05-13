@@ -96,12 +96,6 @@ class _ManageProductsPageState extends State<ManageProductsPage> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Manage Products'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadProducts,
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

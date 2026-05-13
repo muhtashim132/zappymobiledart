@@ -241,7 +241,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                           icon: '🏪',
                           title: 'Seller',
                           subtitle:
-                              'List your products & grow\nyour business — zero commission',
+                              'List your products & grow\nyour business — 5% commission',
                           accentColor: const Color(0xFFF4C542),
                           badge: 'Sell Now',
                           selected: _selectedRole == 'seller',

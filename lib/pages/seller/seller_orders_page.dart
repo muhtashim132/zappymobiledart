@@ -256,9 +256,8 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
             Tab(child: Text('Done', style: GoogleFonts.outfit())),
           ],
         ),
-        actions: [
-          const NotificationBell(),
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadOrders),
+        actions: const [
+          NotificationBell(),
         ],
       ),
       body: _isLoading

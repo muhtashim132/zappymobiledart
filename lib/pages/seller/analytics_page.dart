@@ -16,6 +16,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   final _supabase = Supabase.instance.client;
   bool _isLoading = true;
   double _totalRevenue = 0;
+  double _totalPayout = 0;
+  double _totalCommission = 0;
   int _totalOrders = 0;
   int _deliveredOrders = 0;
   final List<FlSpot> _revenueSpots = [];
@@ -56,6 +58,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
           .order('created_at', ascending: true);
 
       double total = 0;
+      double payout = 0;
+      double commission = 0;
       int delivered = 0;
       
       final Map<DateTime, double> dailyRevenue = {};
@@ -69,9 +73,13 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
       for (final order in (orders as List)) {
         final status = order['status'];
         final amount = (order['total_amount'] ?? 0.0).toDouble();
+        final sp = (order['seller_payout'] ?? 0.0).toDouble();
+        final zc = (order['zappy_commission'] ?? 0.0).toDouble();
 
         if (status == 'delivered') {
           total += amount;
+          payout += sp;
+          commission += zc;
           delivered++;
           
           final createdAtStr = order['created_at'];
@@ -92,6 +100,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
       setState(() {
         _totalRevenue = total;
+        _totalPayout = payout;
+        _totalCommission = commission;
         _totalOrders = orders.length; // Count of all orders in last 7 days
         _deliveredOrders = delivered;
         _revenueSpots.clear();
@@ -121,10 +131,32 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     children: [
                       Expanded(
                         child: _statCard(
-                          'Total Revenue',
+                          'Gross Revenue',
                           '₹${_totalRevenue.toStringAsFixed(0)}',
                           Icons.currency_rupee,
+                          AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _statCard(
+                          'Net Payout',
+                          '₹${_totalPayout.toStringAsFixed(0)}',
+                          Icons.account_balance_wallet_outlined,
                           AppColors.success,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _statCard(
+                          'Zappy Comm.',
+                          '₹${_totalCommission.toStringAsFixed(0)}',
+                          Icons.pie_chart_outline,
+                          AppColors.danger,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -133,7 +165,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                           'Total Orders',
                           '$_totalOrders',
                           Icons.receipt_long_outlined,
-                          AppColors.primary,
+                          AppColors.info,
                         ),
                       ),
                     ],

@@ -122,10 +122,8 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     });
     try {
       final locationProvider = context.read<LocationProvider>();
-      final response = await _supabase
-          .from('shops')
-          .select()
-          .ilike('name', '%$query%');
+      final response =
+          await _supabase.from('shops').select().ilike('name', '%$query%');
 
       final allShops =
           (response as List).map((s) => ShopModel.fromMap(s)).toList();
@@ -282,8 +280,11 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                           ),
                         ),
                         NotificationBell(
-                          iconColor: isDark ? Colors.white70 : AppColors.textPrimary,
-                          containerColor: isDark ? const Color(0xFF1E1E2E) : const Color(0xFFF0F0F8),
+                          iconColor:
+                              isDark ? Colors.white70 : AppColors.textPrimary,
+                          containerColor: isDark
+                              ? const Color(0xFF1E1E2E)
+                              : const Color(0xFFF0F0F8),
                         ),
                         const SizedBox(width: 8),
                         _buildCircleAction(
@@ -449,11 +450,13 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                               )
                             else if (_searchResults.isEmpty)
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 32),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 32),
                                 child: Center(
                                   child: Column(
                                     children: [
-                                      const Text('🔍', style: TextStyle(fontSize: 48)),
+                                      const Text('🔍',
+                                          style: TextStyle(fontSize: 48)),
                                       const SizedBox(height: 12),
                                       Text(
                                         'No shops found for "$_searchQuery"',
@@ -469,7 +472,9 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                               )
                             else
                               ..._searchResults.map((shop) {
-                                final isFood = AppCategories.groupFor(shop.category) == CategoryGroup.food;
+                                final isFood =
+                                    AppCategories.groupFor(shop.category) ==
+                                        CategoryGroup.food;
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 16),
                                   child: isFood
@@ -497,11 +502,14 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                               _isFoodTab
                                   ? 'Restaurants near you'
                                   : 'Shops near you',
-                              subtitle: '${_shops.length} within ${DeliveryCalculator.maxRadiusKm.toInt()} km',
+                              subtitle:
+                                  '${_shops.length} within ${DeliveryCalculator.maxRadiusKm.toInt()} km',
                             ),
                             const SizedBox(height: 16),
                             ..._shops.map((shop) {
-                              final isFood = AppCategories.groupFor(shop.category) == CategoryGroup.food;
+                              final isFood =
+                                  AppCategories.groupFor(shop.category) ==
+                                      CategoryGroup.food;
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 16),
                                 child: isFood
@@ -653,7 +661,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                         color: Colors.white,
                         height: 1.1)),
                 const SizedBox(height: 8),
-                Text('Supporting local sellers · Zero commission',
+                Text('Supporting local sellers · 5% commission',
                     style: GoogleFonts.outfit(
                         fontSize: 12, color: Colors.white.withOpacity(0.7))),
               ],

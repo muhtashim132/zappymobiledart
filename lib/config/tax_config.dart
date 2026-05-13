@@ -114,52 +114,52 @@ class TaxConfig {
 
   static const Map<String, double> _categoryGstRate = {
     // ── Food: Zappy is deemed supplier (Section 9(5)) ─────────────────────
-    'Restaurant':     0.05, // 5% — no ITC for seller
-    'Fast Food':      0.05,
-    'Bakery':         0.05,
+    'Restaurant': 0.05, // 5% — no ITC for seller
+    'Fast Food': 0.05,
+    'Bakery': 0.05,
     'Sweets & Mithai': 0.05,
-    'Tea & Coffee':   0.05,
-    'Ice Cream':      0.05,
-    'Paan Shop':      0.05, // blended (paan 5%, tobacco higher — use 5% avg)
+    'Tea & Coffee': 0.05,
+    'Ice Cream': 0.05,
+    'Paan Shop': 0.05, // blended (paan 5%, tobacco higher — use 5% avg)
 
     // ── Perishables / Raw ──────────────────────────────────────────────────
-    'Fruits & Vegs':  0.00, // 0% — fresh produce
-    'Butcher':        0.00, // 0% — fresh meat
+    'Fruits & Vegs': 0.00, // 0% — fresh produce
+    'Butcher': 0.00, // 0% — fresh meat
     'Fish & Seafood': 0.00, // 0% — fresh fish
-    'Dairy & Eggs':   0.05, // blended: eggs 0%, packaged milk 0%, butter 12%
+    'Dairy & Eggs': 0.05, // blended: eggs 0%, packaged milk 0%, butter 12%
 
     // ── Grocery / Organic ─────────────────────────────────────────────────
-    'Grocery':        0.05, // 5% blended (staples 5%, loose items 0%)
-    'Organic':        0.05,
-    'Beverages':      0.12, // 12% — packaged drinks
+    'Grocery': 0.05, // 5% blended (staples 5%, loose items 0%)
+    'Organic': 0.05,
+    'Beverages': 0.12, // 12% — packaged drinks
 
     // ── Pharmacy ──────────────────────────────────────────────────────────
-    'Pharmacy':       0.05, // 5% — life-saving & OTC medicines
-    'Medical Store':  0.05,
+    'Pharmacy': 0.05, // 5% — life-saving & OTC medicines
+    'Medical Store': 0.05,
 
     // ── Clothing & Footwear (price-slab — handled dynamically) ────────────
-    'Clothing':       0.05, // 5% for ≤₹1,000 | 12% for >₹1,000
-    'Footwear':       0.05, // same slab as clothing
+    'Clothing': 0.05, // 5% for ≤₹1,000 | 12% for >₹1,000
+    'Footwear': 0.05, // same slab as clothing
 
     // ── Electronics ───────────────────────────────────────────────────────
-    'Electronics':    0.18,
+    'Electronics': 0.18,
     'Mobile & Repair': 0.18,
 
     // ── Jewellery ─────────────────────────────────────────────────────────
-    'Jewellery':      0.03, // 3% on gold/gem value
+    'Jewellery': 0.03, // 3% on gold/gem value
 
     // ── General Retail ─────────────────────────────────────────────────────
-    'Stationery':     0.12,
-    'Toys & Games':   0.12,
-    'Sports':         0.12,
-    'Pet Supplies':   0.18,
+    'Stationery': 0.12,
+    'Toys & Games': 0.12,
+    'Sports': 0.12,
+    'Pet Supplies': 0.18,
     'Salon & Beauty': 0.18,
-    'Flowers':        0.05,
-    'Home Decor':     0.18,
-    'Furniture':      0.18,
+    'Flowers': 0.05,
+    'Home Decor': 0.18,
+    'Furniture': 0.18,
     'Hardware Store': 0.18,
-    'Auto Parts':     0.18,
-    'Other':          0.18, // conservative default
+    'Auto Parts': 0.18,
+    'Other': 0.18, // conservative default
   };
 
   /// Returns GST rate as a fraction (e.g. 0.05 = 5%) for a given [category].
@@ -336,12 +336,12 @@ class OrderTaxBreakdown {
     // ── 1. Item base subtotal + GST addition ─────────────────────────────────
     double baseSubtotal = 0;
     double itemGst = 0;
-    double s9_5Gst = 0;    // food/restaurant GST — Zappy remits
+    double s9_5Gst = 0; // food/restaurant GST — Zappy remits
     double nonFoodGst = 0; // retail GST — passed to seller
 
     for (final item in items) {
       final category = (item['category'] as String?) ?? 'Other';
-      final price = (item['price'] as num).toDouble();   // BASE price, pre-GST
+      final price = (item['price'] as num).toDouble(); // BASE price, pre-GST
       final qty = (item['quantity'] as num).toInt();
       final lineBase = price * qty;
       final gstRate = TaxConfig.gstRateForCategory(category, itemPrice: price);
@@ -369,9 +369,8 @@ class OrderTaxBreakdown {
 
     // ── 4. Gateway deduction ──────────────────────────────────────────────────
     final isOnline = paymentMethod != 'cod';
-    final gwDeduct = isOnline
-        ? grand * TaxConfig.effectiveGatewayDeductionPercent
-        : 0.0;
+    final gwDeduct =
+        isOnline ? grand * TaxConfig.effectiveGatewayDeductionPercent : 0.0;
 
     // ── 5. Zappy commission ───────────────────────────────────────────────────
     //   Commission is on BASE item subtotal only (delivery + platform are
@@ -428,9 +427,9 @@ class OrderTaxBreakdown {
       zappyNetCommission +
       (deliveryCharge - deliveryGst) + // delivery net after GST remittance
       (platformFee - platformFeeGst) - // platform net after GST remittance
-      zappyGatewayShare;               // Zappy's gateway share already absorbed above
-                                       // but deliveryCharge portion gateway share is
-                                       // included in zappyGatewayShare already
+      zappyGatewayShare; // Zappy's gateway share already absorbed above
+  // but deliveryCharge portion gateway share is
+  // included in zappyGatewayShare already
 
   @override
   String toString() => '''

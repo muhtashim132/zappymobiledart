@@ -96,11 +96,6 @@ class _EarningsPageState extends State<EarningsPage> {
         title: Text('Earnings',
             style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
         centerTitle: true,
-        actions: [
-          IconButton(
-              onPressed: _loadEarnings,
-              icon: const Icon(Icons.refresh_rounded)),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
+import 'profile_settings_dialogs.dart';
 
 class ProfileSettingsPage extends StatefulWidget {
   const ProfileSettingsPage({super.key});
@@ -87,21 +88,21 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               title: 'Notifications',
               subtitle: 'Manage push notifications',
               isDark: isDark,
-              onTap: () {},
+              onTap: () => showGenericInfoDialog(context, 'Notifications', 'Push notification settings will appear here.'),
             ),
             _buildSettingTile(
               icon: Icons.security_rounded,
               title: 'Privacy & Security',
               subtitle: 'Password, PIN, and biometrics',
               isDark: isDark,
-              onTap: () {},
+              onTap: () => showGenericInfoDialog(context, 'Privacy & Security', 'Biometrics and PIN lock are active.'),
             ),
             _buildSettingTile(
               icon: Icons.help_outline_rounded,
               title: 'Help & Support',
               subtitle: 'FAQs and contact support',
               isDark: isDark,
-              onTap: () {},
+              onTap: () => showGenericInfoDialog(context, 'Help & Support', 'Please contact support at support@zappy.in.'),
             ),
             _buildSettingTile(
               icon: Icons.info_outline_rounded,
@@ -170,14 +171,14 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           title: 'Saved Addresses',
           subtitle: 'Manage delivery locations',
           isDark: isDark,
-          onTap: () => _showComingSoon('Saved Addresses'),
+          onTap: () => showSavedAddressesDialog(context),
         ),
         _buildSettingTile(
           icon: Icons.payment_outlined,
           title: 'Payment Methods',
           subtitle: 'Manage saved cards and UPI',
           isDark: isDark,
-          onTap: () => _showComingSoon('Payment Methods'),
+          onTap: () => showGenericInfoDialog(context, 'Payment Methods', 'UPI and Cards are managed securely via Razorpay during checkout.'),
         ),
         const SizedBox(height: 24),
       ],
@@ -198,18 +199,11 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           onTap: _showShopDetailsDialog,
         ),
         _buildSettingTile(
-          icon: Icons.access_time,
-          title: 'Business Hours',
-          subtitle: 'Set opening and closing times',
-          isDark: isDark,
-          onTap: () => _showComingSoon('Business Hours'),
-        ),
-        _buildSettingTile(
           icon: Icons.account_balance_outlined,
           title: 'Payout Settings',
           subtitle: 'Bank accounts for settlements',
           isDark: isDark,
-          onTap: () => _showComingSoon('Payout Settings'),
+          onTap: () => showPayoutSettingsDialog(context, 'shops', 'seller_id'),
         ),
         const SizedBox(height: 24),
       ],
@@ -234,14 +228,14 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           title: 'Documents',
           subtitle: 'License, Aadhar, and approvals',
           isDark: isDark,
-          onTap: () => _showComingSoon('Documents'),
+          onTap: () => showDocumentsDialog(context),
         ),
         _buildSettingTile(
           icon: Icons.account_balance_outlined,
           title: 'Bank Details',
           subtitle: 'Manage weekly payout account',
           isDark: isDark,
-          onTap: () => _showComingSoon('Bank Details'),
+          onTap: () => showPayoutSettingsDialog(context, 'delivery_partners', 'id'),
         ),
         const SizedBox(height: 24),
       ],

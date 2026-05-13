@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart' as ll;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../config/routes.dart';
@@ -40,7 +41,11 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
   final _bankAccountCtrl = TextEditingController();
   final _ifscCtrl = TextEditingController();
   final _accountHolderCtrl = TextEditingController();
-  
+
+  // Common
+  final _pincodeCtrl = TextEditingController();
+  String? _phoneNumber;
+
   // Seller specific extra
   final _panCtrl = TextEditingController();
   final _gstCtrl = TextEditingController();
@@ -56,6 +61,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
   @override
   void initState() {
     super.initState();
+    _phoneNumber = Supabase.instance.client.auth.currentUser?.phone;
     _animCtrl = AnimationController(
         duration: const Duration(milliseconds: 400), vsync: this)
       ..forward();
@@ -107,6 +113,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
       _panCtrl,
       _gstCtrl,
       _tradeLicenseCtrl,
+      _pincodeCtrl,
     ]) {
       c.dispose();
     }
@@ -120,8 +127,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
     }
   }
 
-  /// Fetch current GPS location and reverse-geocode it into the shop address field
-  Future<void> _fetchLiveLocation() async {
+  /// Fetch current GPS location and reverse-geocode it into the target address field
+  Future<void> _fetchLiveLocation(TextEditingController targetCtrl) async {
     setState(() => _fetchingLocation = true);
     try {
       LocationPermission perm = await Geolocator.checkPermission();
@@ -148,7 +155,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         locProv.setManualLocation(latLng, addr);
         if (mounted) {
           setState(() {
-            _shopAddressCtrl.text = addr;
+            targetCtrl.text = addr;
             _fetchingLocation = false;
           });
         }
@@ -174,7 +181,10 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
     switch (_role) {
       case _Role.customer:
         roleName = 'customer';
-        extra = {'default_address': _addressCtrl.text.trim()};
+        extra = {
+          'default_address': _addressCtrl.text.trim(),
+          'pincode': _pincodeCtrl.text.trim()
+        };
         break;
       case _Role.seller:
         // Validate category-specific required fields
@@ -195,15 +205,18 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           setState(() => _loading = false);
           return;
         }
-        
+
         // ── Enforce GSTIN for non-restaurant sellers ─────────────────────────
         final needsGstin = !TaxConfig.isZappyDeemedSupplier(_shopCategory);
         if (needsGstin && _gstCtrl.text.trim().isEmpty) {
-          _showSnack('GSTIN is mandatory for retail/hypermarket categories', isError: true);
+          _showSnack('GSTIN is mandatory for retail/hypermarket categories',
+              isError: true);
           setState(() => _loading = false);
           return;
         }
-        if (_accountHolderCtrl.text.trim().isEmpty || _bankAccountCtrl.text.trim().isEmpty || _ifscCtrl.text.trim().isEmpty) {
+        if (_accountHolderCtrl.text.trim().isEmpty ||
+            _bankAccountCtrl.text.trim().isEmpty ||
+            _ifscCtrl.text.trim().isEmpty) {
           _showSnack('All Bank Details are required', isError: true);
           setState(() => _loading = false);
           return;
@@ -216,6 +229,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
               : _shopNameCtrl.text.trim(),
           'category': _shopCategory,
           'address': _shopAddressCtrl.text.trim(),
+          'pincode': _pincodeCtrl.text.trim(),
           'is_active': false,
           'aadhar_number': _aadharCtrl.text.trim(),
           'pan_number': _panCtrl.text.trim(),
@@ -232,12 +246,16 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         };
         break;
       case _Role.delivery:
-        if (_aadharCtrl.text.trim().isEmpty || _licenseCtrl.text.trim().isEmpty || _vehicleRegCtrl.text.trim().isEmpty) {
+        if (_aadharCtrl.text.trim().isEmpty ||
+            _licenseCtrl.text.trim().isEmpty ||
+            _vehicleRegCtrl.text.trim().isEmpty) {
           _showSnack('Please fill all mandatory KYC fields', isError: true);
           setState(() => _loading = false);
           return;
         }
-        if (_accountHolderCtrl.text.trim().isEmpty || _bankAccountCtrl.text.trim().isEmpty || _ifscCtrl.text.trim().isEmpty) {
+        if (_accountHolderCtrl.text.trim().isEmpty ||
+            _bankAccountCtrl.text.trim().isEmpty ||
+            _ifscCtrl.text.trim().isEmpty) {
           _showSnack('All Bank Details are required', isError: true);
           setState(() => _loading = false);
           return;
@@ -253,6 +271,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           'bank_account_number': _bankAccountCtrl.text.trim(),
           'bank_ifsc': _ifscCtrl.text.trim(),
           'bank_account_holder': _accountHolderCtrl.text.trim(),
+          'pincode': _pincodeCtrl.text.trim(),
           'is_available': false,
         };
         break;
@@ -457,7 +476,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           _RoleCard(
             icon: '🏪',
             title: 'Seller',
-            subtitle: 'List your products — zero commission on sales',
+            subtitle: 'List your products — 5% commission on sales',
             selected: _role == _Role.seller,
             onTap: () => setState(() => _role = _Role.seller),
           ),
@@ -498,6 +517,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
               controller: _nameCtrl,
               hint: 'Your full name'),
           const SizedBox(height: 16),
+          _buildPhoneField(),
+          const SizedBox(height: 16),
           ..._roleFields,
           const SizedBox(height: 32),
           _GoldButton(
@@ -525,10 +546,13 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
     switch (_role) {
       case _Role.customer:
         return [
+          _buildAddressAndLocation('Default Delivery Address', _addressCtrl),
+          const SizedBox(height: 16),
           _DarkField(
-              label: 'Default Delivery Address',
-              controller: _addressCtrl,
-              hint: 'Your home or work address'),
+              label: 'Pincode',
+              controller: _pincodeCtrl,
+              hint: 'e.g. 400001',
+              number: true),
         ];
       case _Role.seller:
         return [
@@ -600,73 +624,13 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           const SizedBox(height: 16),
 
           // ── Shop Address with live GPS ────────────────────────────────
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Shop Address *',
-                  style: GoogleFonts.outfit(
-                      color: Colors.white54,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.6)),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.06),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.12)),
-                      ),
-                      child: TextField(
-                        controller: _shopAddressCtrl,
-                        maxLines: 2,
-                        style: GoogleFonts.outfit(
-                            color: Colors.white, fontSize: 15),
-                        decoration: InputDecoration(
-                          hintText: 'Type address or tap 📍',
-                          hintStyle: GoogleFonts.outfit(
-                              color: Colors.white24, fontSize: 14),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 18, vertical: 14),
-                          border: InputBorder.none,
-                          filled: true,
-                          fillColor: Colors.transparent,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: _fetchingLocation ? null : _fetchLiveLocation,
-                    child: Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                            colors: [Color(0xFF1A35C8), Color(0xFF0A178C)]),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: _fetchingLocation
-                          ? const Padding(
-                              padding: EdgeInsets.all(14),
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2),
-                            )
-                          : const Icon(Icons.my_location_rounded,
-                              color: Colors.white, size: 24),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text('Tap 📍 to auto-fill from your current GPS location',
-                  style:
-                      GoogleFonts.outfit(color: Colors.white30, fontSize: 11)),
-            ],
-          ),
+          _buildAddressAndLocation('Shop Address *', _shopAddressCtrl),
+          const SizedBox(height: 16),
+          _DarkField(
+              label: 'Pincode *',
+              controller: _pincodeCtrl,
+              hint: 'e.g. 400001',
+              number: true),
           const SizedBox(height: 24),
 
           // ── Dynamic category-specific fields ─────────────────────────
@@ -826,6 +790,12 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
               label: 'Vehicle Type *',
               controller: _vehicleTypeCtrl,
               hint: 'Bike / Scooter / Car'),
+          const SizedBox(height: 16),
+          _DarkField(
+              label: 'Pincode (Operational Area) *',
+              controller: _pincodeCtrl,
+              hint: 'e.g. 400001',
+              number: true),
           const SizedBox(height: 24),
 
           // ── Bank Details ──────────────────────────────────────────────
@@ -864,6 +834,108 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
               caps: true),
         ];
     }
+  }
+
+  Widget _buildPhoneField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Phone Number',
+            style: GoogleFonts.outfit(
+                color: Colors.white54,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.6)),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          ),
+          child: Text(
+            _phoneNumber ?? 'Not available',
+            style: GoogleFonts.outfit(
+                color: Colors.white54, fontSize: 15, fontWeight: FontWeight.w500),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text('This number was used for verification and will be used for contact.',
+            style: GoogleFonts.outfit(color: Colors.white30, fontSize: 11)),
+      ],
+    );
+  }
+
+  Widget _buildAddressAndLocation(String label, TextEditingController ctrl) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: GoogleFonts.outfit(
+                color: Colors.white54,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.6)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.12)),
+                ),
+                child: TextField(
+                  controller: ctrl,
+                  maxLines: 2,
+                  style: GoogleFonts.outfit(
+                      color: Colors.white, fontSize: 15),
+                  decoration: InputDecoration(
+                    hintText: 'Type address or tap 📍',
+                    hintStyle: GoogleFonts.outfit(
+                        color: Colors.white24, fontSize: 14),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 14),
+                    border: InputBorder.none,
+                    filled: true,
+                    fillColor: Colors.transparent,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: _fetchingLocation ? null : () => _fetchLiveLocation(ctrl),
+              child: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                      colors: [Color(0xFF1A35C8), Color(0xFF0A178C)]),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: _fetchingLocation
+                    ? const Padding(
+                        padding: EdgeInsets.all(14),
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Icon(Icons.my_location_rounded,
+                        color: Colors.white, size: 24),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text('Tap 📍 to auto-fill from your current GPS location',
+            style:
+                GoogleFonts.outfit(color: Colors.white30, fontSize: 11)),
+      ],
+    );
   }
 
   Widget _blob(double size, Color color, double opacity) => Opacity(

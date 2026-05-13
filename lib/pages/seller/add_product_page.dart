@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
@@ -21,13 +22,24 @@ class _AddProductPageState extends State<AddProductPage> {
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _menuCategoryController = TextEditingController();
+  final _weightController = TextEditingController();
+  final _inventoryController = TextEditingController();
+  
   bool _isVeg = true;
   bool _isAvailable = true;
   bool _isSaving = false;
   String _productCategory = 'Food';
+  String _unitType = 'pieces';
   bool _isFoodGroup = true;
   String? _shopId;
-  XFile? _imageFile;
+  List<XFile> _images = [];
+
+  List<String> get _availableUnitTypes {
+    if (_productCategory == 'Clothing' || _productCategory == 'Electronics' || _productCategory == 'Hardware' || _productCategory == 'Books') {
+      return ['pieces'];
+    }
+    return ['pieces', 'kg', 'grams', 'liter', 'ml'];
+  }
 
   @override
   void initState() {
@@ -63,9 +75,19 @@ class _AddProductPageState extends State<AddProductPage> {
   }
 
   Future<void> _pickImage() async {
+    if (_images.length >= 3) return;
     final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery);
-    if (file != null) setState(() => _imageFile = file);
+    final List<XFile> picked = await picker.pickMultiImage(imageQuality: 70);
+    if (picked.isNotEmpty) {
+      setState(() {
+        _images.addAll(picked);
+        if (_images.length > 3) _images = _images.sublist(0, 3);
+      });
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() => _images.removeAt(index));
   }
 
   Future<void> _saveProduct() async {
@@ -79,6 +101,16 @@ class _AddProductPageState extends State<AddProductPage> {
 
     setState(() => _isSaving = true);
     try {
+      List<String> uploadedUrls = [];
+      for (int i = 0; i < _images.length; i++) {
+        final file = _images[i];
+        final bytes = await file.readAsBytes();
+        final ext = file.name.split('.').last;
+        final path = '$_shopId/${DateTime.now().millisecondsSinceEpoch}_$i.$ext';
+        await _supabase.storage.from('products').uploadBinary(path, bytes);
+        uploadedUrls.add(_supabase.storage.from('products').getPublicUrl(path));
+      }
+
       await _supabase.from('products').insert({
         'shop_id': _shopId,
         'name': _nameController.text.trim(),
@@ -88,7 +120,10 @@ class _AddProductPageState extends State<AddProductPage> {
         'menu_category': _menuCategoryController.text.trim().isEmpty ? null : _menuCategoryController.text.trim(),
         'is_veg': _isFoodGroup ? _isVeg : false,
         'is_available': _isAvailable,
-        'images': [],
+        'weight_per_unit': _weightController.text.trim().isEmpty ? null : double.tryParse(_weightController.text.trim()),
+        'unit_type': _unitType,
+        'total_quantity': _inventoryController.text.trim().isEmpty ? null : int.tryParse(_inventoryController.text.trim()),
+        'images': uploadedUrls,
       });
 
       if (mounted) {
@@ -127,44 +162,104 @@ class _AddProductPageState extends State<AddProductPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Image Picker
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  width: double.infinity,
-                  height: 180,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                        color: AppColors.primary.withOpacity(0.3),
-                        width: 2,
-                        style: BorderStyle.solid),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        _imageFile != null
-                            ? Icons.check_circle
-                            : Icons.add_photo_alternate_outlined,
-                        size: 48,
-                        color: AppColors.primary,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _imageFile != null
-                            ? 'Image selected ✓'
-                            : 'Tap to add product image',
-                        style: const TextStyle(
+              if (_images.isEmpty)
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    width: double.infinity,
+                    height: 180,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                          color: AppColors.primary.withOpacity(0.3),
+                          width: 2,
+                          style: BorderStyle.solid),
+                    ),
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_photo_alternate_outlined,
+                          size: 48,
                           color: AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Poppins',
                         ),
-                      ),
-                    ],
+                        SizedBox(height: 8),
+                        Text(
+                          'Tap to add up to 3 images',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      height: 120,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _images.length < 3 ? _images.length + 1 : _images.length,
+                        itemBuilder: (context, index) {
+                          if (index == _images.length) {
+                            return GestureDetector(
+                              onTap: _pickImage,
+                              child: Container(
+                                width: 120,
+                                margin: const EdgeInsets.only(right: 12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(0.05),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                      color: AppColors.primary.withOpacity(0.3), width: 2),
+                                ),
+                                child: const Center(
+                                  child: Icon(Icons.add_photo_alternate, color: AppColors.primary),
+                                ),
+                              ),
+                            );
+                          }
+                          return Stack(
+                            children: [
+                              Container(
+                                width: 120,
+                                margin: const EdgeInsets.only(right: 12),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  image: DecorationImage(
+                                    image: FileImage(File(_images[index].path)),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 16,
+                                child: GestureDetector(
+                                  onTap: () => _removeImage(index),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ),
               const SizedBox(height: 20),
 
               _card(
@@ -229,6 +324,9 @@ class _AddProductPageState extends State<AddProductPage> {
                           _productCategory = v;
                           _isFoodGroup = AppCategories.groupFor(v) == CategoryGroup.food || 
                                          AppCategories.groupFor(v) == CategoryGroup.perishable;
+                          if (!_availableUnitTypes.contains(_unitType)) {
+                            _unitType = _availableUnitTypes.first;
+                          }
                         });
                       }
                     },
@@ -246,6 +344,51 @@ class _AddProductPageState extends State<AddProductPage> {
               ),
               const SizedBox(height: 16),
 
+              _card(
+                children: [
+                  TextFormField(
+                    controller: _inventoryController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Total Quantity (Stock)',
+                      hintText: 'Leave empty for unlimited (e.g. food)',
+                      prefixIcon: Icon(Icons.inventory_2_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: TextFormField(
+                          controller: _weightController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          decoration: const InputDecoration(
+                            labelText: 'Weight/Volume per unit',
+                            hintText: 'e.g. 0.5, 1.5, 2',
+                            prefixIcon: Icon(Icons.scale_outlined),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: DropdownButtonFormField<String>(
+                          value: _unitType,
+                          decoration: const InputDecoration(
+                            labelText: 'Unit',
+                          ),
+                          items: _availableUnitTypes.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+                          onChanged: (v) {
+                            if (v != null) setState(() => _unitType = v);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
               _card(
                 children: [
                   if (_isFoodGroup) ...[

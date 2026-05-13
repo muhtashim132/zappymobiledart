@@ -238,15 +238,6 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                         Icons.settings_outlined,
                                         () => Navigator.pushNamed(
                                             context, AppRoutes.settings)),
-                                    _headerIcon(Icons.logout_rounded, () async {
-                                      await auth.signOut();
-                                      if (mounted) {
-                                        Navigator.pushNamedAndRemoveUntil(
-                                            context,
-                                            AppRoutes.roleSelect,
-                                            (_) => false);
-                                      }
-                                    }),
                                   ],
                                 ),
                                 const SizedBox(height: 20),

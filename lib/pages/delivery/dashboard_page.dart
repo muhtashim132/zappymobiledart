@@ -35,9 +35,10 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
   bool _locationUnavailable = false;
 
   late AnimationController _bgCtrl;
-  late AnimationController _pulseCtrl;
   late Animation<double> _bgAnim;
-  late Animation<double> _pulseAnim;
+
+  bool _autoAccept = false;
+  String _navApp = 'Google Maps';
 
   @override
   void initState() {
@@ -46,12 +47,6 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         AnimationController(duration: const Duration(seconds: 5), vsync: this)
           ..repeat(reverse: true);
     _bgAnim = CurvedAnimation(parent: _bgCtrl, curve: Curves.easeInOut);
-
-    _pulseCtrl = AnimationController(
-        duration: const Duration(milliseconds: 1400), vsync: this)
-      ..repeat(reverse: true);
-    _pulseAnim = Tween<double>(begin: 0.92, end: 1.0)
-        .animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
     _loadOrders();
     _initNotifications();
@@ -71,7 +66,6 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
   @override
   void dispose() {
     _bgCtrl.dispose();
-    _pulseCtrl.dispose();
     super.dispose();
   }
 
@@ -369,19 +363,12 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
           slivers: [
             // ── Animated Header ───────────────────────────────────────────
             SliverAppBar(
-              expandedHeight: 300,
+              expandedHeight: 220,
               pinned: true,
               elevation: 0,
               backgroundColor: const Color(0xFF0D2137),
               surfaceTintColor: Colors.transparent,
               leading: const SizedBox.shrink(),
-              actions: [
-                IconButton(
-                  icon:
-                      const Icon(Icons.refresh_rounded, color: Colors.white70),
-                  onPressed: _loadOrders,
-                ),
-              ],
               flexibleSpace: FlexibleSpaceBar(
                 background: AnimatedBuilder(
                   animation: _bgCtrl,
@@ -412,7 +399,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                             child: _blob(180, const Color(0xFF51CF66), 0.10)),
                         // Stars
                         CustomPaint(
-                            size: Size(size.width, 300),
+                            size: Size(size.width, 220),
                             painter: _MiniStarPainter(_bgCtrl.value)),
                         // Content
                         SafeArea(
@@ -456,124 +443,9 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                                       Icons.settings_outlined,
                                       () => Navigator.pushNamed(
                                           context, AppRoutes.settings)),
-                                  _iconBtn(Icons.logout_rounded, () async {
-                                    await auth.signOut();
-                                    if (mounted) {
-                                      Navigator.pushNamedAndRemoveUntil(context,
-                                          AppRoutes.roleSelect, (_) => false);
-                                    }
-                                  }),
                                 ]),
                                 const SizedBox(height: 24),
 
-                                // Online/Offline toggle card
-                                ScaleTransition(
-                                  scale: _isOnline
-                                      ? _pulseAnim
-                                      : const AlwaysStoppedAnimation(1.0),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() => _isOnline = !_isOnline);
-                                      if (_isOnline) _loadOrders();
-                                    },
-                                    child: AnimatedContainer(
-                                      duration:
-                                          const Duration(milliseconds: 400),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 20, vertical: 16),
-                                      decoration: BoxDecoration(
-                                        gradient: _isOnline
-                                            ? const LinearGradient(
-                                                colors: [
-                                                    Color(0xFF2ECC71),
-                                                    Color(0xFF27AE60)
-                                                  ],
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight)
-                                            : null,
-                                        color: _isOnline
-                                            ? null
-                                            : Colors.white.withOpacity(0.08),
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: _isOnline
-                                              ? Colors.transparent
-                                              : Colors.white.withOpacity(0.15),
-                                          width: 1.5,
-                                        ),
-                                        boxShadow: _isOnline
-                                            ? [
-                                                BoxShadow(
-                                                    color:
-                                                        const Color(0xFF2ECC71)
-                                                            .withOpacity(0.4),
-                                                    blurRadius: 20,
-                                                    offset: const Offset(0, 6))
-                                              ]
-                                            : [],
-                                      ),
-                                      child: Row(children: [
-                                        AnimatedContainer(
-                                          duration:
-                                              const Duration(milliseconds: 400),
-                                          width: 14,
-                                          height: 14,
-                                          decoration: BoxDecoration(
-                                            color: _isOnline
-                                                ? Colors.white
-                                                : Colors.grey.shade400,
-                                            shape: BoxShape.circle,
-                                            boxShadow: _isOnline
-                                                ? [
-                                                    const BoxShadow(
-                                                        color: Colors.white30,
-                                                        blurRadius: 8)
-                                                  ]
-                                                : [],
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                  _isOnline
-                                                      ? 'YOU ARE ONLINE'
-                                                      : 'YOU ARE OFFLINE',
-                                                  style: GoogleFonts.outfit(
-                                                      color: Colors.white,
-                                                      fontSize: 15,
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                      letterSpacing: 0.5)),
-                                              Text(
-                                                  _isOnline
-                                                      ? 'Ready to accept deliveries'
-                                                      : 'Tap to go online',
-                                                  style: GoogleFonts.outfit(
-                                                      color: Colors.white70,
-                                                      fontSize: 12)),
-                                            ]),
-                                        const Spacer(),
-                                        Switch(
-                                          value: _isOnline,
-                                          onChanged: (v) {
-                                            setState(() => _isOnline = v);
-                                            if (v) _loadOrders();
-                                          },
-                                          activeTrackColor:
-                                              Colors.white.withOpacity(0.3),
-                                          activeThumbColor: Colors.white,
-                                          inactiveTrackColor:
-                                              Colors.white.withOpacity(0.15),
-                                        ),
-                                      ]),
-                                    ),
-                                  ),
-                                ),
-
-                                const SizedBox(height: 16),
                                 // Stats row
                                 Row(children: [
                                   _miniCard('${_myOrders.length}', 'Active',
@@ -627,6 +499,20 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
+                  // Quick Actions
+                  _sectionHeader('⚡ Quick Actions', '', const Color(0xFF00B4D8), isDark),
+                  const SizedBox(height: 14),
+                  _actionTile(
+                    icon: Icons.work_outline_rounded,
+                    gradient: const [Color(0xFF2ECC71), Color(0xFF27AE60)],
+                    title: 'Work Management',
+                    subtitle: _isOnline ? 'You are Online. Tap to go Offline or edit settings.' : 'You are Offline. Tap to go Online.',
+                    badge: _isOnline ? 'Online' : 'Offline',
+                    isDark: isDark,
+                    onTap: _showWorkManagementSheet,
+                  ),
+                  const SizedBox(height: 24),
+
                   // Active deliveries
                   if (_myOrders.isNotEmpty) ...[
                     _sectionHeader('🚗 My Active Deliveries',
@@ -1120,15 +1006,6 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
               style: GoogleFonts.outfit(
                   color: isDark ? Colors.white38 : Colors.grey.shade500,
                   fontSize: 13)),
-          const SizedBox(height: 20),
-          OutlinedButton.icon(
-            onPressed: _loadOrders,
-            icon: const Icon(Icons.refresh),
-            label: Text('Refresh', style: GoogleFonts.outfit()),
-            style: OutlinedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12))),
-          ),
         ]),
       );
 
@@ -1167,6 +1044,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         ),
         child: Center(
             child: Text(initials,
+                textAlign: TextAlign.center,
                 style: GoogleFonts.outfit(
                     color: Colors.white,
                     fontSize: 20,
@@ -1219,6 +1097,184 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                 gradient:
                     RadialGradient(colors: [color, color.withOpacity(0)]))),
       );
+
+  Widget _actionTile({
+    required IconData icon,
+    required List<Color> gradient,
+    required String title,
+    required String subtitle,
+    required String? badge,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF141425) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                blurRadius: 12,
+                offset: const Offset(0, 4))
+          ],
+        ),
+        child: Row(children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  colors: gradient,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight),
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                    color: gradient.first.withOpacity(0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4))
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title,
+                  style: GoogleFonts.outfit(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                      color: isDark ? Colors.white : const Color(0xFF0A0A14))),
+              Text(subtitle,
+                  style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: isDark ? Colors.white38 : Colors.grey.shade600)),
+            ]),
+          ),
+          if (badge != null) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                  color: badge == 'Online' ? const Color(0xFF2ECC71) : Colors.grey,
+                  borderRadius: BorderRadius.circular(20)),
+              child: Text(badge,
+                  style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800)),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Icon(Icons.arrow_forward_ios_rounded,
+              size: 15, color: isDark ? Colors.white24 : Colors.grey.shade400),
+        ]),
+      ),
+    );
+  }
+
+  void _showWorkManagementSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1A1A2E) : Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Work Management 🛠️', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                const SizedBox(height: 8),
+                Text('Manage your shift, tools, and availability.', style: GoogleFonts.outfit(fontSize: 14, color: isDark ? Colors.white60 : Colors.black54)),
+                const SizedBox(height: 24),
+                // Online/Offline Toggle
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: SwitchListTile(
+                    title: Text('Duty Status', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                    subtitle: Text(_isOnline ? 'Online - Receiving orders' : 'Offline - Not receiving orders', style: GoogleFonts.outfit(color: isDark ? Colors.white70 : Colors.black54)),
+                    value: _isOnline,
+                    activeColor: AppColors.success,
+                    secondary: Icon(Icons.power_settings_new_rounded, color: _isOnline ? AppColors.success : Colors.grey),
+                    onChanged: (val) {
+                      setSheetState(() => _isOnline = val);
+                      setState(() => _isOnline = val);
+                      if (val) _loadOrders();
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: SwitchListTile(
+                    title: Text('Auto-Accept Orders', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                    subtitle: Text('Automatically accept nearby orders (Under Dev)', style: GoogleFonts.outfit(color: isDark ? Colors.white70 : Colors.black54)),
+                    value: _autoAccept,
+                    activeColor: AppColors.primary,
+                    secondary: Icon(Icons.flash_on_rounded, color: _autoAccept ? AppColors.primary : Colors.grey),
+                    onChanged: (val) {
+                      setSheetState(() => _autoAccept = val);
+                      setState(() => _autoAccept = val);
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: ListTile(
+                    title: Text('Navigation App', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                    subtitle: Text(_navApp, style: GoogleFonts.outfit(color: isDark ? Colors.white70 : Colors.black54)),
+                    leading: const Icon(Icons.map_outlined, color: Colors.blue),
+                    trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                    onTap: () {
+                       setSheetState(() {
+                         _navApp = _navApp == 'Google Maps' ? 'Waze' : 'Google Maps';
+                       });
+                       setState(() {});
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: ListTile(
+                    title: Text('Delivery Vehicle', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
+                    subtitle: Text('2-Wheeler (Motorcycle)', style: GoogleFonts.outfit(color: isDark ? Colors.white70 : Colors.black54)),
+                    leading: const Icon(Icons.two_wheeler_rounded, color: Colors.orange),
+                    trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                    onTap: () {
+                       _showSnack('Vehicle change requires admin approval.');
+                    },
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ],
+            ),
+          );
+        }
+      ),
+    );
+  }
 
   Future<void> _callPhone(String phone) async {
     final uri = Uri.parse('tel:$phone');
