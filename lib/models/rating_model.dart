@@ -32,7 +32,9 @@ class RatingModel {
       shopId: map['shop_id'],
       raterRole: map['rater_role'],
       rateeRole: map['ratee_role'],
-      rating: map['rating'] is int ? map['rating'] : int.parse(map['rating'].toString()),
+      rating: map['rating'] is int
+          ? map['rating']
+          : int.parse(map['rating'].toString()),
       review: map['review'],
       createdAt: DateTime.parse(map['created_at']),
     );

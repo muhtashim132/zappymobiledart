@@ -96,9 +96,8 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
       await _supabase.from('shops').update({
         'name': _nameCtrl.text.trim(),
         'address': _addressCtrl.text.trim(),
-        'banner_url': _bannerCtrl.text.trim().isEmpty
-            ? null
-            : _bannerCtrl.text.trim(),
+        'banner_url':
+            _bannerCtrl.text.trim().isEmpty ? null : _bannerCtrl.text.trim(),
         'open_time': _openTimeCtrl.text.trim(),
         'close_time': _closeTimeCtrl.text.trim(),
       }).eq('id', _shopId!);
@@ -139,7 +138,8 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF0A0A14) : const Color(0xFFF4F6FB),
+      backgroundColor:
+          isDark ? const Color(0xFF0A0A14) : const Color(0xFFF4F6FB),
       appBar: AppBar(
         title: Text('Shop Management',
             style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
@@ -241,7 +241,7 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
                               Switch(
                                 value: _isActive,
                                 onChanged: _toggleShopStatus,
-                                activeColor: AppColors.success,
+                                activeThumbColor: AppColors.success,
                                 inactiveThumbColor: AppColors.danger,
                               ),
                             ],
@@ -284,7 +284,8 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
                                 onSubmitted: (_) => setState(() {}),
                               ),
                               const SizedBox(height: 4),
-                              Text('Paste a public image URL for your shop banner',
+                              Text(
+                                  'Paste a public image URL for your shop banner',
                                   style: GoogleFonts.outfit(
                                       fontSize: 11,
                                       color: AppColors.textSecondary)),
@@ -317,8 +318,7 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
                                         _label('Opens at', isDark),
                                         const SizedBox(height: 6),
                                         GestureDetector(
-                                          onTap: () =>
-                                              _pickTime(_openTimeCtrl),
+                                          onTap: () => _pickTime(_openTimeCtrl),
                                           child: AbsorbPointer(
                                             child: _inputField(
                                               controller: _openTimeCtrl,
@@ -443,9 +443,8 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
             GoogleFonts.outfit(color: AppColors.textSecondary, fontSize: 13),
         prefixIcon: Icon(icon, size: 18, color: AppColors.primary),
         filled: true,
-        fillColor: isDark
-            ? Colors.white.withOpacity(0.05)
-            : AppColors.background,
+        fillColor:
+            isDark ? Colors.white.withOpacity(0.05) : AppColors.background,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,

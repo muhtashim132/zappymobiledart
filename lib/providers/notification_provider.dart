@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -95,7 +94,8 @@ class NotificationProvider extends ChangeNotifier {
             _add(AppNotification(
               id: '${orderId}_placed',
               title: '🛍️ Order Placed!',
-              body: 'Your order has been placed. Waiting for shop & rider to accept.',
+              body:
+                  'Your order has been placed. Waiting for shop & rider to accept.',
               orderId: orderId,
             ));
           },
@@ -123,7 +123,8 @@ class NotificationProvider extends ChangeNotifier {
           ),
           callback: (payload) {
             final orderId = payload.newRecord['id'] as String?;
-            final amount = (payload.newRecord['total_amount'] ?? 0.0).toDouble();
+            final amount =
+                (payload.newRecord['total_amount'] ?? 0.0).toDouble();
             _add(AppNotification(
               id: '${orderId}_new',
               title: '🔔 New Order!',
@@ -190,7 +191,9 @@ class NotificationProvider extends ChangeNotifier {
             final oldStatus = oldRecord['status'] as String?;
 
             // A new order just became available for delivery partners
-            if (sellerAcceptedNow && !sellerAcceptedBefore && partnerIdNow == null) {
+            if (sellerAcceptedNow &&
+                !sellerAcceptedBefore &&
+                partnerIdNow == null) {
               final amount = (newRecord['total_amount'] ?? 0.0).toDouble();
               _add(AppNotification(
                 id: '${orderId}_available',
@@ -264,15 +267,27 @@ class NotificationProvider extends ChangeNotifier {
   (String?, String?) _customerStatusMessage(String status, String? orderId) {
     switch (status) {
       case 'confirmed':
-        return ('✅ Order Confirmed!', 'Both the shop and rider have accepted your order.');
+        return (
+          '✅ Order Confirmed!',
+          'Both the shop and rider have accepted your order.'
+        );
       case 'preparing':
-        return ('👨‍🍳 Order Being Prepared', 'The shop is now preparing your order.');
+        return (
+          '👨‍🍳 Order Being Prepared',
+          'The shop is now preparing your order.'
+        );
       case 'ready_for_pickup':
-        return ('📦 Ready for Pickup', 'Your order is packed and waiting for the rider.');
+        return (
+          '📦 Ready for Pickup',
+          'Your order is packed and waiting for the rider.'
+        );
       case 'picked_up':
         return ('🛵 Rider Picked Up', 'Your order is on its way!');
       case 'out_for_delivery':
-        return ('🚀 Out for Delivery!', 'Your order is almost there. Get ready!');
+        return (
+          '🚀 Out for Delivery!',
+          'Your order is almost there. Get ready!'
+        );
       case 'delivered':
         return ('🎉 Order Delivered!', 'Your order has been delivered. Enjoy!');
       case 'cancelled':
@@ -287,11 +302,17 @@ class NotificationProvider extends ChangeNotifier {
   (String?, String?) _sellerStatusMessage(String status, String? orderId) {
     switch (status) {
       case 'confirmed':
-        return ('✅ Order Confirmed!', 'A rider has accepted the order. Start preparing.');
+        return (
+          '✅ Order Confirmed!',
+          'A rider has accepted the order. Start preparing.'
+        );
       case 'cancelled':
         return ('❌ Order Cancelled', 'A customer cancelled their order.');
       case 'picked_up':
-        return ('✅ Order Picked Up', 'The rider has collected the order from your shop.');
+        return (
+          '✅ Order Picked Up',
+          'The rider has collected the order from your shop.'
+        );
       case 'delivered':
         return ('🎉 Order Delivered', 'The order was delivered successfully!');
       default:
@@ -302,11 +323,20 @@ class NotificationProvider extends ChangeNotifier {
   (String?, String?) _deliveryStatusMessage(String status, String? orderId) {
     switch (status) {
       case 'cancelled':
-        return ('❌ Order Cancelled', 'The order you accepted has been cancelled by the customer.');
+        return (
+          '❌ Order Cancelled',
+          'The order you accepted has been cancelled by the customer.'
+        );
       case 'preparing':
-        return ('👨‍🍳 Shop Preparing', 'The shop has started preparing the order. Head over!');
+        return (
+          '👨‍🍳 Shop Preparing',
+          'The shop has started preparing the order. Head over!'
+        );
       case 'ready_for_pickup':
-        return ('📦 Ready for Pickup!', 'The order is ready. Go pick it up now!');
+        return (
+          '📦 Ready for Pickup!',
+          'The order is ready. Go pick it up now!'
+        );
       default:
         return (null, null);
     }

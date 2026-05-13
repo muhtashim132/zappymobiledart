@@ -9,6 +9,7 @@ import '../../config/routes.dart';
 import '../../widgets/common/zappy_map.dart';
 import 'package:uuid/uuid.dart';
 import '../../config/payment_config.dart';
+import '../../config/tax_config.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -62,6 +63,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final riderEarnings = effectiveBase + surcharge + heavyFee;
       final totalDelivery = riderEarnings + cart.smallCartFee - discount;
 
+      // ── Full Tax & Payout Breakdown ────────────────────────────────────────
+      final breakdown = OrderTaxBreakdown.calculate(
+        items: cart.taxBreakdownItems,
+        deliveryCharge: totalDelivery,
+        platformFee: cart.platformFee,
+        paymentMethod: _selectedPaymentMethod!,
+      );
+      debugPrint(breakdown.toString()); // visible in debug console
+
       final cartGroupId = const Uuid().v4();
       final numShops = cart.shops.length;
 
@@ -86,10 +96,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
       for (final shop in cart.shops) {
         final shopItems =
             cart.items.where((i) => i.shop.id == shop.id).toList();
-        final shopSubtotal =
+        // Base subtotal for this shop (pre-GST)
+        final shopBaseSubtotal =
             shopItems.fold(0.0, (sum, i) => sum + i.totalPrice);
 
-        // Split fees evenly across the grouped orders
+        // Split fees evenly across grouped orders
         final shopDelivery = totalDelivery / numShops;
         final shopRiderEarnings = riderEarnings / numShops;
         final shopPlatformFee = cart.platformFee / numShops;
@@ -101,7 +112,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
               'shop_id': shop.id,
               'customer_id': auth.currentUserId,
               'status': 'pending',
-              'total_amount': shopSubtotal,
+              // total_amount = BASE subtotal (seller's revenue, excl. GST)
+              'total_amount': shopBaseSubtotal,
               'delivery_charges': shopDelivery,
               'rider_earnings': shopRiderEarnings,
               'platform_fee': shopPlatformFee,
@@ -114,6 +126,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   : 'pending_upi',
               'customer_phone': customerPhone,
               'shop_phone': shopPhones[shop.id],
+              // ── Tax & payout fields (split evenly across shops) ──────────
+              'gst_item_total': (breakdown.itemGstTotal / numShops),
+              'gst_delivery': (breakdown.deliveryGst / numShops),
+              'gst_platform': (breakdown.platformFeeGst / numShops),
+              'zappy_commission': (breakdown.zappyGrossCommission / numShops),
+              'seller_payout': (breakdown.sellerPayout / numShops),
+              'gateway_deduction': (breakdown.gatewayDeduction / numShops),
             })
             .select()
             .single();
@@ -188,7 +207,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final effectiveBase = baseCharge >= 0 ? baseCharge : 25.0;
     final totalDelivery =
         effectiveBase + surcharge + heavyFee + cart.smallCartFee - discount;
-    final total = cart.subtotal + totalDelivery + cart.platformFee;
+
+    // ── ADD-ON GST model: GST is a real charge on top of base prices ─────────
+    final gstBreakdown = OrderTaxBreakdown.calculate(
+      items: cart.taxBreakdownItems,
+      deliveryCharge: totalDelivery,
+      platformFee: cart.platformFee,
+      paymentMethod: _selectedPaymentMethod ?? 'cod',
+    );
+    // Grand total = base items + item GST + delivery + platform
+    final total = gstBreakdown.grandTotal;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -352,7 +380,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
             const SizedBox(height: 16),
 
-            // Bill Details
             _sectionCard(
               title: 'Bill Details',
               icon: Icons.account_balance_wallet_outlined,
@@ -360,7 +387,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
               child: Column(
                 children: [
                   _billRow(
-                      'Item Total', '₹${cart.subtotal.toStringAsFixed(0)}'),
+                    'Item Subtotal',
+                    '₹${cart.subtotal.toStringAsFixed(2)}',
+                    hint: 'Base price (excl. GST)',
+                  ),
+                  if (gstBreakdown.itemGstTotal > 0) ...[
+                    const SizedBox(height: 8),
+                    _billRow(
+                      'GST on Items',
+                      '+₹${gstBreakdown.itemGstTotal.toStringAsFixed(2)}',
+                      hint: 'Govt. tax • charged to you',
+                      valueColor: const Color(0xFF1565C0), // deep blue
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   _billRow(
                     'Delivery Fee',
@@ -394,7 +433,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       valueColor: Colors.orange.shade700,
                     ),
                   ],
-                  // Multi-shop surcharge — shown only when ordering from 2+ shops
                   if (surcharge > 0) ...[
                     const SizedBox(height: 8),
                     _billRow(
@@ -406,16 +444,32 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   ],
                   const SizedBox(height: 8),
                   _billRow(
-                    'Handling/Platform Fee',
+                    'Handling Fee',
                     '+₹${cart.platformFee.toStringAsFixed(0)}',
-                    hint: 'Supports app operations',
+                    hint: 'Covers payment gateway & app operations',
                   ),
                   const Divider(height: 20),
                   _billRow(
                     'Grand Total',
-                    '₹${total.toStringAsFixed(0)}',
+                    '₹${total.toStringAsFixed(2)}',
                     isBold: true,
                     valueColor: AppColors.primary,
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      const Icon(Icons.info_outline,
+                          size: 11, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Incl. ₹${gstBreakdown.itemGstTotal.toStringAsFixed(2)} GST on items',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -430,7 +484,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, -4),
             ),
@@ -445,11 +499,23 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 const Text('Total Amount',
                     style: TextStyle(
                         color: AppColors.textSecondary, fontSize: 13)),
-                Text('₹${total.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('₹${total.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary)),
+                    if (gstBreakdown.itemGstTotal > 0)
+                      Text(
+                        '+ ₹${gstBreakdown.itemGstTotal.toStringAsFixed(2)} GST',
+                        style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textSecondary),
+                      ),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -461,7 +527,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.secondary.withOpacity(0.4),
+                    color: AppColors.secondary.withValues(alpha: 0.4),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -514,7 +580,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
           ),
         ],
@@ -557,7 +623,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color:
-              isSelected ? iconColor.withOpacity(0.07) : AppColors.background,
+              isSelected ? iconColor.withValues(alpha: 0.07) : AppColors.background,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected ? iconColor : AppColors.divider,
@@ -570,7 +636,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.12),
+                color: iconColor.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: iconColor, size: 20),

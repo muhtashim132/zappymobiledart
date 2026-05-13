@@ -6,6 +6,7 @@ import '../models/cart_item_model.dart';
 import '../models/product_model.dart';
 import '../models/shop_model.dart';
 import '../config/payment_config.dart';
+import '../config/tax_config.dart';
 import '../utils/delivery_calculator.dart';
 
 // ---------------------------------------------------------------------------
@@ -114,6 +115,37 @@ class CartProvider extends ChangeNotifier {
   bool get meetsMinimumOrder => subtotal >= PaymentConfig.minimumOrderValue;
 
   double get platformFee => PaymentConfig.platformFee;
+
+  // ---------------------------------------------------------------------------
+  // Add-On GST helpers (tax_config.dart — ADD-ON MODEL)
+  // ---------------------------------------------------------------------------
+
+  /// GST added ON TOP of the base item subtotal.
+  /// This is a REAL charge to the customer — not extracted from MRP.
+  double get itemGstTotal {
+    double gst = 0;
+    for (final item in _items) {
+      final rate = TaxConfig.gstRateForCategory(
+        item.product.category,
+        itemPrice: item.product.price,
+      );
+      gst += item.totalPrice * rate; // base × rate (add-on, not extraction)
+    }
+    return gst;
+  }
+
+  /// Gross item total the customer pays = base subtotal + GST on items.
+  double get itemGrossTotal => subtotal + itemGstTotal;
+
+  /// Builds the [items] list required by [OrderTaxBreakdown.calculate].
+  /// prices are BASE prices (pre-GST) — GST is added on top in the breakdown.
+  List<Map<String, dynamic>> get taxBreakdownItems => _items
+      .map((i) => {
+            'category': i.product.category,
+            'price': i.product.price, // BASE price, pre-GST
+            'quantity': i.quantity,
+          })
+      .toList();
 
   double get smallCartFee =>
       subtotal < PaymentConfig.smallCartThreshold && subtotal > 0

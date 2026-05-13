@@ -125,9 +125,9 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     // Mock bypass for testing
-    if (phone.contains('1111111111') ||
-        phone.contains('2222222222') ||
-        phone.contains('3333333333')) {
+    if (phone.contains('9999999991') ||
+        phone.contains('9999999992') ||
+        phone.contains('9999999993')) {
       _pendingPhone = phone;
       _isLoading = false;
       notifyListeners();
@@ -162,9 +162,9 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     // ─── Magic Number Bypass ────────────────────────────────────────────────
-    if (phone.contains('1111111111') ||
-        phone.contains('2222222222') ||
-        phone.contains('3333333333')) {
+    if (phone.contains('9999999991') ||
+        phone.contains('9999999992') ||
+        phone.contains('9999999993')) {
       await Future.delayed(const Duration(seconds: 1));
 
       String mockId =

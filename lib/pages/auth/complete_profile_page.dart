@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../config/routes.dart';
 import '../../config/app_categories.dart';
+import '../../config/tax_config.dart';
 import '../../widgets/seller/category_extra_fields.dart';
 
 enum _Role { customer, seller, delivery }
@@ -191,6 +192,14 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         }
         if (_panCtrl.text.trim().isEmpty) {
           _showSnack('PAN Number is required', isError: true);
+          setState(() => _loading = false);
+          return;
+        }
+        
+        // ── Enforce GSTIN for non-restaurant sellers ─────────────────────────
+        final needsGstin = !TaxConfig.isZappyDeemedSupplier(_shopCategory);
+        if (needsGstin && _gstCtrl.text.trim().isEmpty) {
+          _showSnack('GSTIN is mandatory for retail/hypermarket categories', isError: true);
           setState(() => _loading = false);
           return;
         }
@@ -721,7 +730,9 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
               caps: true),
           const SizedBox(height: 16),
           _DarkField(
-              label: 'GSTIN (Optional)',
+              label: TaxConfig.isZappyDeemedSupplier(_shopCategory)
+                  ? 'GSTIN (Optional for Restaurants)'
+                  : 'GSTIN Number *',
               controller: _gstCtrl,
               hint: '22AAAAA0000A1Z5',
               caps: true),
