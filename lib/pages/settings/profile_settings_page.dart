@@ -108,7 +108,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               title: 'About Zappy',
               subtitle: 'App version, Terms, Privacy Policy',
               isDark: isDark,
-              onTap: () {},
+              onTap: _showAboutBottomSheet,
             ),
 
             const SizedBox(height: 32),
@@ -455,5 +455,51 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     } catch (e) {
       if (mounted) Navigator.pop(context);
     }
+  }
+
+  void _showAboutBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('About Zappy',
+                style: GoogleFonts.outfit(
+                    fontSize: 20, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.description_outlined),
+              title: Text('Terms of Service', style: GoogleFonts.outfit()),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, '/legal/terms');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.privacy_tip_outlined),
+              title: Text('Privacy Policy', style: GoogleFonts.outfit()),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, '/legal/privacy');
+              },
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Text('Version 1.0.0\nMade with ❤️ in India',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.outfit(color: Colors.grey, fontSize: 12)),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
   }
 }

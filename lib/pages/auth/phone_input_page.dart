@@ -333,13 +333,47 @@ class _PhoneAuthPageState extends State<PhoneAuthPage>
                     ),
 
                     const SizedBox(height: 28),
-                    Text(
-                      'By continuing, you agree to our Terms of Service\nand Privacy Policy',
+                    RichText(
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.outfit(
-                          color: Colors.white30,
+                      text: TextSpan(
+                        style: GoogleFonts.outfit(
+                          color: Colors.white54,
                           fontSize: 12,
-                          height: 1.5),
+                          height: 1.5,
+                        ),
+                        children: [
+                          const TextSpan(text: 'By continuing, you agree to our '),
+                          WidgetSpan(
+                            child: GestureDetector(
+                              onTap: () => Navigator.pushNamed(context, AppRoutes.terms),
+                              child: Text(
+                                'Terms of Service',
+                                style: GoogleFonts.outfit(
+                                  color: const Color(0xFFF4C542),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const TextSpan(text: '\nand '),
+                          WidgetSpan(
+                            child: GestureDetector(
+                              onTap: () => Navigator.pushNamed(context, AppRoutes.privacy),
+                              child: Text(
+                                'Privacy Policy',
+                                style: GoogleFonts.outfit(
+                                  color: const Color(0xFFF4C542),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 24),
 

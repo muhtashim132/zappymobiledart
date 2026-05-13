@@ -22,6 +22,8 @@ import '../pages/delivery/dashboard_page.dart';
 import '../pages/delivery/earnings_page.dart';
 import '../pages/seller/shop_management_page.dart';
 import '../pages/settings/profile_settings_page.dart';
+import '../pages/legal/terms_of_service_page.dart';
+import '../pages/legal/privacy_policy_page.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -47,6 +49,8 @@ class AppRoutes {
   static const String earnings = '/delivery/earnings';
   static const String shopManagement = '/seller/shop-management';
   static const String settings = '/settings';
+  static const String terms = '/legal/terms';
+  static const String privacy = '/legal/privacy';
 
   static Route<dynamic> generateRoute(RouteSettings routeSettings) {
     switch (routeSettings.name) {
@@ -104,6 +108,10 @@ class AppRoutes {
         return _build(const ShopManagementPage(), routeSettings);
       case settings:
         return _build(const ProfileSettingsPage(), routeSettings);
+      case terms:
+        return _build(const TermsOfServicePage(), routeSettings);
+      case privacy:
+        return _build(const PrivacyPolicyPage(), routeSettings);
       default:
         return _build(const SplashPage(), routeSettings);
     }
