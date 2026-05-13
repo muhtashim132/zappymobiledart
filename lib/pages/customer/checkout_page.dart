@@ -21,8 +21,8 @@ class CheckoutPage extends StatefulWidget {
 class _CheckoutPageState extends State<CheckoutPage> {
   bool _isProcessing = false;
   final _notesController = TextEditingController();
-  // Payment method: 'cod' | 'upi' | null (not yet selected)
-  String? _selectedPaymentMethod;
+  // Payment method: 'upi'
+  String? _selectedPaymentMethod = 'upi';
 
   @override
   void dispose() {
@@ -31,18 +31,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Future<void> _placeOrder() async {
-    if (_selectedPaymentMethod == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please select a payment method to continue.'),
-          backgroundColor: Colors.orange.shade700,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-      return;
-    }
     setState(() => _isProcessing = true);
     final cart = context.read<CartProvider>();
     final auth = context.read<AuthProvider>();
@@ -121,9 +109,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               'delivery_notes':
                   _notesController.text.isEmpty ? null : _notesController.text,
               'payment_method': _selectedPaymentMethod,
-              'payment_status': _selectedPaymentMethod == 'cod'
-                  ? 'pending_cod'
-                  : 'pending_upi',
+              'payment_status': 'pending_upi',
               'customer_phone': customerPhone,
               'shop_phone': shopPhones[shop.id],
               // ── Tax & payout fields (split evenly across shops) ──────────
@@ -343,38 +329,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
               child: Column(
                 children: [
                   _paymentOption(
-                    value: 'cod',
-                    icon: Icons.money_rounded,
-                    label: 'Cash on Delivery',
-                    subtitle: 'Pay in cash when your order arrives',
-                    iconColor: AppColors.success,
-                  ),
-                  const SizedBox(height: 10),
-                  _paymentOption(
                     value: 'upi',
                     icon: Icons.account_balance_wallet_outlined,
                     label: 'UPI / Online',
                     subtitle: 'Pay via any UPI app (GPay, PhonePe, etc.)',
                     iconColor: AppColors.primary,
                   ),
-                  if (_selectedPaymentMethod == null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_outline,
-                              size: 13, color: Colors.orange.shade700),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Select a payment method to proceed',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.orange.shade700,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                 ],
               ),
             ),
