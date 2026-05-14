@@ -401,6 +401,16 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                         Navigator.pushNamed(context, AppRoutes.analytics),
                   ),
                   _actionTile(
+                    icon: Icons.account_balance_outlined,
+                    gradient: const [Color(0xFFF4C542), Color(0xFFE8A000)],
+                    title: 'CA / Tax Report',
+                    subtitle: 'Monthly GST & payout report for your CA',
+                    badge: null,
+                    isDark: isDark,
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRoutes.caReport),
+                  ),
+                  _actionTile(
                     icon: Icons.settings_outlined,
                     gradient: const [Color(0xFF00B4D8), Color(0xFF0077A8)],
                     title: 'Manage Shop',

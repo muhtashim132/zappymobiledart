@@ -1,3 +1,23 @@
+// ============================================================================
+// order_model.dart — Zappy Order + Financial Snapshot
+// ============================================================================
+//
+// FINANCIAL SNAPSHOT PATTERN:
+//   Every order in Zappy permanently stores its complete financial breakdown
+//   at the moment of checkout. This means:
+//     • GST rates, commission %, and payout amounts are FROZEN in the DB.
+//     • Future rate changes will never corrupt historical reporting.
+//     • Your CA can generate GSTR-1, GSTR-8 (TCS), and payout reconciliation
+//       reports directly from the orders table, no recalculation needed.
+//
+// INDIA GST COMPLIANCE FIELDS:
+//   s9_5GstAmount    — Food/restaurant GST. Zappy remits to Govt (§9(5) CGST).
+//   nonFoodGstAmount — Retail GST. Seller remits to Govt (declare in GSTR-1/3B).
+//   tcsAmount        — 1% TCS Zappy deducts (Zappy files GSTR-8 by 10th).
+//   grandTotalCollected — True INR collected from customer (incl. all GST).
+//   gstRateSnapshot  — Frozen {category: rate} map used at checkout.
+// ============================================================================
+
 class OrderModel {
   final String id;
   final String customerId;
@@ -16,6 +36,8 @@ class OrderModel {
   final String? customerPhone;
   final String? shopPhone;
   final String? riderPhone;
+  final String? paymentMethod;
+
   // Dual-acceptance flags (stored in DB columns)
   bool sellerAccepted;
   bool partnerAccepted;
@@ -35,6 +57,50 @@ class OrderModel {
   final double? deliveryLat;
   final double? deliveryLng;
 
+  // ── Financial Snapshot Fields (India GST Compliance) ─────────────────────
+  // These are written ONCE at checkout and never recalculated.
+  // They represent the exact financial reality of this specific transaction.
+
+  /// GST charged on items and added on top of base price (ADD-ON model).
+  final double gstItemTotal;
+
+  /// GST on Section 9(5) food/restaurant items — Zappy remits to Govt.
+  /// Seller does NOT declare this in their GSTR-1. It is Zappy's liability.
+  final double s9_5GstAmount;
+
+  /// GST on non-food retail/grocery/pharma — passed to seller in payout.
+  /// Seller MUST declare this in their GSTR-1/3B.
+  final double nonFoodGstAmount;
+
+  /// 18% GST embedded in the delivery charge — Zappy remits to Govt.
+  final double gstDelivery;
+
+  /// 18% GST embedded in the platform/handling fee — Zappy remits to Govt.
+  final double gstPlatform;
+
+  /// 1% Tax Collected at Source deducted from seller by Zappy (CGST §52).
+  /// Zappy files GSTR-8 by 10th. Seller claims credit via GSTR-2B.
+  final double tcsAmount;
+
+  /// Gross commission Zappy charged on base item subtotal (5% standard).
+  final double zappyCommission;
+
+  /// Net payout to seller: (base − commission + nonFoodGst − tcs).
+  /// This is what actually lands in the seller's bank account.
+  final double sellerPayout;
+
+  /// Razorpay / gateway deduction (2.36% for UPI/Card, 0 for COD).
+  /// Absorbed entirely by Zappy under the 5% commission plan.
+  final double gatewayDeduction;
+
+  /// Actual total collected from the customer including all GST + fees.
+  /// This is Zappy's "gross turnover" figure for ECO reporting.
+  final double grandTotalCollected;
+
+  /// Frozen snapshot of {category: gstRate} used at checkout.
+  /// Stored as JSON so future rate changes never affect historical orders.
+  final Map<String, dynamic> gstRateSnapshot;
+
   OrderModel({
     required this.id,
     required this.customerId,
@@ -53,6 +119,7 @@ class OrderModel {
     this.customerPhone,
     this.shopPhone,
     this.riderPhone,
+    this.paymentMethod,
     this.sellerAccepted = false,
     this.partnerAccepted = false,
     this.arrivedAtShopTime,
@@ -64,6 +131,18 @@ class OrderModel {
     this.hasDeliveryRated = false,
     this.deliveryLat,
     this.deliveryLng,
+    // Financial snapshot fields
+    this.gstItemTotal = 0.0,
+    this.s9_5GstAmount = 0.0,
+    this.nonFoodGstAmount = 0.0,
+    this.gstDelivery = 0.0,
+    this.gstPlatform = 0.0,
+    this.tcsAmount = 0.0,
+    this.zappyCommission = 0.0,
+    this.sellerPayout = 0.0,
+    this.gatewayDeduction = 0.0,
+    this.grandTotalCollected = 0.0,
+    this.gstRateSnapshot = const {},
   });
 
   factory OrderModel.fromMap(Map<String, dynamic> map) {
@@ -73,7 +152,7 @@ class OrderModel {
       status: map['status'] ?? 'pending',
       totalAmount: (map['total_amount'] ?? 0.0).toDouble(),
       deliveryCharges: (map['delivery_charges'] ?? 0.0).toDouble(),
-      riderEarnings: (map['rider_earnings'] ?? (map['delivery_charges'] ?? 0.0)).toDouble(), // Fallback for legacy orders
+      riderEarnings: (map['rider_earnings'] ?? (map['delivery_charges'] ?? 0.0)).toDouble(),
       multiShopSurcharge: (map['multi_shop_surcharge'] ?? 0.0).toDouble(),
       platformFee: (map['platform_fee'] ?? 0.0).toDouble(),
       createdAt: DateTime.tryParse(map['created_at'] ?? '') ?? DateTime.now(),
@@ -84,6 +163,7 @@ class OrderModel {
       customerPhone: map['customer_phone'],
       shopPhone: map['shop_phone'],
       riderPhone: map['rider_phone'],
+      paymentMethod: map['payment_method'],
       sellerAccepted: map['seller_accepted'] ?? false,
       partnerAccepted: map['partner_accepted'] ?? false,
       arrivedAtShopTime: map['arrived_at_shop_time'] != null
@@ -99,11 +179,36 @@ class OrderModel {
       hasDeliveryRated: map['has_delivery_rated'] ?? false,
       deliveryLat: (map['delivery_lat'] as num?)?.toDouble(),
       deliveryLng: (map['delivery_lng'] as num?)?.toDouble(),
+      // ── Financial snapshot — read from frozen DB values ────────────────
+      gstItemTotal: (map['gst_item_total'] ?? 0.0).toDouble(),
+      s9_5GstAmount: (map['s9_5_gst_amount'] ?? 0.0).toDouble(),
+      nonFoodGstAmount: (map['non_food_gst_amount'] ?? 0.0).toDouble(),
+      gstDelivery: (map['gst_delivery'] ?? 0.0).toDouble(),
+      gstPlatform: (map['gst_platform'] ?? 0.0).toDouble(),
+      tcsAmount: (map['tcs_amount'] ?? 0.0).toDouble(),
+      zappyCommission: (map['zappy_commission'] ?? 0.0).toDouble(),
+      sellerPayout: (map['seller_payout'] ?? 0.0).toDouble(),
+      gatewayDeduction: (map['gateway_deduction'] ?? 0.0).toDouble(),
+      grandTotalCollected: (map['grand_total_collected'] ?? 0.0).toDouble(),
+      gstRateSnapshot: (map['gst_rate_snapshot'] as Map<String, dynamic>?) ?? {},
     );
   }
 
   /// True when both the seller and delivery partner have accepted.
   bool get isFullyConfirmed => sellerAccepted && partnerAccepted;
+
+  /// Grand total as displayed to customer at checkout.
+  double get grandTotal =>
+      totalAmount + deliveryCharges + multiShopSurcharge + platformFee;
+
+  /// Total GST across the entire order (items + delivery + platform).
+  double get totalGstInOrder => gstItemTotal + gstDelivery + gstPlatform;
+
+  /// Amount seller must declare in their GSTR-1 (their GST liability only).
+  double get sellerGstrLiability => nonFoodGstAmount;
+
+  /// Net seller taxable turnover for TCS basis (base amount only).
+  double get sellerNetTaxableSupply => totalAmount;
 
   OrderModel copyWith({
     String? status,
@@ -138,6 +243,7 @@ class OrderModel {
       customerPhone: customerPhone ?? this.customerPhone,
       shopPhone: shopPhone ?? this.shopPhone,
       riderPhone: riderPhone ?? this.riderPhone,
+      paymentMethod: paymentMethod,
       sellerAccepted: sellerAccepted ?? this.sellerAccepted,
       partnerAccepted: partnerAccepted ?? this.partnerAccepted,
       arrivedAtShopTime: arrivedAtShopTime,
@@ -149,6 +255,18 @@ class OrderModel {
       hasDeliveryRated: hasDeliveryRated ?? this.hasDeliveryRated,
       deliveryLat: deliveryLat ?? this.deliveryLat,
       deliveryLng: deliveryLng ?? this.deliveryLng,
+      // Preserve frozen financial fields unchanged
+      gstItemTotal: gstItemTotal,
+      s9_5GstAmount: s9_5GstAmount,
+      nonFoodGstAmount: nonFoodGstAmount,
+      gstDelivery: gstDelivery,
+      gstPlatform: gstPlatform,
+      tcsAmount: tcsAmount,
+      zappyCommission: zappyCommission,
+      sellerPayout: sellerPayout,
+      gatewayDeduction: gatewayDeduction,
+      grandTotalCollected: grandTotalCollected,
+      gstRateSnapshot: gstRateSnapshot,
     );
   }
 
@@ -185,9 +303,6 @@ class OrderModel {
         return status;
     }
   }
-
-  double get grandTotal =>
-      totalAmount + deliveryCharges + multiShopSurcharge + platformFee;
 }
 
 class OrderItem {

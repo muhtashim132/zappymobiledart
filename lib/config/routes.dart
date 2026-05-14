@@ -18,6 +18,7 @@ import '../pages/seller/add_product_page.dart';
 import '../pages/seller/manage_products_page.dart';
 import '../pages/seller/seller_orders_page.dart';
 import '../pages/seller/analytics_page.dart';
+import '../pages/seller/ca_report_page.dart';
 import '../pages/delivery/dashboard_page.dart';
 import '../pages/delivery/earnings_page.dart';
 import '../pages/seller/shop_management_page.dart';
@@ -45,6 +46,7 @@ class AppRoutes {
   static const String manageProducts = '/seller/products';
   static const String sellerOrders = '/seller/orders';
   static const String analytics = '/seller/analytics';
+  static const String caReport = '/seller/ca-report';
   static const String deliveryDashboard = '/delivery/dashboard';
   static const String earnings = '/delivery/earnings';
   static const String shopManagement = '/seller/shop-management';
@@ -100,6 +102,8 @@ class AppRoutes {
         return _build(const SellerOrdersPage(), routeSettings);
       case analytics:
         return _build(const AnalyticsPage(), routeSettings);
+      case caReport:
+        return _build(const CaReportPage(), routeSettings);
       case deliveryDashboard:
         return _build(const DeliveryDashboardPage(), routeSettings);
       case earnings:

@@ -93,6 +93,43 @@ class _CheckoutPageState extends State<CheckoutPage> {
         final shopRiderEarnings = riderEarnings / numShops;
         final shopPlatformFee = cart.platformFee / numShops;
 
+        // ── Build frozen GST rate snapshot for this shop's items ─────────────
+        // Maps each unique category → rate used. Immutable for audit purposes.
+        final Map<String, dynamic> rateSnapshot = {};
+        for (final item in shopItems) {
+          final cat = item.product.category;
+          if (!rateSnapshot.containsKey(cat)) {
+            rateSnapshot[cat] = TaxConfig.gstRateForCategory(
+              cat,
+              itemPrice: item.product.price,
+            );
+          }
+        }
+
+        // ── Per-shop GST split (S9(5) food vs non-food retail) ───────────────
+        double shopS9_5Gst = 0;
+        double shopNonFoodGst = 0;
+        for (final item in shopItems) {
+          final cat = item.product.category;
+          final rate = TaxConfig.gstRateForCategory(cat, itemPrice: item.product.price);
+          final lineGst = item.totalPrice * rate;
+          if (TaxConfig.isZappyDeemedSupplier(cat)) {
+            shopS9_5Gst += lineGst;
+          } else {
+            shopNonFoodGst += lineGst;
+          }
+        }
+
+        // ── TCS: 1% on net taxable supply per CGST §52 ───────────────────────
+        // TCS basis = seller's base subtotal (pre-GST). Rate = 0.5% CGST + 0.5% SGST = 1%.
+        final shopTcs = shopBaseSubtotal * 0.01;
+
+        // ── True grand total collected from customer (for this shop's share) ─
+        final shopGrandTotal = shopBaseSubtotal +
+            (shopS9_5Gst + shopNonFoodGst) + // item GST
+            shopDelivery +
+            shopPlatformFee;
+
         final orderResponse = await supabase
             .from('orders')
             .insert({
@@ -112,13 +149,20 @@ class _CheckoutPageState extends State<CheckoutPage> {
               'payment_status': 'pending_upi',
               'customer_phone': customerPhone,
               'shop_phone': shopPhones[shop.id],
-              // ── Tax & payout fields (split evenly across shops) ──────────
+              // ── Financial Snapshot — written ONCE, never recalculated ────
+              // Existing columns
               'gst_item_total': (breakdown.itemGstTotal / numShops),
               'gst_delivery': (breakdown.deliveryGst / numShops),
               'gst_platform': (breakdown.platformFeeGst / numShops),
               'zappy_commission': (breakdown.zappyGrossCommission / numShops),
-              'seller_payout': (breakdown.sellerPayout / numShops),
+              'seller_payout': (breakdown.sellerPayout / numShops) - shopTcs,
               'gateway_deduction': (breakdown.gatewayDeduction / numShops),
+              // New GST compliance columns
+              's9_5_gst_amount': shopS9_5Gst,      // Zappy remits to Govt
+              'non_food_gst_amount': shopNonFoodGst, // Seller remits in GSTR-1
+              'tcs_amount': shopTcs,                 // Zappy files GSTR-8
+              'grand_total_collected': shopGrandTotal,
+              'gst_rate_snapshot': rateSnapshot,     // Frozen rate map
             })
             .select()
             .single();
