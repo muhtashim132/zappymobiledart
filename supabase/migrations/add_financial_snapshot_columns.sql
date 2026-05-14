@@ -126,3 +126,35 @@ FROM orders
 WHERE status = 'delivered'
 GROUP BY DATE_TRUNC('month', created_at)
 ORDER BY month DESC;
+
+-- ============================================================================
+-- Zappy Master Transaction Log (for Zappy admin)
+-- ============================================================================
+-- Detailed order-by-order financial ledger for platform audits.
+-- Provides complete visibility into the tax breakdown of every single order.
+
+CREATE OR REPLACE VIEW zappy_master_transactions AS
+SELECT
+  o.id                                 AS order_id,
+  o.created_at                         AS transaction_date,
+  s.name                               AS shop_name,
+  
+  ROUND(o.total_amount, 2)             AS base_sales_amount,
+  ROUND(o.non_food_gst_amount, 2)      AS gst_seller_remits_retail,
+  ROUND(o.s9_5_gst_amount, 2)          AS gst_zappy_remits_s9_5_food,
+  o.gst_rate_snapshot                  AS gst_rates_applied,
+  
+  ROUND(o.zappy_commission, 2)         AS zappy_commission_revenue,
+  ROUND(o.tcs_amount, 2)               AS tcs_withheld_gstr8,
+  
+  ROUND(o.gst_delivery, 2)             AS delivery_gst,
+  ROUND(o.gst_platform, 2)             AS platform_gst,
+  ROUND(o.gateway_deduction, 2)        AS razorpay_gateway_fee,
+  
+  ROUND(o.seller_payout, 2)            AS net_seller_payout,
+  ROUND(o.rider_earnings, 2)           AS net_rider_payout,
+  ROUND(o.grand_total_collected, 2)    AS gross_customer_payment
+FROM orders o
+JOIN shops s ON s.id = o.shop_id
+WHERE o.status = 'delivered'
+ORDER BY o.created_at DESC;

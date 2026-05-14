@@ -41,6 +41,7 @@ class _CaReportPageState extends State<CaReportPage> {
   double _gatewayFees = 0;
   int _deliveredOrders = 0;
   String _shopName = '';
+  List<Map<String, dynamic>> _monthlyOrders = [];
 
   @override
   void initState() {
@@ -104,6 +105,7 @@ class _CaReportPageState extends State<CaReportPage> {
         _grandCollected = grand;
         _gatewayFees    = gw;
         _deliveredOrders = orders.length;
+        _monthlyOrders  = List<Map<String, dynamic>>.from(orders);
         _isLoading      = false;
       });
     } catch (e) {
@@ -236,6 +238,20 @@ Gateway Fees                    : ₹${_f(_gatewayFees)}
                 const SizedBox(height: 8),
                 // Summary pill
                 _summaryPill(),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _monthlyOrders.isEmpty ? null : _showTransactionsBottomSheet,
+                  icon: const Icon(Icons.list_alt_rounded, size: 18),
+                  label: Text('View Detailed Transactions',
+                      style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white24),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    minimumSize: const Size(double.infinity, 44),
+                  ),
+                ),
                 const SizedBox(height: 20),
                 // ── Document 1 — Sales Register ───────────────────────────
                 _docCard(
@@ -368,6 +384,102 @@ Gateway Fees       : ₹${_f(_gatewayFees)}''',
                 ),
               ],
             ),
+    );
+  }
+
+  void _showTransactionsBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF141425),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            return Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Detailed Transactions',
+                          style: GoogleFonts.outfit(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700)),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white70),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: Colors.white10),
+                Expanded(
+                  child: ListView.separated(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: _monthlyOrders.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(color: Colors.white10),
+                    itemBuilder: (context, index) {
+                      final order = _monthlyOrders[index];
+                      final orderId = order['id'].toString().substring(0, 8);
+                      final baseAmount =
+                          (order['total_amount'] ?? 0.0).toDouble();
+                      final nonFoodGst =
+                          (order['non_food_gst_amount'] ?? 0.0).toDouble();
+                      final s9_5Gst =
+                          (order['s9_5_gst_amount'] ?? 0.0).toDouble();
+                      final totalGst = nonFoodGst + s9_5Gst;
+                      final total = baseAmount + totalGst;
+
+                      String gstLabel = '';
+                      if (s9_5Gst > 0 && nonFoodGst == 0) {
+                        gstLabel = '(Food - Zappy pays)';
+                      } else if (nonFoodGst > 0 && s9_5Gst == 0) {
+                        gstLabel = '(Retail - You pay)';
+                      } else if (s9_5Gst > 0 && nonFoodGst > 0) {
+                        gstLabel = '(Mixed)';
+                      } else {
+                        gstLabel = '(0%)';
+                      }
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Order #$orderId',
+                                style: GoogleFonts.outfit(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Base: ₹${_f(baseAmount)} + GST: ₹${_f(totalGst)} $gstLabel = Total: ₹${_f(total)}',
+                              style: GoogleFonts.outfit(
+                                  color: Colors.white70, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
