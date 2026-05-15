@@ -24,18 +24,23 @@ class _AddProductPageState extends State<AddProductPage> {
   final _menuCategoryController = TextEditingController();
   final _weightController = TextEditingController();
   final _inventoryController = TextEditingController();
-  
+
   bool _isVeg = true;
   bool _isAvailable = true;
   bool _isSaving = false;
   String _productCategory = 'Food';
   String _unitType = 'pieces';
   bool _isFoodGroup = true;
+  bool _requiresPrescription = false;
+  String _medicineType = 'General';
   String? _shopId;
   List<XFile> _images = [];
 
   List<String> get _availableUnitTypes {
-    if (_productCategory == 'Clothing' || _productCategory == 'Electronics' || _productCategory == 'Hardware' || _productCategory == 'Books') {
+    if (_productCategory == 'Clothing' ||
+        _productCategory == 'Electronics' ||
+        _productCategory == 'Hardware' ||
+        _productCategory == 'Books') {
       return ['pieces'];
     }
     return ['pieces', 'kg', 'grams', 'liter', 'ml'];
@@ -55,10 +60,10 @@ class _AddProductPageState extends State<AddProductPage> {
           .select('id, category, categories')
           .eq('seller_id', auth.currentUserId ?? '')
           .single();
-          
-      final cat = resp['category'] ?? 
-          (resp['categories'] != null && (resp['categories'] as List).isNotEmpty 
-              ? resp['categories'][0] 
+
+      final cat = resp['category'] ??
+          (resp['categories'] != null && (resp['categories'] as List).isNotEmpty
+              ? resp['categories'][0]
               : 'Food');
 
       setState(() {
@@ -66,8 +71,10 @@ class _AddProductPageState extends State<AddProductPage> {
         if (_productCategory == 'Food' && cat != 'Food') {
           _productCategory = cat;
         }
-        _isFoodGroup = AppCategories.groupFor(_productCategory) == CategoryGroup.food || 
-                       AppCategories.groupFor(_productCategory) == CategoryGroup.perishable;
+        _isFoodGroup =
+            AppCategories.groupFor(_productCategory) == CategoryGroup.food ||
+                AppCategories.groupFor(_productCategory) ==
+                    CategoryGroup.perishable;
       });
     } catch (e) {
       debugPrint('Shop fetch error: $e');
@@ -106,7 +113,8 @@ class _AddProductPageState extends State<AddProductPage> {
         final file = _images[i];
         final bytes = await file.readAsBytes();
         final ext = file.name.split('.').last;
-        final path = '$_shopId/${DateTime.now().millisecondsSinceEpoch}_$i.$ext';
+        final path =
+            '$_shopId/${DateTime.now().millisecondsSinceEpoch}_$i.$ext';
         await _supabase.storage.from('products').uploadBinary(path, bytes);
         uploadedUrls.add(_supabase.storage.from('products').getPublicUrl(path));
       }
@@ -117,13 +125,21 @@ class _AddProductPageState extends State<AddProductPage> {
         'price': double.parse(_priceController.text),
         'description': _descriptionController.text.trim(),
         'category': _productCategory,
-        'menu_category': _menuCategoryController.text.trim().isEmpty ? null : _menuCategoryController.text.trim(),
+        'menu_category': _menuCategoryController.text.trim().isEmpty
+            ? null
+            : _menuCategoryController.text.trim(),
         'is_veg': _isFoodGroup ? _isVeg : false,
         'is_available': _isAvailable,
-        'weight_per_unit': _weightController.text.trim().isEmpty ? null : double.tryParse(_weightController.text.trim()),
+        'weight_per_unit': _weightController.text.trim().isEmpty
+            ? null
+            : double.tryParse(_weightController.text.trim()),
         'unit_type': _unitType,
-        'total_quantity': _inventoryController.text.trim().isEmpty ? null : int.tryParse(_inventoryController.text.trim()),
+        'total_quantity': _inventoryController.text.trim().isEmpty
+            ? null
+            : int.tryParse(_inventoryController.text.trim()),
         'images': uploadedUrls,
+        'requires_prescription': _productCategory == 'Pharmacy' ? _requiresPrescription : false,
+        'medicine_type': _productCategory == 'Pharmacy' ? _medicineType : 'General',
       });
 
       if (mounted) {
@@ -205,7 +221,9 @@ class _AddProductPageState extends State<AddProductPage> {
                       height: 120,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: _images.length < 3 ? _images.length + 1 : _images.length,
+                        itemCount: _images.length < 3
+                            ? _images.length + 1
+                            : _images.length,
                         itemBuilder: (context, index) {
                           if (index == _images.length) {
                             return GestureDetector(
@@ -217,10 +235,12 @@ class _AddProductPageState extends State<AddProductPage> {
                                   color: AppColors.primary.withOpacity(0.05),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                      color: AppColors.primary.withOpacity(0.3), width: 2),
+                                      color: AppColors.primary.withOpacity(0.3),
+                                      width: 2),
                                 ),
                                 child: const Center(
-                                  child: Icon(Icons.add_photo_alternate, color: AppColors.primary),
+                                  child: Icon(Icons.add_photo_alternate,
+                                      color: AppColors.primary),
                                 ),
                               ),
                             );
@@ -249,7 +269,8 @@ class _AddProductPageState extends State<AddProductPage> {
                                       color: Colors.black54,
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                    child: const Icon(Icons.close,
+                                        color: Colors.white, size: 16),
                                   ),
                                 ),
                               ),
@@ -266,7 +287,8 @@ class _AddProductPageState extends State<AddProductPage> {
                 children: [
                   TextFormField(
                     controller: _nameController,
-                    validator: (v) => AppValidators.required(v, field: 'Product name'),
+                    validator: (v) =>
+                        AppValidators.required(v, field: 'Product name'),
                     decoration: const InputDecoration(
                       labelText: 'Product Name',
                       hintText: 'e.g., Chicken Biryani',
@@ -301,8 +323,8 @@ class _AddProductPageState extends State<AddProductPage> {
               _card(
                 children: [
                   DropdownButtonFormField<String>(
-                    initialValue: AppCategories.names.contains(_productCategory) 
-                        ? _productCategory 
+                    initialValue: AppCategories.names.contains(_productCategory)
+                        ? _productCategory
                         : AppCategories.names.first,
                     isExpanded: true,
                     decoration: const InputDecoration(
@@ -322,8 +344,10 @@ class _AddProductPageState extends State<AddProductPage> {
                       if (v != null) {
                         setState(() {
                           _productCategory = v;
-                          _isFoodGroup = AppCategories.groupFor(v) == CategoryGroup.food || 
-                                         AppCategories.groupFor(v) == CategoryGroup.perishable;
+                          _isFoodGroup =
+                              AppCategories.groupFor(v) == CategoryGroup.food ||
+                                  AppCategories.groupFor(v) ==
+                                      CategoryGroup.perishable;
                           if (!_availableUnitTypes.contains(_unitType)) {
                             _unitType = _availableUnitTypes.first;
                           }
@@ -362,7 +386,8 @@ class _AddProductPageState extends State<AddProductPage> {
                         flex: 3,
                         child: TextFormField(
                           controller: _weightController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
                           decoration: const InputDecoration(
                             labelText: 'Weight/Volume per unit',
                             hintText: 'e.g. 0.5, 1.5, 2',
@@ -374,11 +399,14 @@ class _AddProductPageState extends State<AddProductPage> {
                       Expanded(
                         flex: 2,
                         child: DropdownButtonFormField<String>(
-                          value: _unitType,
+                          initialValue: _unitType,
                           decoration: const InputDecoration(
                             labelText: 'Unit',
                           ),
-                          items: _availableUnitTypes.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+                          items: _availableUnitTypes
+                              .map((u) =>
+                                  DropdownMenuItem(value: u, child: Text(u)))
+                              .toList(),
                           onChanged: (v) {
                             if (v != null) setState(() => _unitType = v);
                           },
@@ -421,6 +449,60 @@ class _AddProductPageState extends State<AddProductPage> {
                   ),
                 ],
               ),
+              if (_productCategory == 'Pharmacy') ...[
+                const SizedBox(height: 16),
+                _card(
+                  children: [
+                    Text('Pharmacy & Medical Regulations',
+                        style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primary)),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: _medicineType,
+                      decoration: const InputDecoration(
+                        labelText: 'Medicine Type',
+                        prefixIcon: Icon(Icons.medical_services_outlined),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'General', child: Text('General / Wellness')),
+                        DropdownMenuItem(value: 'OTC', child: Text('Over The Counter (OTC)')),
+                        DropdownMenuItem(value: 'Schedule H', child: Text('Schedule H (Prescription)')),
+                        DropdownMenuItem(value: 'Schedule H1', child: Text('Schedule H1 (Prescription)')),
+                      ],
+                      onChanged: (v) {
+                        if (v != null) {
+                          setState(() {
+                            _medicineType = v;
+                            if (v == 'Schedule H' || v == 'Schedule H1') {
+                              _requiresPrescription = true;
+                            }
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Note: Schedule X, NDPS (Narcotics), and Psychotropic substances are strictly PROHIBITED for online sale under Govt of India norms. Do not list them.',
+                      style: TextStyle(fontSize: 11, color: AppColors.danger),
+                    ),
+                    const SizedBox(height: 16),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Requires Prescription',
+                          style: TextStyle(fontFamily: 'Poppins')),
+                      subtitle: const Text(
+                        'Customer must upload Rx',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      value: _requiresPrescription,
+                      activeThumbColor: AppColors.primary,
+                      onChanged: (v) => setState(() => _requiresPrescription = v),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 32),
 
               SizedBox(

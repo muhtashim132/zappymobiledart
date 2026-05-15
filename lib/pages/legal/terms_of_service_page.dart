@@ -15,24 +15,24 @@ class TermsOfServicePage extends StatelessWidget {
               'By accessing or using the Zappy application, you agree to be bound by these Terms of Service. If you do not agree to all terms, please do not use the application.',
         ),
         LegalSection(
-          heading: '2. Platform Services',
+          heading: '2. Platform Role & E-Commerce Compliance',
           content:
-              'Zappy acts as an e-commerce marketplace aggregator connecting Customers, Sellers, and Delivery Partners. Zappy does not own the inventory or products listed by Sellers and is not responsible for the quality, safety, or legality of items.',
+              'Under the Consumer Protection (E-Commerce) Rules, 2020, Zappy acts as a Marketplace E-Commerce Entity connecting Customers, Sellers, and Delivery Partners. Zappy does not own the inventory and is not responsible for the quality, safety, or legality of items.',
         ),
         LegalSection(
-          heading: '3. Pricing & Payments',
+          heading: '3. E-Pharmacy Specific Rules (Drugs and Cosmetics Act, 1940)',
           content:
-              'Zappy charges a 5% platform commission on the base price of products sold. A fixed Handling/Platform Fee of ₹15 is charged per order. All payments are processed securely via third-party payment gateways. Cash on Delivery is strictly prohibited to ensure merchant and rider security.',
+              'The sale of Schedule H and H1 drugs requires a valid prescription from a Registered Medical Practitioner, which must be uploaded via the Platform. The sale of Schedule X drugs, Narcotic Drugs, and Psychotropic Substances (NDPS) is strictly prohibited. The registered pharmacy seller retains sole responsibility for verifying the authenticity of uploaded prescriptions.',
         ),
         LegalSection(
-          heading: '4. GST Compliance',
+          heading: '4. Pricing, Payments & GST',
           content:
-              'Zappy is an E-Commerce Operator (ECO) under Section 9(5) of the CGST Act. For Restaurant food, Zappy collects and remits 5% GST directly to the government. For all other retail goods, Zappy acts as a passthrough agent, and the Seller is responsible for final GST remittance.',
+              'Zappy charges a 5% platform commission on base prices. A fixed Handling/Platform Fee of ₹15 is charged per order. In accordance with Section 9(5) of the CGST Act, Zappy collects and remits GST on behalf of restaurants for food deliveries. For non-food retail and pharmacy items, the seller is responsible for remitting GST, though Zappy will collect 1% TCS as per Section 52.',
         ),
         LegalSection(
           heading: '5. Cancellation & Refunds',
           content:
-              'Orders can only be cancelled before they are accepted by the Seller. Once prepared or picked up, cancellations are not permitted. Refunds are issued solely at Zappy\'s discretion in cases of missing items or delivery failure attributable to Zappy.',
+              'Pre-Dispatch: Customers may cancel orders before the seller accepts the order for a full refund. Rejections: If a seller rejects an order (e.g., due to an invalid medical prescription), a full refund will be initiated automatically. Approved refunds will be processed back to the original payment method within 5-7 business days.',
         ),
         LegalSection(
           heading: '6. User Responsibilities',

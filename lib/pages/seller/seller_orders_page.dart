@@ -106,7 +106,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
   Future<void> _sellerReject(OrderModel order) async {
     try {
       await _supabase.from('orders').update({
-        'status': 'seller_rejected',
+        'status': order.prescriptionUrls.isNotEmpty ? 'verification_failed' : 'seller_rejected',
         'seller_accepted': false,
       }).eq('id', order.id);
       _loadOrders();
@@ -114,6 +114,53 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
     } catch (e) {
       debugPrint('Reject error: $e');
     }
+  }
+
+  void _showPrescriptionImages(List<String> urls) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: const Color(0xFF1E1E2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: SizedBox(
+          width: double.infinity,
+          height: 500,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Prescription Images', style: GoogleFonts.outfit(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    IconButton(icon: const Icon(Icons.close, color: Colors.white54), onPressed: () => Navigator.pop(context)),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: urls.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      width: 300,
+                      margin: const EdgeInsets.only(right: 16),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white12),
+                        image: DecorationImage(image: NetworkImage(urls[index]), fit: BoxFit.contain),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _updateOrderStatus(String orderId, String status) async {
@@ -445,6 +492,56 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
                   ),
                 ),
             ]),
+          ],
+
+          if (order.prescriptionUrls.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.danger.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.danger.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.medical_information, color: AppColors.danger, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Prescription Required',
+                          style: GoogleFonts.outfit(color: AppColors.danger, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showPrescriptionImages(order.prescriptionUrls),
+                      icon: const Icon(Icons.image_outlined, size: 16),
+                      label: Text('View ${order.prescriptionUrls.length} Prescription Images'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.danger,
+                        side: const BorderSide(color: AppColors.danger),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                  if (tab == 'pending') ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Please verify the prescription before accepting the order.',
+                      style: GoogleFonts.outfit(color: AppColors.danger, fontSize: 11),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ],
 
           // Action buttons

@@ -116,6 +116,8 @@ class CartProvider extends ChangeNotifier {
 
   double get platformFee => PaymentConfig.platformFee;
 
+  bool get requiresPrescription => _items.any((item) => item.product.requiresPrescription);
+
   // ---------------------------------------------------------------------------
   // Add-On GST helpers (tax_config.dart — ADD-ON MODEL)
   // ---------------------------------------------------------------------------

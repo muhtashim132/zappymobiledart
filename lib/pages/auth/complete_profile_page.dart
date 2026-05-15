@@ -44,12 +44,11 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
 
   // Common
   final _pincodeCtrl = TextEditingController();
+  final _landmarkCtrl = TextEditingController();
   String? _phoneNumber;
 
   // Seller specific extra
-  final _panCtrl = TextEditingController();
   final _gstCtrl = TextEditingController();
-  final _tradeLicenseCtrl = TextEditingController();
 
   bool _loading = false;
   int _step = 0; // 0=role select, 1=details
@@ -110,10 +109,9 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
       _bankAccountCtrl,
       _ifscCtrl,
       _accountHolderCtrl,
-      _panCtrl,
       _gstCtrl,
-      _tradeLicenseCtrl,
       _pincodeCtrl,
+      _landmarkCtrl,
     ]) {
       c.dispose();
     }
@@ -183,7 +181,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         roleName = 'customer';
         extra = {
           'default_address': _addressCtrl.text.trim(),
-          'pincode': _pincodeCtrl.text.trim()
+          'pincode': _pincodeCtrl.text.trim(),
+          'landmark': _landmarkCtrl.text.trim(),
         };
         break;
       case _Role.seller:
@@ -195,33 +194,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           return;
         }
         final categoryExtra = _extraFieldsKey.currentState?.collectData() ?? {};
-        if (_aadharCtrl.text.trim().isEmpty) {
-          _showSnack('Aadhaar Number is required', isError: true);
-          setState(() => _loading = false);
-          return;
-        }
-        if (_panCtrl.text.trim().isEmpty) {
-          _showSnack('PAN Number is required', isError: true);
-          setState(() => _loading = false);
-          return;
-        }
-
-        // ── Enforce GSTIN for non-restaurant sellers ─────────────────────────
-        final needsGstin = !TaxConfig.isZappyDeemedSupplier(_shopCategory);
-        if (needsGstin && _gstCtrl.text.trim().isEmpty) {
-          _showSnack('GSTIN is mandatory for retail/hypermarket categories',
-              isError: true);
-          setState(() => _loading = false);
-          return;
-        }
-        if (_accountHolderCtrl.text.trim().isEmpty ||
-            _bankAccountCtrl.text.trim().isEmpty ||
-            _ifscCtrl.text.trim().isEmpty) {
-          _showSnack('All Bank Details are required', isError: true);
-          setState(() => _loading = false);
-          return;
-        }
-
+        // Note: Aadhaar, PAN, Bank Details are moved to SellerKycUploadPage
         roleName = 'seller';
         extra = {
           'name': _shopNameCtrl.text.trim().isEmpty
@@ -230,14 +203,10 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           'category': _shopCategory,
           'address': _shopAddressCtrl.text.trim(),
           'pincode': _pincodeCtrl.text.trim(),
+          'landmark': _landmarkCtrl.text.trim(),
           'is_active': false,
-          'aadhar_number': _aadharCtrl.text.trim(),
-          'pan_number': _panCtrl.text.trim(),
+          'verification_status': 'pending',
           'gst_number': _gstCtrl.text.trim(),
-          'trade_license': _tradeLicenseCtrl.text.trim(),
-          'bank_account_number': _bankAccountCtrl.text.trim(),
-          'bank_ifsc': _ifscCtrl.text.trim(),
-          'bank_account_holder': _accountHolderCtrl.text.trim(),
           // Merge the group-specific fields directly into the shops row.
           // Supabase ignores keys that don't exist as columns, so unknown
           // fields will be silently dropped unless you add a `metadata` JSONB
@@ -272,6 +241,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           'bank_ifsc': _ifscCtrl.text.trim(),
           'bank_account_holder': _accountHolderCtrl.text.trim(),
           'pincode': _pincodeCtrl.text.trim(),
+          'landmark': _landmarkCtrl.text.trim(),
           'is_available': false,
         };
         break;
@@ -303,7 +273,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         break;
       case _Role.seller:
         Navigator.pushNamedAndRemoveUntil(
-            context, AppRoutes.sellerDashboard, (_) => false);
+            context, AppRoutes.sellerKycUpload, (_) => false);
         break;
       case _Role.delivery:
         Navigator.pushNamedAndRemoveUntil(
@@ -549,6 +519,11 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           _buildAddressAndLocation('Default Delivery Address', _addressCtrl),
           const SizedBox(height: 16),
           _DarkField(
+              label: 'Landmark',
+              controller: _landmarkCtrl,
+              hint: 'e.g. Near City Mall'),
+          const SizedBox(height: 16),
+          _DarkField(
               label: 'Pincode',
               controller: _pincodeCtrl,
               hint: 'e.g. 400001',
@@ -627,6 +602,11 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           _buildAddressAndLocation('Shop Address *', _shopAddressCtrl),
           const SizedBox(height: 16),
           _DarkField(
+              label: 'Landmark',
+              controller: _landmarkCtrl,
+              hint: 'e.g. Near City Mall'),
+          const SizedBox(height: 16),
+          _DarkField(
               label: 'Pincode *',
               controller: _pincodeCtrl,
               hint: 'e.g. 400001',
@@ -671,7 +651,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
                       height: 1, color: Colors.white.withValues(alpha: 0.08))),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text('KYC & Legal Details',
+                child: Text('Tax Details',
                     style: GoogleFonts.outfit(
                         color: Colors.white38, fontSize: 12)),
               ),
@@ -681,65 +661,12 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
             ],
           ),
           const SizedBox(height: 20),
-          _DarkField(
-              label: 'Aadhaar Last 4 Digits *',
-              controller: _aadharCtrl,
-              hint: 'e.g. 9012',
-              number: true),
-          const SizedBox(height: 16),
-          _DarkField(
-              label: 'PAN Number *',
-              controller: _panCtrl,
-              hint: 'ABCDE1234F',
-              caps: true),
-          const SizedBox(height: 16),
           _DarkField(
               label: TaxConfig.isZappyDeemedSupplier(_shopCategory)
                   ? 'GSTIN (Optional for Restaurants)'
-                  : 'GSTIN Number *',
+                  : 'GSTIN Number (Optional)',
               controller: _gstCtrl,
               hint: '22AAAAA0000A1Z5',
-              caps: true),
-          const SizedBox(height: 16),
-          _DarkField(
-              label: 'Shop/Trade License (Optional)',
-              controller: _tradeLicenseCtrl,
-              hint: 'e.g. 1234567890'),
-          const SizedBox(height: 24),
-
-          // ── Bank Details ──────────────────────────────────────────────
-          Row(
-            children: [
-              Expanded(
-                  child: Container(
-                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text('Bank Details',
-                    style: GoogleFonts.outfit(
-                        color: Colors.white38, fontSize: 12)),
-              ),
-              Expanded(
-                  child: Container(
-                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _DarkField(
-              label: 'Account Holder Name *',
-              controller: _accountHolderCtrl,
-              hint: 'Name on bank account'),
-          const SizedBox(height: 16),
-          _DarkField(
-              label: 'Bank Account Number *',
-              controller: _bankAccountCtrl,
-              hint: 'e.g. 1234567890',
-              number: true),
-          const SizedBox(height: 16),
-          _DarkField(
-              label: 'IFSC Code *',
-              controller: _ifscCtrl,
-              hint: 'SBIN0001234',
               caps: true),
         ];
       case _Role.delivery:
@@ -790,6 +717,11 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
               label: 'Vehicle Type *',
               controller: _vehicleTypeCtrl,
               hint: 'Bike / Scooter / Car'),
+          const SizedBox(height: 16),
+          _DarkField(
+              label: 'Landmark (Home Base)',
+              controller: _landmarkCtrl,
+              hint: 'e.g. Near City Mall'),
           const SizedBox(height: 16),
           _DarkField(
               label: 'Pincode (Operational Area) *',

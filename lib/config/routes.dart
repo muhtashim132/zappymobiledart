@@ -4,6 +4,8 @@ import '../pages/auth/role_selection_page.dart';
 import '../pages/auth/phone_input_page.dart';
 import '../pages/auth/otp_verify_page.dart';
 import '../pages/auth/complete_profile_page.dart';
+import '../pages/auth/seller_kyc_upload_page.dart';
+import '../pages/auth/seller_pending_verification_page.dart';
 import '../pages/auth/login_page.dart';
 import '../pages/customer/home_page.dart';
 import '../pages/customer/restaurant_page.dart';
@@ -34,6 +36,8 @@ class AppRoutes {
   static const String phoneAuth = '/auth/phone';
   static const String otpVerify = '/auth/otp';
   static const String completeProfile = '/auth/complete-profile';
+  static const String sellerKycUpload = '/auth/seller-kyc';
+  static const String sellerPendingVerification = '/auth/seller-pending';
   static const String login = '/login';
   static const String customerHome = '/customer/home';
   static const String restaurant = '/customer/restaurant';
@@ -70,6 +74,10 @@ class AppRoutes {
         return _build(const OtpVerifyPage(), routeSettings);
       case completeProfile:
         return _build(const CompleteProfilePage(), routeSettings);
+      case sellerKycUpload:
+        return _build(const SellerKycUploadPage(), routeSettings);
+      case sellerPendingVerification:
+        return _build(const SellerPendingVerificationPage(), routeSettings);
       case login:
         return _build(const LoginPage(), routeSettings);
       case customerHome:

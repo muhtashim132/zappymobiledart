@@ -159,13 +159,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           isDark: isDark,
           onTap: () => Navigator.pushNamed(context, '/customer/orders'),
         ),
-        _buildSettingTile(
-          icon: Icons.person_outline,
-          title: 'Personal Information',
-          subtitle: 'Update your name, email and phone',
-          isDark: isDark,
-          onTap: _showEditProfileDialog,
-        ),
+
         _buildSettingTile(
           icon: Icons.location_on_outlined,
           title: 'Saved Addresses',
@@ -324,39 +318,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     ));
   }
 
-  void _showEditProfileDialog() {
-    final auth = context.read<AuthProvider>();
-    final user = auth.user;
-    if (user == null) return;
-    final nameCtrl = TextEditingController(text: user.fullName);
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Personal Information', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 20),
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Full Name')),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameCtrl.text.trim().isEmpty) return;
-                await auth.createProfile(fullName: nameCtrl.text.trim(), role: user.activeSessionRole);
-                if (ctx.mounted) Navigator.pop(ctx);
-              },
-              style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 56)),
-              child: const Text('Save Changes'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Future<void> _showShopDetailsDialog() async {
     final auth = context.read<AuthProvider>();

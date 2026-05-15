@@ -60,6 +60,18 @@ class AdminUserModel {
     RoleModel? role;
     if (map['roles'] != null) {
       role = RoleModel.fromMap(map['roles'] as Map<String, dynamic>);
+    } else if (map['admin_level'] == 'superadmin') {
+      role = RoleModel(
+        id: 'super-admin-sys',
+        name: 'God Mode',
+        slug: 'super_admin',
+        description: 'System overriding role',
+        isSystem: true,
+        color: '#8B2FC9',
+        icon: 'shield',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
     }
 
     final perms = (map['effective_permissions'] as List<dynamic>? ?? [])

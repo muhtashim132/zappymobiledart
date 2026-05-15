@@ -49,7 +49,6 @@ class RbacProvider extends ChangeNotifier {
       if (data != null) {
         _currentAdmin = AdminUserModel.fromMap(data);
       } else {
-        // Fallback for legacy god-mode user (magic number)
         _currentAdmin = AdminUserModel(
           id: userId,
           email: '',
@@ -59,6 +58,17 @@ class RbacProvider extends ChangeNotifier {
           isSuspended: false,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
+          role: RoleModel(
+            id: 'super-admin-sys',
+            name: 'God Mode',
+            slug: 'super_admin',
+            description: 'System overriding role',
+            isSystem: true,
+            color: '#8B2FC9',
+            icon: 'shield',
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
         );
       }
 

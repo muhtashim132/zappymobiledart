@@ -18,6 +18,8 @@ class ProductModel {
   final List<String> specialTags;
   final bool isAvailable;
   final double rating;
+  final bool requiresPrescription;
+  final String medicineType;
 
   ProductModel({
     required this.id,
@@ -39,6 +41,8 @@ class ProductModel {
     this.specialTags = const [],
     this.isAvailable = true,
     this.rating = 4.0,
+    this.requiresPrescription = false,
+    this.medicineType = 'General',
   });
 
   factory ProductModel.fromMap(Map<String, dynamic> map) {
@@ -71,6 +75,8 @@ class ProductModel {
       specialTags: List<String>.from(map['special_tags'] ?? []),
       isAvailable: map['is_available'] ?? true,
       rating: (map['rating'] ?? 4.0).toDouble(),
+      requiresPrescription: map['requires_prescription'] ?? false,
+      medicineType: map['medicine_type'] ?? 'General',
     );
   }
 
@@ -92,6 +98,8 @@ class ProductModel {
     'prep_time_minutes': prepTimeMinutes,
     'special_tags': specialTags,
     'is_available': isAvailable,
+    'requires_prescription': requiresPrescription,
+    'medicine_type': medicineType,
   };
 
   String get firstImage => images.isNotEmpty ? images.first : '';

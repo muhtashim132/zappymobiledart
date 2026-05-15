@@ -68,7 +68,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
     try {
       final shopsResp = await _supabase
           .from('shops')
-          .select('id, category, categories, is_active, average_rating')
+          .select('id, category, categories, is_active, average_rating, verification_status')
           .eq('seller_id', auth.currentUserId ?? '');
 
       if ((shopsResp as List).isEmpty) {
@@ -78,6 +78,22 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
       }
 
       final shopData = shopsResp.first;
+      final verificationStatus = shopData['verification_status'];
+
+      if (verificationStatus == 'pending') {
+        if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+              context, AppRoutes.sellerPendingVerification, (_) => false);
+        }
+        return;
+      } else if (verificationStatus == null || verificationStatus == 'rejected') {
+         if (mounted) {
+          Navigator.pushNamedAndRemoveUntil(
+              context, AppRoutes.sellerKycUpload, (_) => false);
+        }
+        return;
+      }
+
       final shopId = shopData['id'];
       _startNotifications(shopId as String);
 

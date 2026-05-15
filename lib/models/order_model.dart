@@ -57,6 +57,9 @@ class OrderModel {
   final double? deliveryLat;
   final double? deliveryLng;
 
+  // Prescription validation
+  final List<String> prescriptionUrls;
+
   // ── Financial Snapshot Fields (India GST Compliance) ─────────────────────
   // These are written ONCE at checkout and never recalculated.
   // They represent the exact financial reality of this specific transaction.
@@ -143,6 +146,7 @@ class OrderModel {
     this.gatewayDeduction = 0.0,
     this.grandTotalCollected = 0.0,
     this.gstRateSnapshot = const {},
+    this.prescriptionUrls = const [],
   });
 
   factory OrderModel.fromMap(Map<String, dynamic> map) {
@@ -191,6 +195,9 @@ class OrderModel {
       gatewayDeduction: (map['gateway_deduction'] ?? 0.0).toDouble(),
       grandTotalCollected: (map['grand_total_collected'] ?? 0.0).toDouble(),
       gstRateSnapshot: (map['gst_rate_snapshot'] as Map<String, dynamic>?) ?? {},
+      prescriptionUrls: map['prescription_urls'] != null 
+          ? List<String>.from(map['prescription_urls']) 
+          : [],
     );
   }
 
@@ -267,11 +274,16 @@ class OrderModel {
       gatewayDeduction: gatewayDeduction,
       grandTotalCollected: grandTotalCollected,
       gstRateSnapshot: gstRateSnapshot,
+      prescriptionUrls: prescriptionUrls,
     );
   }
 
   String get statusDisplay {
     switch (status) {
+      case 'pending_verification':
+        return 'Pending Prescription Verification';
+      case 'verification_failed':
+        return 'Prescription Rejected';
       case 'pending':
         if (sellerAccepted && !partnerAccepted) return 'Awaiting Rider';
         if (!sellerAccepted && partnerAccepted) return 'Awaiting Shop';
@@ -313,6 +325,7 @@ class OrderItem {
   final double price;
   final double weightKg;
   final String? specialInstructions;
+  final bool requiresPrescription;
 
   OrderItem({
     required this.id,
@@ -322,6 +335,7 @@ class OrderItem {
     required this.price,
     required this.weightKg,
     this.specialInstructions,
+    this.requiresPrescription = false,
   });
 
   factory OrderItem.fromMap(Map<String, dynamic> map) {
@@ -333,6 +347,7 @@ class OrderItem {
       price: (map['price'] ?? 0.0).toDouble(),
       weightKg: (map['weight_kg'] ?? 0.0).toDouble(),
       specialInstructions: map['special_instructions'],
+      requiresPrescription: map['requires_prescription'] ?? false,
     );
   }
 

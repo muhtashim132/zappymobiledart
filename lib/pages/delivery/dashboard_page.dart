@@ -500,13 +500,16 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   // Quick Actions
-                  _sectionHeader('⚡ Quick Actions', '', const Color(0xFF00B4D8), isDark),
+                  _sectionHeader(
+                      '⚡ Quick Actions', '', const Color(0xFF00B4D8), isDark),
                   const SizedBox(height: 14),
                   _actionTile(
                     icon: Icons.work_outline_rounded,
                     gradient: const [Color(0xFF2ECC71), Color(0xFF27AE60)],
                     title: 'Work Management',
-                    subtitle: _isOnline ? 'You are Online. Tap to go Offline or edit settings.' : 'You are Offline. Tap to go Online.',
+                    subtitle: _isOnline
+                        ? 'You are Online. Tap to go Offline or edit settings.'
+                        : 'You are Offline. Tap to go Online.',
                     badge: _isOnline ? 'Online' : 'Offline',
                     isDark: isDark,
                     onTap: _showWorkManagementSheet,
@@ -1159,7 +1162,8 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                  color: badge == 'Online' ? const Color(0xFF2ECC71) : Colors.grey,
+                  color:
+                      badge == 'Online' ? const Color(0xFF2ECC71) : Colors.grey,
                   borderRadius: BorderRadius.circular(20)),
               child: Text(badge,
                   style: GoogleFonts.outfit(
@@ -1180,99 +1184,145 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1A1A2E) : Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          final isDark = Theme.of(context).brightness == Brightness.dark;
-          return Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Work Management 🛠️', style: GoogleFonts.outfit(fontSize: 22, fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
-                const SizedBox(height: 8),
-                Text('Manage your shift, tools, and availability.', style: GoogleFonts.outfit(fontSize: 14, color: isDark ? Colors.white60 : Colors.black54)),
-                const SizedBox(height: 24),
-                // Online/Offline Toggle
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: SwitchListTile(
-                    title: Text('Duty Status', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
-                    subtitle: Text(_isOnline ? 'Online - Receiving orders' : 'Offline - Not receiving orders', style: GoogleFonts.outfit(color: isDark ? Colors.white70 : Colors.black54)),
-                    value: _isOnline,
-                    activeColor: AppColors.success,
-                    secondary: Icon(Icons.power_settings_new_rounded, color: _isOnline ? AppColors.success : Colors.grey),
-                    onChanged: (val) {
-                      setSheetState(() => _isOnline = val);
-                      setState(() => _isOnline = val);
-                      if (val) _loadOrders();
-                    },
-                  ),
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF1A1A2E)
+          : Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx, setSheetState) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Work Management 🛠️',
+                  style: GoogleFonts.outfit(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black)),
+              const SizedBox(height: 8),
+              Text('Manage your shift, tools, and availability.',
+                  style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      color: isDark ? Colors.white60 : Colors.black54)),
+              const SizedBox(height: 24),
+              // Online/Offline Toggle
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: SwitchListTile(
-                    title: Text('Auto-Accept Orders', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
-                    subtitle: Text('Automatically accept nearby orders (Under Dev)', style: GoogleFonts.outfit(color: isDark ? Colors.white70 : Colors.black54)),
-                    value: _autoAccept,
-                    activeColor: AppColors.primary,
-                    secondary: Icon(Icons.flash_on_rounded, color: _autoAccept ? AppColors.primary : Colors.grey),
-                    onChanged: (val) {
-                      setSheetState(() => _autoAccept = val);
-                      setState(() => _autoAccept = val);
-                    },
-                  ),
+                child: SwitchListTile(
+                  title: Text('Duty Status',
+                      style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black)),
+                  subtitle: Text(
+                      _isOnline
+                          ? 'Online - Receiving orders'
+                          : 'Offline - Not receiving orders',
+                      style: GoogleFonts.outfit(
+                          color: isDark ? Colors.white70 : Colors.black54)),
+                  value: _isOnline,
+                  activeThumbColor: AppColors.success,
+                  secondary: Icon(Icons.power_settings_new_rounded,
+                      color: _isOnline ? AppColors.success : Colors.grey),
+                  onChanged: (val) {
+                    setSheetState(() => _isOnline = val);
+                    setState(() => _isOnline = val);
+                    if (val) _loadOrders();
+                  },
                 ),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: ListTile(
-                    title: Text('Navigation App', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
-                    subtitle: Text(_navApp, style: GoogleFonts.outfit(color: isDark ? Colors.white70 : Colors.black54)),
-                    leading: const Icon(Icons.map_outlined, color: Colors.blue),
-                    trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-                    onTap: () {
-                       setSheetState(() {
-                         _navApp = _navApp == 'Google Maps' ? 'Waze' : 'Google Maps';
-                       });
-                       setState(() {});
-                    },
-                  ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: ListTile(
-                    title: Text('Delivery Vehicle', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black)),
-                    subtitle: Text('2-Wheeler (Motorcycle)', style: GoogleFonts.outfit(color: isDark ? Colors.white70 : Colors.black54)),
-                    leading: const Icon(Icons.two_wheeler_rounded, color: Colors.orange),
-                    trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
-                    onTap: () {
-                       _showSnack('Vehicle change requires admin approval.');
-                    },
-                  ),
+                child: SwitchListTile(
+                  title: Text('Auto-Accept Orders',
+                      style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black)),
+                  subtitle: Text(
+                      'Automatically accept nearby orders (Under Dev)',
+                      style: GoogleFonts.outfit(
+                          color: isDark ? Colors.white70 : Colors.black54)),
+                  value: _autoAccept,
+                  activeThumbColor: AppColors.primary,
+                  secondary: Icon(Icons.flash_on_rounded,
+                      color: _autoAccept ? AppColors.primary : Colors.grey),
+                  onChanged: (val) {
+                    setSheetState(() => _autoAccept = val);
+                    setState(() => _autoAccept = val);
+                  },
                 ),
-                const SizedBox(height: 32),
-              ],
-            ),
-          );
-        }
-      ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ListTile(
+                  title: Text('Navigation App',
+                      style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black)),
+                  subtitle: Text(_navApp,
+                      style: GoogleFonts.outfit(
+                          color: isDark ? Colors.white70 : Colors.black54)),
+                  leading: const Icon(Icons.map_outlined, color: Colors.blue),
+                  trailing:
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                  onTap: () {
+                    setSheetState(() {
+                      _navApp =
+                          _navApp == 'Google Maps' ? 'Waze' : 'Google Maps';
+                    });
+                    setState(() {});
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.black.withOpacity(0.03),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: ListTile(
+                  title: Text('Delivery Vehicle',
+                      style: GoogleFonts.outfit(
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black)),
+                  subtitle: Text('2-Wheeler (Motorcycle)',
+                      style: GoogleFonts.outfit(
+                          color: isDark ? Colors.white70 : Colors.black54)),
+                  leading: const Icon(Icons.two_wheeler_rounded,
+                      color: Colors.orange),
+                  trailing:
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                  onTap: () {
+                    _showSnack('Vehicle change requires admin approval.');
+                  },
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        );
+      }),
     );
   }
 

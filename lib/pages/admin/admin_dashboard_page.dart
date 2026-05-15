@@ -12,6 +12,12 @@ import 'rbac/roles_list_page.dart';
 import 'rbac/team_members_page.dart';
 import 'rbac/audit_logs_page.dart';
 
+import 'modules/sellers_admin_page.dart';
+import 'modules/orders_admin_page.dart';
+import 'modules/users_admin_page.dart';
+import 'modules/riders_admin_page.dart';
+import 'modules/finance_admin_page.dart';
+
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
   @override
@@ -142,7 +148,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                         color: Colors.white, fontSize: 18,
                         fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                 Row(children: [
-                  Text('Welcome, $name',
+                  Text(rbac.isSuperAdmin ? 'Welcome Boss' : 'Welcome, $name',
                       style: GoogleFonts.outfit(color: Colors.white70, fontSize: 12)),
                   const SizedBox(width: 6),
                   if (role != null)
@@ -173,6 +179,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
     return switch (label) {
       'Overview' => _buildOverview(rbac),
       'RBAC' => _buildRbacHub(rbac),
+      'Sellers' => const SellersAdminPage(),
+      'Orders' => const OrdersAdminPage(),
+      'Users' => const UsersAdminPage(),
+      'Riders' => const RidersAdminPage(),
+      'Finance' => const FinanceAdminPage(),
       _ => _placeholder('$label (coming soon)'),
     };
   }
@@ -292,6 +303,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
       );
 
   Widget _buildNavBar(List<_NavItem> items, int selected) {
+    if (items.length < 2) return const SizedBox.shrink();
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF0D0A1F),

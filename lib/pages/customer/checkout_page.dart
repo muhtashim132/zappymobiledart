@@ -7,6 +7,8 @@ import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
 import '../../widgets/common/zappy_map.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../../config/payment_config.dart';
 import '../../config/tax_config.dart';
@@ -21,13 +23,27 @@ class CheckoutPage extends StatefulWidget {
 class _CheckoutPageState extends State<CheckoutPage> {
   bool _isProcessing = false;
   final _notesController = TextEditingController();
-  // Payment method: 'upi'
   String? _selectedPaymentMethod = 'upi';
+  List<XFile> _prescriptions = [];
 
   @override
   void dispose() {
     _notesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPrescription() async {
+    final picker = ImagePicker();
+    final List<XFile> picked = await picker.pickMultiImage(imageQuality: 70);
+    if (picked.isNotEmpty) {
+      setState(() {
+        _prescriptions.addAll(picked);
+      });
+    }
+  }
+
+  void _removePrescription(int index) {
+    setState(() => _prescriptions.removeAt(index));
   }
 
   Future<void> _placeOrder() async {
@@ -37,6 +53,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final location = context.read<LocationProvider>();
 
     try {
+      if (cart.requiresPrescription && _prescriptions.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('A valid prescription is required for medicines in your cart.'), backgroundColor: AppColors.danger),
+        );
+        setState(() => _isProcessing = false);
+        return;
+      }
+
       final supabase = Supabase.instance.client;
       double distanceKm = 3.0;
       if (location.currentLocation != null && cart.shops.isNotEmpty) {
@@ -77,6 +101,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
           final profile = await supabase.from('profiles').select('phone').eq('id', shop.sellerId).maybeSingle();
           if (profile != null) shopPhones[shop.id] = profile['phone'];
         } catch (_) {}
+      }
+
+      List<String> uploadedPrescriptionUrls = [];
+      if (cart.requiresPrescription && _prescriptions.isNotEmpty) {
+        for (int i = 0; i < _prescriptions.length; i++) {
+          final file = _prescriptions[i];
+          final bytes = await file.readAsBytes();
+          final ext = file.name.split('.').last;
+          final path = '${auth.currentUserId}/${cartGroupId}_$i.$ext';
+          await supabase.storage.from('prescription_docs').uploadBinary(path, bytes);
+          uploadedPrescriptionUrls.add(supabase.storage.from('prescription_docs').getPublicUrl(path));
+        }
       }
 
       final List<String> orderIds = [];
@@ -163,6 +199,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               'tcs_amount': shopTcs,                 // Zappy files GSTR-8
               'grand_total_collected': shopGrandTotal,
               'gst_rate_snapshot': rateSnapshot,     // Frozen rate map
+              'prescription_urls': uploadedPrescriptionUrls,
             })
             .select()
             .single();
@@ -344,6 +381,93 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ],
               ),
             ),
+            if (cart.requiresPrescription) ...[
+              const SizedBox(height: 16),
+              _sectionCard(
+                title: 'Upload Prescription',
+                icon: Icons.medical_information_outlined,
+                iconColor: AppColors.danger,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Your order contains medicines that require a valid doctor\'s prescription under Govt of India norms. Please upload it here.',
+                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 12),
+                    if (_prescriptions.isEmpty)
+                      GestureDetector(
+                        onTap: _pickPrescription,
+                        child: Container(
+                          width: double.infinity,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.primary.withOpacity(0.3), style: BorderStyle.solid),
+                          ),
+                          child: const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary, size: 32),
+                              SizedBox(height: 8),
+                              Text('Tap to upload prescription', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        height: 100,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _prescriptions.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == _prescriptions.length) {
+                              return GestureDetector(
+                                onTap: _pickPrescription,
+                                child: Container(
+                                  width: 100,
+                                  margin: const EdgeInsets.only(right: 8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.05),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                                  ),
+                                  child: const Center(child: Icon(Icons.add, color: AppColors.primary)),
+                                ),
+                              );
+                            }
+                            return Stack(
+                              children: [
+                                Container(
+                                  width: 100,
+                                  margin: const EdgeInsets.only(right: 8),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    image: DecorationImage(image: FileImage(File(_prescriptions[index].path)), fit: BoxFit.cover),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 4, right: 12,
+                                  child: GestureDetector(
+                                    onTap: () => _removePrescription(index),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                      child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
 
             // Delivery Notes
