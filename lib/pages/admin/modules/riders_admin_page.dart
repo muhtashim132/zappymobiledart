@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import '../../../widgets/admin/kyc_verification_dialog.dart';
+import '../../../theme/app_colors.dart';
 
 class RidersAdminPage extends StatefulWidget {
   const RidersAdminPage({super.key});
@@ -52,11 +54,12 @@ class _RidersAdminPageState extends State<RidersAdminPage> {
                 padding: const EdgeInsets.all(16),
                 itemCount: _riders.length,
                 itemBuilder: (context, index) {
-                  final rider = _riders[index];
-                  final profile = rider['profiles'] ?? {};
-                  final isActive = rider['is_active'] == true;
-                  final isOnline = rider['is_online'] == true;
-                  final createdAt = rider['created_at'] != null ? DateFormat('MMM dd, yyyy').format(DateTime.parse(rider['created_at'])) : 'Unknown';
+                   final rider = _riders[index];
+                   final profile = rider['profiles'] ?? {};
+                   final isActive = rider['is_active'] == true;
+                   final isOnline = rider['is_online'] == true;
+                   final vStatus = rider['verification_status'] ?? 'none';
+                   final createdAt = rider['created_at'] != null ? DateFormat('MMM dd, yyyy').format(DateTime.parse(rider['created_at'])) : 'Unknown';
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
@@ -98,12 +101,31 @@ class _RidersAdminPageState extends State<RidersAdminPage> {
                                   const SizedBox(width: 16),
                                   Icon(Icons.directions_bike_rounded, color: Colors.white38, size: 12),
                                   const SizedBox(width: 4),
-                                  Text('${rider['total_deliveries'] ?? 0} deliveries', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 11)),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+                                   Text('${rider['total_deliveries'] ?? 0} deliveries', style: GoogleFonts.outfit(color: Colors.white54, fontSize: 11)),
+                                 ],
+                               ),
+                               const SizedBox(height: 12),
+                               Row(
+                                 children: [
+                                   _buildStatusBadge(vStatus),
+                                   if (vStatus == 'pending') ...[
+                                     const SizedBox(width: 8),
+                                     TextButton.icon(
+                                       onPressed: () => _showVerifyDialog(rider, profile),
+                                       icon: const Icon(Icons.verified_user_rounded, size: 16),
+                                       label: const Text('Review KYC'),
+                                       style: TextButton.styleFrom(
+                                         foregroundColor: const Color(0xFF00BCD4),
+                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                                         backgroundColor: const Color(0xFF00BCD4).withOpacity(0.1),
+                                       ),
+                                     ),
+                                   ],
+                                 ],
+                               ),
+                             ],
+                           ),
+                         ),
                         Column(
                           children: [
                             Switch(
@@ -119,5 +141,39 @@ class _RidersAdminPageState extends State<RidersAdminPage> {
                   );
                 },
               );
+   }
+
+  Widget _buildStatusBadge(String status) {
+    Color color = Colors.grey;
+    String label = status.toUpperCase();
+    if (status == 'verified') color = Colors.green;
+    if (status == 'pending') color = Colors.orange;
+    if (status == 'rejected') color = Colors.red;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.outfit(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  void _showVerifyDialog(Map<String, dynamic> rider, Map<String, dynamic> profile) {
+    showDialog(
+      context: context,
+      builder: (_) => KycVerificationDialog(
+        title: 'Verify Rider: ${profile['full_name']}',
+        data: rider,
+        tableName: 'delivery_partners',
+        idColumn: 'id',
+        onRefresh: _fetchRiders,
+      ),
+    );
   }
 }

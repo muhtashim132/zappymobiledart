@@ -217,12 +217,23 @@ class AuthProvider extends ChangeNotifier {
               ? preferredRole
               : primaryRole;
 
+      // ── Detect verification status for the session role ──
+      String verificationStatus = 'verified'; // Default for customer
+      if (sessionRole == 'seller') {
+        final sellerData = await _supabase.from('shops').select('verification_status').eq('seller_id', userId).maybeSingle();
+        verificationStatus = sellerData?['verification_status'] ?? 'pending';
+      } else if (sessionRole == 'delivery_partner') {
+        final deliveryData = await _supabase.from('delivery_partners').select('verification_status').eq('id', userId).maybeSingle();
+        verificationStatus = deliveryData?['verification_status'] ?? 'pending';
+      }
+
       _user = UserModel.fromMap({
         ...data,
         'email': _supabase.auth.currentUser?.email ?? '',
         'phone': _supabase.auth.currentUser?.phone ?? data['phone'] ?? '',
         'activeRoles': allRoles,
         'activeSessionRole': sessionRole,
+        'verification_status': verificationStatus,
       });
       notifyListeners();
     } catch (e) {

@@ -79,10 +79,20 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       }
       if (!mounted) return;
       final role = auth.user?.activeSessionRole ?? auth.user?.role;
+      final status = auth.user?.verificationStatus ?? 'verified';
+
       if (role == 'seller') {
-        Navigator.pushReplacementNamed(context, AppRoutes.sellerDashboard);
+        if (status == 'verified') {
+          Navigator.pushReplacementNamed(context, AppRoutes.sellerDashboard);
+        } else {
+          Navigator.pushReplacementNamed(context, AppRoutes.sellerPendingVerification);
+        }
       } else if (role == 'delivery_partner') {
-        Navigator.pushReplacementNamed(context, AppRoutes.deliveryDashboard);
+        if (status == 'verified') {
+          Navigator.pushReplacementNamed(context, AppRoutes.deliveryDashboard);
+        } else {
+          Navigator.pushReplacementNamed(context, AppRoutes.deliveryPendingVerification);
+        }
       } else {
         Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
       }

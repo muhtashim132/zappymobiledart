@@ -213,12 +213,26 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
           context, AppRoutes.adminPassword, (_) => false);
       return;
     }
+
+    final auth = context.read<AuthProvider>();
+    final status = auth.user?.verificationStatus ?? 'verified';
+
     if (role == 'seller') {
-      Navigator.pushNamedAndRemoveUntil(
-          context, AppRoutes.sellerDashboard, (_) => false);
+      if (status == 'verified') {
+        Navigator.pushNamedAndRemoveUntil(
+            context, AppRoutes.sellerDashboard, (_) => false);
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+            context, AppRoutes.sellerPendingVerification, (_) => false);
+      }
     } else if (role == 'delivery_partner') {
-      Navigator.pushNamedAndRemoveUntil(
-          context, AppRoutes.deliveryDashboard, (_) => false);
+      if (status == 'verified') {
+        Navigator.pushNamedAndRemoveUntil(
+            context, AppRoutes.deliveryDashboard, (_) => false);
+      } else {
+        Navigator.pushNamedAndRemoveUntil(
+            context, AppRoutes.deliveryPendingVerification, (_) => false);
+      }
     } else {
       Navigator.pushNamedAndRemoveUntil(
           context, AppRoutes.customerHome, (_) => false);

@@ -4,14 +4,14 @@ import 'package:provider/provider.dart';
 import '../../config/routes.dart';
 import '../../providers/auth_provider.dart';
 
-class SellerPendingVerificationPage extends StatefulWidget {
-  const SellerPendingVerificationPage({super.key});
+class DeliveryPendingVerificationPage extends StatefulWidget {
+  const DeliveryPendingVerificationPage({super.key});
 
   @override
-  State<SellerPendingVerificationPage> createState() => _SellerPendingVerificationPageState();
+  State<DeliveryPendingVerificationPage> createState() => _DeliveryPendingVerificationPageState();
 }
 
-class _SellerPendingVerificationPageState extends State<SellerPendingVerificationPage> with SingleTickerProviderStateMixin {
+class _DeliveryPendingVerificationPageState extends State<DeliveryPendingVerificationPage> with SingleTickerProviderStateMixin {
   late AnimationController _animCtrl;
   late Animation<double> _pulseAnim;
 
@@ -32,7 +32,7 @@ class _SellerPendingVerificationPageState extends State<SellerPendingVerificatio
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final isRejected = auth.user?.verificationStatus == 'rejected';
-    final primaryColor = isRejected ? Colors.redAccent : const Color(0xFFF4C542);
+    final primaryColor = isRejected ? Colors.redAccent : const Color(0xFF51CF66);
 
     return Scaffold(
       backgroundColor: const Color(0xFF02061A),
@@ -100,8 +100,8 @@ class _SellerPendingVerificationPageState extends State<SellerPendingVerificatio
                       ),
                       child: Text(
                         isRejected
-                            ? 'Unfortunately, your seller verification was not successful. This is usually due to blurry document photos or mismatched business details.\n\nPlease re-upload your documents to continue.'
-                            : 'Your KYC documents have been successfully securely transmitted to our Back-Office Operations Team.\n\nYou will be notified and granted access to your Seller Dashboard once your profile is verified.',
+                            ? 'Unfortunately, your delivery partner verification was not successful. This is usually due to blurry document photos or mismatched details.\n\nPlease re-upload your documents to continue.'
+                            : 'Your KYC documents have been successfully securely transmitted to our Back-Office Operations Team.\n\nYou will be notified and granted access to your Delivery Dashboard once your profile is verified.',
                         textAlign: TextAlign.center,
                         style: GoogleFonts.outfit(
                           color: Colors.white70,
@@ -115,9 +115,8 @@ class _SellerPendingVerificationPageState extends State<SellerPendingVerificatio
                       _buildButton(
                         label: 'Re-upload Documents',
                         color: primaryColor,
-                        onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.sellerKycUpload),
+                        onTap: () => Navigator.pushReplacementNamed(context, AppRoutes.deliveryKycUpload),
                         icon: Icons.upload_file_rounded,
-                        textColor: Colors.black,
                       )
                     else
                       _buildButton(

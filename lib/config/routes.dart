@@ -6,6 +6,8 @@ import '../pages/auth/otp_verify_page.dart';
 import '../pages/auth/complete_profile_page.dart';
 import '../pages/auth/seller_kyc_upload_page.dart';
 import '../pages/auth/seller_pending_verification_page.dart';
+import '../pages/auth/delivery_kyc_upload_page.dart';
+import '../pages/auth/delivery_pending_verification_page.dart';
 import '../pages/auth/login_page.dart';
 import '../pages/customer/home_page.dart';
 import '../pages/customer/restaurant_page.dart';
@@ -29,6 +31,7 @@ import '../pages/legal/terms_of_service_page.dart';
 import '../pages/legal/privacy_policy_page.dart';
 import '../pages/admin/admin_password_page.dart';
 import '../pages/admin/admin_dashboard_page.dart';
+import '../pages/settings/faq_support_page.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -38,6 +41,8 @@ class AppRoutes {
   static const String completeProfile = '/auth/complete-profile';
   static const String sellerKycUpload = '/auth/seller-kyc';
   static const String sellerPendingVerification = '/auth/seller-pending';
+  static const String deliveryKycUpload = '/auth/delivery-kyc';
+  static const String deliveryPendingVerification = '/auth/delivery-pending';
   static const String login = '/login';
   static const String customerHome = '/customer/home';
   static const String restaurant = '/customer/restaurant';
@@ -61,6 +66,7 @@ class AppRoutes {
   static const String privacy = '/legal/privacy';
   static const String adminPassword  = '/admin/password';
   static const String adminDashboard = '/admin/dashboard';
+  static const String faqSupport = '/settings/faq-support';
 
   static Route<dynamic> generateRoute(RouteSettings routeSettings) {
     switch (routeSettings.name) {
@@ -78,6 +84,10 @@ class AppRoutes {
         return _build(const SellerKycUploadPage(), routeSettings);
       case sellerPendingVerification:
         return _build(const SellerPendingVerificationPage(), routeSettings);
+      case deliveryKycUpload:
+        return _build(const DeliveryKycUploadPage(), routeSettings);
+      case deliveryPendingVerification:
+        return _build(const DeliveryPendingVerificationPage(), routeSettings);
       case login:
         return _build(const LoginPage(), routeSettings);
       case customerHome:
@@ -132,6 +142,8 @@ class AppRoutes {
         return _build(const AdminPasswordPage(), routeSettings);
       case adminDashboard:
         return _build(const AdminDashboardPage(), routeSettings);
+      case faqSupport:
+        return _build(const FaqSupportPage(), routeSettings);
       default:
         return _build(const SplashPage(), routeSettings);
     }

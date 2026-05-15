@@ -102,7 +102,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               title: 'Help & Support',
               subtitle: 'FAQs and contact support',
               isDark: isDark,
-              onTap: () => showGenericInfoDialog(context, 'Help & Support', 'Please contact support at support@zappy.in.'),
+              onTap: () => Navigator.pushNamed(context, '/settings/faq-support'),
             ),
             _buildSettingTile(
               icon: Icons.info_outline_rounded,

@@ -12,6 +12,8 @@ class UserModel {
   final String activeSessionRole;
   final double averageRating;
   final int totalReviews;
+  /// KYC verification status for the active role (pending, verified, rejected)
+  final String verificationStatus;
 
   UserModel({
     required this.id,
@@ -25,6 +27,7 @@ class UserModel {
     String? activeSessionRole,
     this.averageRating = 0.0,
     this.totalReviews = 0,
+    this.verificationStatus = 'verified', // Default for customers usually
   })  : activeRoles = activeRoles ?? [role],
         activeSessionRole = activeSessionRole ?? role;
 
@@ -42,6 +45,7 @@ class UserModel {
       activeSessionRole: map['activeSessionRole'] as String? ?? role,
       averageRating: (map['average_rating'] ?? 0.0).toDouble(),
       totalReviews: map['total_reviews'] ?? 0,
+      verificationStatus: map['verification_status'] as String? ?? 'verified',
     );
   }
 
@@ -50,6 +54,7 @@ class UserModel {
     List<String>? activeRoles,
     double? averageRating,
     int? totalReviews,
+    String? verificationStatus,
   }) {
     return UserModel(
       id: id,
@@ -63,6 +68,7 @@ class UserModel {
       activeSessionRole: activeSessionRole ?? this.activeSessionRole,
       averageRating: averageRating ?? this.averageRating,
       totalReviews: totalReviews ?? this.totalReviews,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
     );
   }
 

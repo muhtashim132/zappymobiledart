@@ -35,13 +35,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
   // Delivery
   final _vehicleTypeCtrl = TextEditingController();
   final _vehicleRegCtrl = TextEditingController();
-  final _licenseCtrl = TextEditingController();
-  final _aadharCtrl = TextEditingController();
   final _insuranceCtrl = TextEditingController();
-  final _bankAccountCtrl = TextEditingController();
-  final _ifscCtrl = TextEditingController();
-  final _accountHolderCtrl = TextEditingController();
-
   // Common
   final _pincodeCtrl = TextEditingController();
   final _landmarkCtrl = TextEditingController();
@@ -103,15 +97,10 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
       _shopAddressCtrl,
       _vehicleTypeCtrl,
       _vehicleRegCtrl,
-      _licenseCtrl,
-      _aadharCtrl,
       _insuranceCtrl,
-      _bankAccountCtrl,
-      _ifscCtrl,
-      _accountHolderCtrl,
-      _gstCtrl,
       _pincodeCtrl,
       _landmarkCtrl,
+      _gstCtrl,
     ]) {
       c.dispose();
     }
@@ -215,17 +204,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         };
         break;
       case _Role.delivery:
-        if (_aadharCtrl.text.trim().isEmpty ||
-            _licenseCtrl.text.trim().isEmpty ||
-            _vehicleRegCtrl.text.trim().isEmpty) {
-          _showSnack('Please fill all mandatory KYC fields', isError: true);
-          setState(() => _loading = false);
-          return;
-        }
-        if (_accountHolderCtrl.text.trim().isEmpty ||
-            _bankAccountCtrl.text.trim().isEmpty ||
-            _ifscCtrl.text.trim().isEmpty) {
-          _showSnack('All Bank Details are required', isError: true);
+        if (_vehicleRegCtrl.text.trim().isEmpty) {
+          _showSnack('Please fill vehicle registration', isError: true);
           setState(() => _loading = false);
           return;
         }
@@ -234,15 +214,11 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         extra = {
           'vehicle_type': _vehicleTypeCtrl.text.trim(),
           'vehicle_reg_number': _vehicleRegCtrl.text.trim(), // RC
-          'driving_license': _licenseCtrl.text.trim(),
-          'aadhar_number': _aadharCtrl.text.trim(),
           'insurance_number': _insuranceCtrl.text.trim(),
-          'bank_account_number': _bankAccountCtrl.text.trim(),
-          'bank_ifsc': _ifscCtrl.text.trim(),
-          'bank_account_holder': _accountHolderCtrl.text.trim(),
           'pincode': _pincodeCtrl.text.trim(),
           'landmark': _landmarkCtrl.text.trim(),
           'is_available': false,
+          'verification_status': 'pending',
         };
         break;
     }
@@ -277,7 +253,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         break;
       case _Role.delivery:
         Navigator.pushNamedAndRemoveUntil(
-            context, AppRoutes.deliveryDashboard, (_) => false);
+            context, AppRoutes.deliveryKycUpload, (_) => false);
         break;
     }
   }
@@ -671,7 +647,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
         ];
       case _Role.delivery:
         return [
-          // ── Vehicle & KYC Details ──────────────────────────────────────
+          // ── Vehicle Details ──────────────────────────────────────
           Row(
             children: [
               Expanded(
@@ -679,7 +655,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
                       height: 1, color: Colors.white.withValues(alpha: 0.08))),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text('Vehicle & KYC Details',
+                child: Text('Vehicle Details',
                     style: GoogleFonts.outfit(
                         color: Colors.white38, fontSize: 12)),
               ),
@@ -690,16 +666,9 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           ),
           const SizedBox(height: 20),
           _DarkField(
-              label: 'Aadhaar Last 4 Digits *',
-              controller: _aadharCtrl,
-              hint: 'e.g. 9012',
-              number: true),
-          const SizedBox(height: 16),
-          _DarkField(
-              label: 'Driving License Number *',
-              controller: _licenseCtrl,
-              hint: 'MH-0220110012345',
-              caps: true),
+              label: 'Vehicle Type *',
+              controller: _vehicleTypeCtrl,
+              hint: 'Bike / Scooter / Car'),
           const SizedBox(height: 16),
           _DarkField(
               label: 'Vehicle Reg. Number (RC) *',
@@ -714,11 +683,6 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
               caps: true),
           const SizedBox(height: 16),
           _DarkField(
-              label: 'Vehicle Type *',
-              controller: _vehicleTypeCtrl,
-              hint: 'Bike / Scooter / Car'),
-          const SizedBox(height: 16),
-          _DarkField(
               label: 'Landmark (Home Base)',
               controller: _landmarkCtrl,
               hint: 'e.g. Near City Mall'),
@@ -729,46 +693,12 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
               hint: 'e.g. 400001',
               number: true),
           const SizedBox(height: 24),
-
-          // ── Bank Details ──────────────────────────────────────────────
-          Row(
-            children: [
-              Expanded(
-                  child: Container(
-                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text('Bank Details',
-                    style: GoogleFonts.outfit(
-                        color: Colors.white38, fontSize: 12)),
-              ),
-              Expanded(
-                  child: Container(
-                      height: 1, color: Colors.white.withValues(alpha: 0.08))),
-            ],
-          ),
-          const SizedBox(height: 20),
-          _DarkField(
-              label: 'Account Holder Name *',
-              controller: _accountHolderCtrl,
-              hint: 'Name on bank account'),
-          const SizedBox(height: 16),
-          _DarkField(
-              label: 'Bank Account Number *',
-              controller: _bankAccountCtrl,
-              hint: 'e.g. 1234567890',
-              number: true),
-          const SizedBox(height: 16),
-          _DarkField(
-              label: 'IFSC Code *',
-              controller: _ifscCtrl,
-              hint: 'SBIN0001234',
-              caps: true),
         ];
     }
   }
 
   Widget _buildPhoneField() {
+    final displayPhone = (_phoneNumber == null || _phoneNumber!.isEmpty) ? 'Not available' : _phoneNumber!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -788,7 +718,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
             border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           child: Text(
-            _phoneNumber ?? 'Not available',
+            displayPhone,
             style: GoogleFonts.outfit(
                 color: Colors.white54, fontSize: 15, fontWeight: FontWeight.w500),
           ),

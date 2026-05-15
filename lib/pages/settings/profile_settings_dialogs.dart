@@ -41,7 +41,7 @@ void showSavedAddressesDialog(BuildContext context) {
           
           if (isLoading) {
             Supabase.instance.client.from('customers').select().eq('id', user.id).maybeSingle().then((data) {
-              if (data != null && mounted) {
+              if (data != null && context.mounted) {
                 final home = data['address_home'] ?? {};
                 final work = data['address_work'] ?? {};
                 

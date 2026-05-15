@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import '../../../widgets/admin/kyc_verification_dialog.dart';
+import '../../../theme/app_colors.dart';
 
 class SellersAdminPage extends StatefulWidget {
   const SellersAdminPage({super.key});
@@ -52,10 +54,11 @@ class _SellersAdminPageState extends State<SellersAdminPage> {
                 padding: const EdgeInsets.all(16),
                 itemCount: _sellers.length,
                 itemBuilder: (context, index) {
-                  final shop = _sellers[index];
-                  final profile = shop['profiles'] ?? {};
-                  final isActive = shop['is_active'] == true;
-                  final createdAt = shop['created_at'] != null ? DateFormat('MMM dd, yyyy').format(DateTime.parse(shop['created_at'])) : 'Unknown';
+                   final shop = _sellers[index];
+                   final profile = shop['profiles'] ?? {};
+                   final isActive = shop['is_active'] == true;
+                   final vStatus = shop['verification_status'] ?? 'none';
+                   final createdAt = shop['created_at'] != null ? DateFormat('MMM dd, yyyy').format(DateTime.parse(shop['created_at'])) : 'Unknown';
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
@@ -89,12 +92,31 @@ class _SellersAdminPageState extends State<SellersAdminPage> {
                                   const SizedBox(width: 16),
                                   Icon(Icons.calendar_today_rounded, color: Colors.white38, size: 12),
                                   const SizedBox(width: 4),
-                                  Text(createdAt, style: GoogleFonts.outfit(color: Colors.white54, fontSize: 11)),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+                                   Text(createdAt, style: GoogleFonts.outfit(color: Colors.white54, fontSize: 11)),
+                                 ],
+                               ),
+                               const SizedBox(height: 12),
+                               Row(
+                                 children: [
+                                   _buildStatusBadge(vStatus),
+                                   if (vStatus == 'pending') ...[
+                                     const SizedBox(width: 8),
+                                     TextButton.icon(
+                                       onPressed: () => _showVerifyDialog(shop),
+                                       icon: const Icon(Icons.verified_user_rounded, size: 16),
+                                       label: const Text('Review KYC'),
+                                       style: TextButton.styleFrom(
+                                         foregroundColor: AppColors.primary,
+                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                                         backgroundColor: AppColors.primary.withOpacity(0.1),
+                                       ),
+                                     ),
+                                   ],
+                                 ],
+                               ),
+                             ],
+                           ),
+                         ),
                         Column(
                           children: [
                             Switch(
@@ -110,5 +132,39 @@ class _SellersAdminPageState extends State<SellersAdminPage> {
                   );
                 },
               );
+   }
+
+  Widget _buildStatusBadge(String status) {
+    Color color = Colors.grey;
+    String label = status.toUpperCase();
+    if (status == 'verified') color = Colors.green;
+    if (status == 'pending') color = Colors.orange;
+    if (status == 'rejected') color = Colors.red;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.outfit(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  void _showVerifyDialog(Map<String, dynamic> shop) {
+    showDialog(
+      context: context,
+      builder: (_) => KycVerificationDialog(
+        title: 'Verify Seller: ${shop['name']}',
+        data: shop,
+        tableName: 'shops',
+        idColumn: 'id',
+        onRefresh: _fetchSellers,
+      ),
+    );
   }
 }
