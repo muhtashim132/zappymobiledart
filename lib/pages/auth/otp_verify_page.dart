@@ -121,6 +121,20 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
       final auth = context.read<AuthProvider>();
       final allRoles = auth.user?.activeRoles ?? [];
 
+      // ── God Mode Override ──────────────────────────────────────────────────
+      // If the user's account actually has admin privileges, intercept normal
+      // routing and force them into the God Mode 2FA gate, regardless of what
+      // role card they clicked.
+      if (allRoles.contains('admin')) {
+        _showSnack('👑 Administrator detected. Securing connection...',
+            isError: false);
+        await Future.delayed(const Duration(milliseconds: 1200));
+        if (!mounted) return;
+        Navigator.pushNamedAndRemoveUntil(
+            context, AppRoutes.adminPassword, (_) => false);
+        return;
+      }
+
       // ── Case A: requested role is NOT yet registered — add new role ────────
       if (_requestedRole != null && !allRoles.contains(_requestedRole)) {
         // User exists but chosen role is new for them → complete profile for new role
@@ -193,6 +207,12 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
   }
 
   void _navigateToDashboard(String role) {
+    // Admin must pass 2nd-factor password gate first
+    if (role == 'admin') {
+      Navigator.pushNamedAndRemoveUntil(
+          context, AppRoutes.adminPassword, (_) => false);
+      return;
+    }
     if (role == 'seller') {
       Navigator.pushNamedAndRemoveUntil(
           context, AppRoutes.sellerDashboard, (_) => false);
@@ -234,6 +254,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
       case 'seller':           return 'Seller';
       case 'delivery_partner': return 'Delivery Partner';
       case 'customer':         return 'Customer';
+      case 'admin':            return 'Admin';
       default:                 return r;
     }
   }
@@ -242,7 +263,8 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
     switch (r) {
       case 'seller':           return '🏪';
       case 'delivery_partner': return '🏍️';
-      default:                 return '🛍️';
+      case 'admin':            return '👑';
+      default:                 return '🛒';
     }
   }
 
@@ -250,6 +272,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
     switch (r) {
       case 'seller':           return const Color(0xFFF4C542);
       case 'delivery_partner': return const Color(0xFF51CF66);
+      case 'admin':            return const Color(0xFF8B2FC9);
       default:                 return const Color(0xFF4C6EF5);
     }
   }
@@ -488,6 +511,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
     switch (r) {
       case 'seller':           return 'Go to Seller Dashboard';
       case 'delivery_partner': return 'Go to Delivery Dashboard';
+      case 'admin':            return 'Enter God Mode Control Tower';
       default:                 return 'Go to Customer Home';
     }
   }

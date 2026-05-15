@@ -261,6 +261,8 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                               () => _selectedRole = 'delivery_partner'),
                         ),
 
+
+
                         const SizedBox(height: 40),
 
                         // CTA
@@ -508,6 +510,7 @@ class _AnimatedRoleCard extends StatelessWidget {
     );
   }
 }
+
 
 // ── Subtle star field ─────────────────────────────────────────────────────────
 class _StarPainter extends CustomPainter {

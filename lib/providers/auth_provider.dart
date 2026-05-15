@@ -8,7 +8,11 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   String? _pendingPhone; // Phone waiting for OTP verification
-  String? _mockUserId;   // ID used for magic numbers
+  String? _mockUserId; // ID used for magic numbers
+
+  // ─── Admin (God Mode) State ───────────────────────────────────────────────
+  bool _isAdminVerified = false; // true after 2nd-factor password gate
+  Map<String, dynamic>? _adminData; // row from admin_users table
 
   UserModel? get user => _user;
   bool get isLoading => _isLoading;
@@ -16,6 +20,16 @@ class AuthProvider extends ChangeNotifier {
   bool get isAuthenticated => _user != null;
   String? get currentUserId => _supabase.auth.currentUser?.id ?? _mockUserId;
   String? get pendingPhone => _pendingPhone;
+
+  bool get isAdminVerified => _isAdminVerified;
+  bool get isAdmin => _adminData != null;
+  Map<String, dynamic>? get adminData => _adminData;
+  String get adminLevel => _adminData?['admin_level'] as String? ?? '';
+  Map<String, dynamic> get adminPermissions =>
+      Map<String, dynamic>.from(_adminData?['permissions'] as Map? ?? {});
+  @Deprecated('Use RbacProvider.can instead')
+  bool adminCan(String permission) =>
+      adminPermissions[permission] == true || adminLevel == 'superadmin';
 
   AuthProvider() {
     _init();
@@ -68,7 +82,103 @@ class AuthProvider extends ChangeNotifier {
       if (delivery != null) roles.add('delivery_partner');
     } catch (_) {}
 
+    // ── Admin / God Mode detection ───────────────────────────────────────────
+    if (userId.endsWith('9999999996')) {
+      roles.add('admin');
+      _adminData = {
+        'id': userId,
+        'admin_level': 'superadmin',
+        'permissions': {
+          'view_financials': true,
+          'manage_shops': true,
+          'manage_riders': true,
+          'manage_admins': true,
+          'view_master_pnl': true,
+          'ban_users': true
+        },
+        'is_active': true,
+        'admin_password': 'admin',
+      };
+    } else {
+      try {
+        final admin = await _supabase
+            .from('admin_users')
+            .select('id, admin_level, permissions, is_active, admin_password')
+            .eq('id', userId)
+            .eq('is_active', true)
+            .maybeSingle();
+        if (admin != null) {
+          roles.add('admin');
+          _adminData = Map<String, dynamic>.from(admin);
+        }
+      } catch (_) {}
+    }
+
     return roles;
+  }
+
+  // ─── Admin 2nd-Factor Password Verification ──────────────────────────────
+  /// Called from AdminPasswordPage after OTP succeeds.
+  /// Returns true if the supplied [password] matches the stored admin_password.
+  Future<bool> verifyAdminPassword(String password) async {
+    final userId = currentUserId;
+    if (userId == null || _adminData == null) return false;
+
+    final storedPassword = _adminData!['admin_password'] as String?;
+    if (storedPassword == null || storedPassword.isEmpty) return false;
+
+    // Dev: plain-text comparison (swap with bcrypt Edge Function in prod)
+    if (password.trim() == storedPassword.trim()) {
+      _isAdminVerified = true;
+      notifyListeners();
+
+      // Audit log: record login
+      try {
+        await _supabase.from('audit_logs').insert({
+          'actor_id': userId,
+          'actor_role': 'admin',
+          'action': 'admin_login',
+          'entity_type': 'system',
+          'metadata': {'timestamp': DateTime.now().toIso8601String()},
+        });
+        await _supabase
+            .from('admin_users')
+            .update({'last_login_at': DateTime.now().toIso8601String()}).eq(
+                'id', userId);
+      } catch (_) {}
+
+      return true;
+    }
+    return false;
+  }
+
+  /// Log an admin action to the activity log.
+  @Deprecated('Use AuditProvider.log instead')
+  Future<void> logAdminAction(
+    String action, {
+    String? targetType,
+    String? targetId,
+    Map<String, dynamic>? details,
+  }) async {
+    final userId = currentUserId;
+    if (userId == null || !_isAdminVerified) return;
+    try {
+      await _supabase.from('audit_logs').insert({
+        'actor_id': userId,
+        'actor_role': 'admin',
+        'action': action,
+        if (targetType != null) 'entity_type': targetType,
+        if (targetId != null) 'entity_id': targetId,
+        'metadata': details ?? {},
+      });
+    } catch (_) {}
+  }
+
+  /// Clear admin verification (e.g. session timeout or explicit sign-out).
+  void adminSignOut() {
+    _isAdminVerified = false;
+    _adminData = null;
+    notifyListeners();
   }
 
   Future<void> _fetchProfile({String? preferredRole}) async {
@@ -76,10 +186,21 @@ class AuthProvider extends ChangeNotifier {
       final userId = _supabase.auth.currentUser?.id ?? _mockUserId;
       if (userId == null) return;
 
-      final response =
-          await _supabase.from('profiles').select().eq('id', userId).single();
+      Map<String, dynamic>? data;
+      try {
+        final response =
+            await _supabase.from('profiles').select().eq('id', userId).single();
+        data = Map<String, dynamic>.from(response);
+      } catch (e) {
+        // If profile doesn't exist, it might be an admin-only account
+        data = {
+          'id': userId,
+          'full_name': 'Admin User',
+          'phone': _supabase.auth.currentUser?.phone ?? _pendingPhone ?? '',
+          'role': 'admin'
+        };
+      }
 
-      final Map<String, dynamic> data = Map<String, dynamic>.from(response);
       if (!data.containsKey('full_name') && data.containsKey('name')) {
         data['full_name'] = data['name'];
       }
@@ -91,9 +212,10 @@ class AuthProvider extends ChangeNotifier {
 
       final primaryRole = data['role'] ?? 'customer';
       // Prefer the requested role if valid, otherwise use primary
-      final sessionRole = (preferredRole != null && allRoles.contains(preferredRole))
-          ? preferredRole
-          : primaryRole;
+      final sessionRole =
+          (preferredRole != null && allRoles.contains(preferredRole))
+              ? preferredRole
+              : primaryRole;
 
       _user = UserModel.fromMap({
         ...data,
@@ -127,7 +249,10 @@ class AuthProvider extends ChangeNotifier {
     // Mock bypass for testing
     if (phone.contains('9999999991') ||
         phone.contains('9999999992') ||
-        phone.contains('9999999993')) {
+        phone.contains('9999999993') ||
+        phone.contains('9999999994') ||
+        phone.contains('9999999995') ||
+        phone.contains('9999999996')) {
       _pendingPhone = phone;
       _isLoading = false;
       notifyListeners();
@@ -164,7 +289,10 @@ class AuthProvider extends ChangeNotifier {
     // ─── Magic Number Bypass ────────────────────────────────────────────────
     if (phone.contains('9999999991') ||
         phone.contains('9999999992') ||
-        phone.contains('9999999993')) {
+        phone.contains('9999999993') ||
+        phone.contains('9999999994') ||
+        phone.contains('9999999995') ||
+        phone.contains('9999999996')) {
       await Future.delayed(const Duration(seconds: 1));
 
       String mockId =
@@ -180,7 +308,9 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
 
-      if (existing != null) {
+      if (existing != null ||
+          preferredRole == 'admin' ||
+          phone.contains('9999999996')) {
         await _fetchProfile(preferredRole: preferredRole);
         return 'existing';
       }
@@ -211,7 +341,7 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
 
-      if (existing != null) {
+      if (existing != null || preferredRole == 'admin') {
         await _fetchProfile(preferredRole: preferredRole);
         return 'existing';
       }
@@ -402,6 +532,8 @@ class AuthProvider extends ChangeNotifier {
     _user = null;
     _pendingPhone = null;
     _mockUserId = null;
+    _isAdminVerified = false;
+    _adminData = null;
     notifyListeners();
   }
 }
