@@ -46,7 +46,8 @@ class _SellerKycUploadPageState extends State<SellerKycUploadPage> {
 
   Future<void> _pickImage(Function(File) onPicked) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final pickedFile =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (pickedFile != null) {
       setState(() => onPicked(File(pickedFile.path)));
     }
@@ -74,7 +75,11 @@ class _SellerKycUploadPageState extends State<SellerKycUploadPage> {
   }
 
   Future<void> _submit() async {
-    if (_aadharCtrl.text.isEmpty || _panCtrl.text.isEmpty || _accountHolderCtrl.text.isEmpty || _bankAccountCtrl.text.isEmpty || _ifscCtrl.text.isEmpty) {
+    if (_aadharCtrl.text.isEmpty ||
+        _panCtrl.text.isEmpty ||
+        _accountHolderCtrl.text.isEmpty ||
+        _bankAccountCtrl.text.isEmpty ||
+        _ifscCtrl.text.isEmpty) {
       _showSnack('Please fill all mandatory text fields', isError: true);
       return;
     }
@@ -91,7 +96,9 @@ class _SellerKycUploadPageState extends State<SellerKycUploadPage> {
       return;
     }
     if (_bankProof == null) {
-      _showSnack('Bank Account Verification image (Cancelled Cheque/Passbook) is required', isError: true);
+      _showSnack(
+          'Bank Account Verification image (Cancelled Cheque/Passbook) is required',
+          isError: true);
       return;
     }
 
@@ -102,12 +109,16 @@ class _SellerKycUploadPageState extends State<SellerKycUploadPage> {
       if (userId == null) throw Exception('User not logged in');
 
       // Upload Images
-      final aadharFrontUrl = await _uploadFile(_aadharFront!, '${userId}_aadhar_front');
-      final aadharBackUrl = await _uploadFile(_aadharBack!, '${userId}_aadhar_back');
+      final aadharFrontUrl =
+          await _uploadFile(_aadharFront!, '${userId}_aadhar_front');
+      final aadharBackUrl =
+          await _uploadFile(_aadharBack!, '${userId}_aadhar_back');
       final panFrontUrl = await _uploadFile(_panFront!, '${userId}_pan_front');
       final panBackUrl = await _uploadFile(_panBack!, '${userId}_pan_back');
       final shopProof1Url = await _uploadFile(_shopProof1!, '${userId}_shop_1');
-      final shopProof2Url = _shopProof2 != null ? await _uploadFile(_shopProof2!, '${userId}_shop_2') : null;
+      final shopProof2Url = _shopProof2 != null
+          ? await _uploadFile(_shopProof2!, '${userId}_shop_2')
+          : null;
       final bankProofUrl = await _uploadFile(_bankProof!, '${userId}_bank');
 
       final kycDocs = {
@@ -134,7 +145,8 @@ class _SellerKycUploadPageState extends State<SellerKycUploadPage> {
       }).eq('seller_id', userId);
 
       if (mounted) {
-        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.sellerPendingVerification, (_) => false);
+        Navigator.pushNamedAndRemoveUntil(
+            context, AppRoutes.sellerPendingVerification, (_) => false);
       }
     } catch (e) {
       _showSnack('Submission failed: $e', isError: true);
@@ -148,7 +160,11 @@ class _SellerKycUploadPageState extends State<SellerKycUploadPage> {
     return Scaffold(
       backgroundColor: const Color(0xFF02061A),
       appBar: AppBar(
-        title: Text('KYC Verification', style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white)),
+        title: Text('KYC Verification',
+            style: GoogleFonts.outfit(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.white)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -159,31 +175,45 @@ class _SellerKycUploadPageState extends State<SellerKycUploadPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Final Step: Legal & KYC', style: GoogleFonts.outfit(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+            Text('Final Step: Legal & KYC',
+                style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
-            Text('Please provide your tax details and upload verification documents. Clear images speed up the approval process.',
+            Text(
+                'Please provide your tax details and upload verification documents. Clear images speed up the approval process.',
                 style: GoogleFonts.outfit(color: Colors.white54, fontSize: 14)),
             const SizedBox(height: 32),
-
-            _SectionHeader(title: 'Tax & Identity Details'),
-            _DarkField(label: 'Aadhaar Number *', controller: _aadharCtrl, number: true),
+            const _SectionHeader(title: 'Tax & Identity Details'),
+            _DarkField(
+                label: 'Aadhaar Number *',
+                controller: _aadharCtrl,
+                number: true),
             const SizedBox(height: 16),
             _DarkField(label: 'PAN Number *', controller: _panCtrl, caps: true),
             const SizedBox(height: 16),
-            _DarkField(label: 'GSTIN (Optional depending on category)', controller: _gstCtrl, caps: true),
+            _DarkField(
+                label: 'GSTIN (Optional depending on category)',
+                controller: _gstCtrl,
+                caps: true),
             const SizedBox(height: 16),
-            _DarkField(label: 'Trade License Number (Optional)', controller: _tradeLicenseCtrl),
+            _DarkField(
+                label: 'Trade License Number (Optional)',
+                controller: _tradeLicenseCtrl),
             const SizedBox(height: 32),
-
-            _SectionHeader(title: 'Bank Account Details'),
-            _DarkField(label: 'Account Holder Name *', controller: _accountHolderCtrl),
+            const _SectionHeader(title: 'Bank Account Details'),
+            _DarkField(
+                label: 'Account Holder Name *', controller: _accountHolderCtrl),
             const SizedBox(height: 16),
-            _DarkField(label: 'Account Number *', controller: _bankAccountCtrl, number: true),
+            _DarkField(
+                label: 'Account Number *',
+                controller: _bankAccountCtrl,
+                number: true),
             const SizedBox(height: 16),
             _DarkField(label: 'IFSC Code *', controller: _ifscCtrl, caps: true),
             const SizedBox(height: 32),
-
-            _SectionHeader(title: 'Document Uploads'),
+            const _SectionHeader(title: 'Document Uploads'),
             _UploadRow(
               title: 'Aadhaar Card (Front & Back) *',
               file1: _aadharFront,
@@ -225,7 +255,6 @@ class _SellerKycUploadPageState extends State<SellerKycUploadPage> {
               single: true,
             ),
             const SizedBox(height: 48),
-
             SizedBox(
               width: double.infinity,
               height: 56,
@@ -233,11 +262,20 @@ class _SellerKycUploadPageState extends State<SellerKycUploadPage> {
                 onPressed: _loading ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFF4C542),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                 ),
                 child: _loading
-                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-                    : Text('Submit Application', style: GoogleFonts.outfit(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                            color: Colors.black, strokeWidth: 2))
+                    : Text('Submit Application',
+                        style: GoogleFonts.outfit(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 40),
@@ -257,12 +295,20 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         children: [
-          Expanded(child: Container(height: 1, color: Colors.white.withOpacity(0.08))),
+          Expanded(
+              child:
+                  Container(height: 1, color: Colors.white.withOpacity(0.08))),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(title, style: GoogleFonts.outfit(color: const Color(0xFFF4C542), fontSize: 12, fontWeight: FontWeight.w600)),
+            child: Text(title,
+                style: GoogleFonts.outfit(
+                    color: const Color(0xFFF4C542),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600)),
           ),
-          Expanded(child: Container(height: 1, color: Colors.white.withOpacity(0.08))),
+          Expanded(
+              child:
+                  Container(height: 1, color: Colors.white.withOpacity(0.08))),
         ],
       ),
     );
@@ -275,25 +321,34 @@ class _DarkField extends StatelessWidget {
   final bool number;
   final bool caps;
 
-  const _DarkField({required this.label, required this.controller, this.number = false, this.caps = false});
+  const _DarkField(
+      {required this.label,
+      required this.controller,
+      this.number = false,
+      this.caps = false});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
+        Text(label,
+            style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           keyboardType: number ? TextInputType.number : TextInputType.text,
-          textCapitalization: caps ? TextCapitalization.characters : TextCapitalization.none,
+          textCapitalization:
+              caps ? TextCapitalization.characters : TextCapitalization.none,
           style: GoogleFonts.outfit(color: Colors.white, fontSize: 15),
           decoration: InputDecoration(
             filled: true,
             fillColor: Colors.white.withOpacity(0.05),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           ),
         ),
       ],
@@ -311,20 +366,33 @@ class _UploadRow extends StatelessWidget {
   final VoidCallback onPick2;
   final bool single;
 
-  const _UploadRow({required this.title, required this.file1, required this.file2, required this.label1, required this.label2, required this.onPick1, required this.onPick2, this.single = false});
+  const _UploadRow(
+      {required this.title,
+      required this.file1,
+      required this.file2,
+      required this.label1,
+      required this.label2,
+      required this.onPick1,
+      required this.onPick2,
+      this.single = false});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
+        Text(title,
+            style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _UploadBox(file: file1, label: label1, onTap: onPick1)),
+            Expanded(
+                child: _UploadBox(file: file1, label: label1, onTap: onPick1)),
             if (!single) const SizedBox(width: 16),
-            if (!single) Expanded(child: _UploadBox(file: file2, label: label2, onTap: onPick2)),
+            if (!single)
+              Expanded(
+                  child:
+                      _UploadBox(file: file2, label: label2, onTap: onPick2)),
           ],
         ),
       ],
@@ -336,7 +404,8 @@ class _UploadBox extends StatelessWidget {
   final File? file;
   final String label;
   final VoidCallback onTap;
-  const _UploadBox({required this.file, required this.label, required this.onTap});
+  const _UploadBox(
+      {required this.file, required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -346,17 +415,34 @@ class _UploadBox extends StatelessWidget {
         height: 100,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.03),
-          border: Border.all(color: file != null ? Colors.green : Colors.white.withOpacity(0.15)),
+          border: Border.all(
+              color:
+                  file != null ? Colors.green : Colors.white.withOpacity(0.15)),
           borderRadius: BorderRadius.circular(12),
-          image: file != null ? DecorationImage(image: FileImage(file!), fit: BoxFit.cover, colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.4), BlendMode.darken)) : null,
+          image: file != null
+              ? DecorationImage(
+                  image: FileImage(file!),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                      Colors.black.withOpacity(0.4), BlendMode.darken))
+              : null,
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(file != null ? Icons.check_circle_rounded : Icons.add_photo_alternate_rounded, color: file != null ? Colors.green : Colors.white54, size: 28),
+              Icon(
+                  file != null
+                      ? Icons.check_circle_rounded
+                      : Icons.add_photo_alternate_rounded,
+                  color: file != null ? Colors.green : Colors.white54,
+                  size: 28),
               const SizedBox(height: 8),
-              Text(file != null ? 'Uploaded' : label, style: GoogleFonts.outfit(color: file != null ? Colors.green : Colors.white54, fontSize: 12, fontWeight: FontWeight.w600)),
+              Text(file != null ? 'Uploaded' : label,
+                  style: GoogleFonts.outfit(
+                      color: file != null ? Colors.green : Colors.white54,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600)),
             ],
           ),
         ),

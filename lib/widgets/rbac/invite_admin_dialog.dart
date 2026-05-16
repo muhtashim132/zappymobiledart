@@ -35,7 +35,10 @@ class _InviteAdminDialogState extends State<InviteAdminDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate() || _selectedRole == null) return;
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
 
     final rbac = context.read<RbacProvider>();
     final team = context.read<TeamProvider>();
@@ -50,7 +53,10 @@ class _InviteAdminDialogState extends State<InviteAdminDialog> {
     );
 
     if (!mounted) return;
-    setState(() { _loading = false; _error = err; });
+    setState(() {
+      _loading = false;
+      _error = err;
+    });
     if (err == null) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -103,7 +109,8 @@ class _InviteAdminDialogState extends State<InviteAdminDialog> {
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, color: Colors.white38),
+                    icon:
+                        const Icon(Icons.close_rounded, color: Colors.white38),
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -114,14 +121,15 @@ class _InviteAdminDialogState extends State<InviteAdminDialog> {
 
               // Email
               Text('Email Address',
-                  style: GoogleFonts.outfit(color: Colors.white60, fontSize: 12)),
+                  style:
+                      GoogleFonts.outfit(color: Colors.white60, fontSize: 12)),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
                 style: GoogleFonts.outfit(color: Colors.white),
-                decoration: _inputDecoration('e.g. john@company.com',
-                    Icons.email_outlined),
+                decoration: _inputDecoration(
+                    'e.g. john@company.com', Icons.email_outlined),
                 validator: (v) {
                   if (v == null || v.isEmpty) return 'Email is required';
                   if (!v.contains('@')) return 'Enter a valid email';
@@ -132,20 +140,22 @@ class _InviteAdminDialogState extends State<InviteAdminDialog> {
 
               // Role
               Text('Assign Role',
-                  style: GoogleFonts.outfit(color: Colors.white60, fontSize: 12)),
+                  style:
+                      GoogleFonts.outfit(color: Colors.white60, fontSize: 12)),
               const SizedBox(height: 6),
               DropdownButtonFormField<RoleModel>(
-                value: _selectedRole,
+                initialValue: _selectedRole,
                 dropdownColor: const Color(0xFF1A1030),
                 style: GoogleFonts.outfit(color: Colors.white),
-                decoration: _inputDecoration('Select a role',
-                    Icons.admin_panel_settings_outlined),
+                decoration: _inputDecoration(
+                    'Select a role', Icons.admin_panel_settings_outlined),
                 items: roles
                     .where((r) => r.slug != 'super_admin')
                     .map((r) => DropdownMenuItem(
                           value: r,
                           child: Text(r.name,
-                              style: GoogleFonts.outfit(color: const Color(0xDEFFFFFF))),
+                              style: GoogleFonts.outfit(
+                                  color: const Color(0xDEFFFFFF))),
                         ))
                     .toList(),
                 onChanged: (v) => setState(() => _selectedRole = v),

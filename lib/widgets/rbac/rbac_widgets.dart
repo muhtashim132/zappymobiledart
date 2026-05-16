@@ -265,9 +265,13 @@ class _PermissionGroupCardState extends State<PermissionGroupCard> {
   void _toggleAll() {
     final updated = Set<String>.from(widget.selected);
     if (_allSelected) {
-      for (final p in widget.permissions) updated.remove(p['code']);
+      for (final p in widget.permissions) {
+        updated.remove(p['code']);
+      }
     } else {
-      for (final p in widget.permissions) updated.add(p['code']!);
+      for (final p in widget.permissions) {
+        updated.add(p['code']!);
+      }
     }
     widget.onChanged(updated);
   }
@@ -331,7 +335,8 @@ class _PermissionGroupCardState extends State<PermissionGroupCard> {
                     GestureDetector(
                       onTap: _toggleAll,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: _allSelected
                               ? moduleColor.withOpacity(0.2)
@@ -476,7 +481,8 @@ class AccessDeniedCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              message ?? 'You don\'t have permission to perform this action.\nRequired: $permission',
+              message ??
+                  'You don\'t have permission to perform this action.\nRequired: $permission',
               textAlign: TextAlign.center,
               style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13),
             ),

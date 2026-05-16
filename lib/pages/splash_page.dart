@@ -93,6 +93,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         } else {
           Navigator.pushReplacementNamed(context, AppRoutes.deliveryPendingVerification);
         }
+      } else if (role == 'admin') {
+        // Admin must re-pass 2FA password gate on every app restart
+        Navigator.pushReplacementNamed(context, AppRoutes.adminPassword);
       } else {
         Navigator.pushReplacementNamed(context, AppRoutes.customerHome);
       }

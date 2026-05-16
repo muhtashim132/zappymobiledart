@@ -45,9 +45,8 @@ class _TeamMembersPageState extends State<TeamMembersPage>
   Widget build(BuildContext context) {
     final rbac = context.watch<RbacProvider>();
     final team = context.watch<TeamProvider>();
-    final pendingCount = team.invitations
-        .where((i) => i.status.name == 'pending')
-        .length;
+    final pendingCount =
+        team.invitations.where((i) => i.status.name == 'pending').length;
 
     return Scaffold(
       backgroundColor: const Color(0xFF06040F),
@@ -60,7 +59,9 @@ class _TeamMembersPageState extends State<TeamMembersPage>
         ),
         title: Text('Team Members',
             style: GoogleFonts.outfit(
-                color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w800)),
         actions: [
           if (rbac.isSuperAdmin)
             Padding(
@@ -116,13 +117,11 @@ class _TeamMembersPageState extends State<TeamMembersPage>
                 fillColor: Colors.white.withOpacity(0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      BorderSide(color: Colors.white.withOpacity(0.1)),
+                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      BorderSide(color: Colors.white.withOpacity(0.08)),
+                  borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -146,16 +145,14 @@ class _TeamMembersPageState extends State<TeamMembersPage>
                             onRefresh: () => team.loadTeam(),
                             color: const Color(0xFF8B2FC9),
                             child: ListView.builder(
-                              padding:
-                                  const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                               itemCount: team.members.length,
                               itemBuilder: (_, i) => _MemberCard(
                                 member: team.members[i],
                                 isSuperAdmin: rbac.isSuperAdmin,
                                 allRoles: rbac.allRoles,
                                 actorId: rbac.currentAdmin?.id ?? '',
-                                actorRole:
-                                    rbac.currentAdmin?.role?.slug ?? '',
+                                actorRole: rbac.currentAdmin?.role?.slug ?? '',
                               ),
                             ),
                           ),
@@ -166,8 +163,7 @@ class _TeamMembersPageState extends State<TeamMembersPage>
                     : team.invitations.isEmpty
                         ? _empty('No invitations sent yet')
                         : ListView.builder(
-                            padding:
-                                const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                             itemCount: team.invitations.length,
                             itemBuilder: (_, i) {
                               final inv = team.invitations[i];
@@ -256,19 +252,19 @@ class _TeamMembersPageState extends State<TeamMembersPage>
             color: Colors.white.withOpacity(0.04),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Row(children: [
-            const SkeletonBox(width: 44, height: 44, radius: 22),
-            const SizedBox(width: 12),
+          child: const Row(children: [
+            SkeletonBox(width: 44, height: 44, radius: 22),
+            SizedBox(width: 12),
             Expanded(
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     SkeletonBox(width: 120, height: 13),
                     SizedBox(height: 6),
                     SkeletonBox(width: 80, height: 11),
                   ]),
             ),
-            const SkeletonBox(width: 60, height: 22, radius: 10),
+            SkeletonBox(width: 60, height: 22, radius: 10),
           ]),
         ),
       );
@@ -306,8 +302,7 @@ class _MemberCard extends StatelessWidget {
       context: context,
       builder: (_) => Dialog(
         backgroundColor: const Color(0xFF12091F),
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -374,8 +369,8 @@ class _MemberCard extends StatelessWidget {
                 hintStyle: const TextStyle(color: Colors.white24),
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.05),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
           ],
@@ -387,7 +382,8 @@ class _MemberCard extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B2FC9)),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8B2FC9)),
             child: const Text('Reset'),
           ),
         ],
@@ -441,36 +437,35 @@ class _MemberCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(member.fullName,
-                      style: GoogleFonts.outfit(
-                          color: const Color(0xDEFFFFFF),
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700)),
-                  Text(member.email,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.outfit(
-                          color: Colors.white38, fontSize: 11)),
-                  const SizedBox(height: 4),
-                  Row(children: [
-                    if (member.role != null)
-                      RoleBadge(
-                          name: member.role!.name,
-                          color: member.role!.badgeColor,
-                          small: true),
-                    const SizedBox(width: 6),
-                    UserStatusBadge(
-                        isActive: member.isActive,
-                        isSuspended: member.isSuspended,
-                        small: true),
-                  ]),
-                  Text('Last login: $lastLogin',
-                      style: GoogleFonts.outfit(
-                          color: Colors.white24, fontSize: 10)),
-                ]),
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(member.fullName,
+                  style: GoogleFonts.outfit(
+                      color: const Color(0xDEFFFFFF),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700)),
+              Text(member.email,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      GoogleFonts.outfit(color: Colors.white38, fontSize: 11)),
+              const SizedBox(height: 4),
+              Row(children: [
+                if (member.role != null)
+                  RoleBadge(
+                      name: member.role!.name,
+                      color: member.role!.badgeColor,
+                      small: true),
+                const SizedBox(width: 6),
+                UserStatusBadge(
+                    isActive: member.isActive,
+                    isSuspended: member.isSuspended,
+                    small: true),
+              ]),
+              Text('Last login: $lastLogin',
+                  style:
+                      GoogleFonts.outfit(color: Colors.white24, fontSize: 10)),
+            ]),
           ),
           if (isSuperAdmin)
             PopupMenuButton<String>(

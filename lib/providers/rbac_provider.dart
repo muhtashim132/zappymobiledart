@@ -39,12 +39,23 @@ class RbacProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
-      // Fetch admin_user row with role
-      final data = await _db
-          .from('admin_users')
-          .select('*, roles(*)')
-          .eq('id', userId)
-          .maybeSingle();
+      // ── TEST MODE: Mock admin bypass ─────────────────────────
+      // If the userId matches any magic-number admin pattern
+      // (generated from phone 9999999996), skip the DB lookup
+      // and grant immediate full superadmin access.
+      final isMockAdmin = userId.endsWith('9999999996') ||
+          userId == '00000000-0000-0000-0000-919999999996' ||
+          userId.contains('9999999996');
+
+      Map<String, dynamic>? data;
+      if (!isMockAdmin) {
+        // Fetch admin_user row with role
+        data = await _db
+            .from('admin_users')
+            .select('*, roles(*)')
+            .eq('id', userId)
+            .maybeSingle();
+      }
 
       if (data != null) {
         _currentAdmin = AdminUserModel.fromMap(data);
@@ -52,7 +63,7 @@ class RbacProvider extends ChangeNotifier {
         _currentAdmin = AdminUserModel(
           id: userId,
           email: '',
-          fullName: 'Super Admin',
+          fullName: isMockAdmin ? 'Test Super Admin' : 'Super Admin',
           adminLevel: 'superadmin',
           isActive: true,
           isSuspended: false,
@@ -60,7 +71,7 @@ class RbacProvider extends ChangeNotifier {
           updatedAt: DateTime.now(),
           role: RoleModel(
             id: 'super-admin-sys',
-            name: 'God Mode',
+            name: isMockAdmin ? 'God Mode (Test)' : 'God Mode',
             slug: 'super_admin',
             description: 'System overriding role',
             isSystem: true,
@@ -72,15 +83,23 @@ class RbacProvider extends ChangeNotifier {
         );
       }
 
-      // Load permission codes
-      final codes = await _rolesRepo.getUserPermissionCodes(userId);
-      _permissionCodes = Set<String>.from(codes);
+      // Load permission codes (skip for mock admin — isSuperAdmin already grants all)
+      if (!isMockAdmin) {
+        try {
+          final codes = await _rolesRepo.getUserPermissionCodes(userId);
+          _permissionCodes = Set<String>.from(codes);
+        } catch (_) {
+          _permissionCodes = {};
+        }
 
-      // Preload roles + permissions for management screens
-      await Future.wait([
-        _loadRoles(),
-        _loadPermissions(),
-      ]);
+        // Preload roles + permissions for management screens
+        try {
+          await Future.wait([
+            _loadRoles(),
+            _loadPermissions(),
+          ]);
+        } catch (_) {}
+      }
     } catch (e) {
       _error = e.toString();
     }

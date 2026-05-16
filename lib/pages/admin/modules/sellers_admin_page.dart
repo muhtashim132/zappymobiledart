@@ -25,7 +25,10 @@ class _SellersAdminPageState extends State<SellersAdminPage> {
 
   Future<void> _fetchSellers() async {
     try {
-      final res = await _db.from('shops').select('*, profiles:seller_id(full_name, email, phone)').order('created_at', ascending: false);
+      final res = await _db
+          .from('shops')
+          .select('*, profiles:seller_id(full_name, email, phone)')
+          .order('created_at', ascending: false);
       setState(() {
         _sellers = List<Map<String, dynamic>>.from(res);
         _loading = false;
@@ -37,28 +40,39 @@ class _SellersAdminPageState extends State<SellersAdminPage> {
 
   Future<void> _toggleStatus(String shopId, bool currentStatus) async {
     try {
-      await _db.from('shops').update({'is_active': !currentStatus}).eq('id', shopId);
+      await _db
+          .from('shops')
+          .update({'is_active': !currentStatus}).eq('id', shopId);
       _fetchSellers();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return _loading
-        ? const Center(child: CircularProgressIndicator(color: Color(0xFF8B2FC9)))
+        ? const Center(
+            child: CircularProgressIndicator(color: Color(0xFF8B2FC9)))
         : _sellers.isEmpty
-            ? Center(child: Text('No sellers found', style: GoogleFonts.outfit(color: Colors.white54)))
+            ? Center(
+                child: Text('No sellers found',
+                    style: GoogleFonts.outfit(color: Colors.white54)))
             : ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: _sellers.length,
                 itemBuilder: (context, index) {
-                   final shop = _sellers[index];
-                   final profile = shop['profiles'] ?? {};
-                   final isActive = shop['is_active'] == true;
-                   final vStatus = shop['verification_status'] ?? 'none';
-                   final createdAt = shop['created_at'] != null ? DateFormat('MMM dd, yyyy').format(DateTime.parse(shop['created_at'])) : 'Unknown';
+                  final shop = _sellers[index];
+                  final profile = shop['profiles'] ?? {};
+                  final isActive = shop['is_active'] == true;
+                  final vStatus = shop['verification_status'] ?? 'none';
+                  final createdAt = shop['created_at'] != null
+                      ? DateFormat('MMM dd, yyyy')
+                          .format(DateTime.parse(shop['created_at']))
+                      : 'Unknown';
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
@@ -72,59 +86,84 @@ class _SellersAdminPageState extends State<SellersAdminPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CircleAvatar(
-                          backgroundColor: const Color(0xFF8B2FC9).withOpacity(0.2),
-                          child: const Icon(Icons.store_rounded, color: Color(0xFF8B2FC9)),
+                          backgroundColor:
+                              const Color(0xFF8B2FC9).withOpacity(0.2),
+                          child: const Icon(Icons.store_rounded,
+                              color: Color(0xFF8B2FC9)),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(shop['name'] ?? 'Unnamed Shop', style: GoogleFonts.outfit(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                              Text(profile['full_name'] ?? 'Unknown Owner', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 13)),
-                              Text(shop['category'] ?? 'Category', style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12)),
+                              Text(shop['name'] ?? 'Unnamed Shop',
+                                  style: GoogleFonts.outfit(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                              Text(profile['full_name'] ?? 'Unknown Owner',
+                                  style: GoogleFonts.outfit(
+                                      color: Colors.white70, fontSize: 13)),
+                              Text(shop['category'] ?? 'Category',
+                                  style: GoogleFonts.outfit(
+                                      color: Colors.white38, fontSize: 12)),
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Icon(Icons.star_rounded, color: Colors.amber, size: 14),
+                                  const Icon(Icons.star_rounded,
+                                      color: Colors.amber, size: 14),
                                   const SizedBox(width: 4),
-                                  Text('${shop['rating'] ?? '0.0'} (${shop['total_reviews'] ?? 0} reviews)', style: GoogleFonts.outfit(color: Colors.white70, fontSize: 12)),
+                                  Text(
+                                      '${shop['rating'] ?? '0.0'} (${shop['total_reviews'] ?? 0} reviews)',
+                                      style: GoogleFonts.outfit(
+                                          color: Colors.white70, fontSize: 12)),
                                   const SizedBox(width: 16),
-                                  Icon(Icons.calendar_today_rounded, color: Colors.white38, size: 12),
+                                  const Icon(Icons.calendar_today_rounded,
+                                      color: Colors.white38, size: 12),
                                   const SizedBox(width: 4),
-                                   Text(createdAt, style: GoogleFonts.outfit(color: Colors.white54, fontSize: 11)),
-                                 ],
-                               ),
-                               const SizedBox(height: 12),
-                               Row(
-                                 children: [
-                                   _buildStatusBadge(vStatus),
-                                   if (vStatus == 'pending') ...[
-                                     const SizedBox(width: 8),
-                                     TextButton.icon(
-                                       onPressed: () => _showVerifyDialog(shop),
-                                       icon: const Icon(Icons.verified_user_rounded, size: 16),
-                                       label: const Text('Review KYC'),
-                                       style: TextButton.styleFrom(
-                                         foregroundColor: AppColors.primary,
-                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                                         backgroundColor: AppColors.primary.withOpacity(0.1),
-                                       ),
-                                     ),
-                                   ],
-                                 ],
-                               ),
-                             ],
-                           ),
-                         ),
+                                  Text(createdAt,
+                                      style: GoogleFonts.outfit(
+                                          color: Colors.white54, fontSize: 11)),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  _buildStatusBadge(vStatus),
+                                  if (vStatus == 'pending') ...[
+                                    const SizedBox(width: 8),
+                                    TextButton.icon(
+                                      onPressed: () => _showVerifyDialog(shop),
+                                      icon: const Icon(
+                                          Icons.verified_user_rounded,
+                                          size: 16),
+                                      label: const Text('Review KYC'),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: AppColors.primary,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 12, vertical: 0),
+                                        backgroundColor:
+                                            AppColors.primary.withOpacity(0.1),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                         Column(
                           children: [
                             Switch(
                               value: isActive,
-                              onChanged: (v) => _toggleStatus(shop['id'], isActive),
-                              activeColor: const Color(0xFF8B2FC9),
+                              onChanged: (v) =>
+                                  _toggleStatus(shop['id'], isActive),
+                              activeThumbColor: const Color(0xFF8B2FC9),
                             ),
-                            Text(isActive ? 'Active' : 'Suspended', style: GoogleFonts.outfit(color: isActive ? Colors.green : Colors.red, fontSize: 11)),
+                            Text(isActive ? 'Active' : 'Suspended',
+                                style: GoogleFonts.outfit(
+                                    color: isActive ? Colors.green : Colors.red,
+                                    fontSize: 11)),
                           ],
                         ),
                       ],
@@ -132,7 +171,7 @@ class _SellersAdminPageState extends State<SellersAdminPage> {
                   );
                 },
               );
-   }
+  }
 
   Widget _buildStatusBadge(String status) {
     Color color = Colors.grey;
@@ -150,7 +189,8 @@ class _SellersAdminPageState extends State<SellersAdminPage> {
       ),
       child: Text(
         label,
-        style: GoogleFonts.outfit(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+        style: GoogleFonts.outfit(
+            color: color, fontSize: 10, fontWeight: FontWeight.bold),
       ),
     );
   }

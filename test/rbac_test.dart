@@ -28,18 +28,42 @@ void main() {
 
     test('equality is code-based', () {
       final p1 = PermissionModel(
-          id: '1', code: 'orders.view', name: 'View', description: '', module: 'Orders', createdAt: DateTime.now());
+          id: '1',
+          code: 'orders.view',
+          name: 'View',
+          description: '',
+          module: 'Orders',
+          createdAt: DateTime.now());
       final p2 = PermissionModel(
-          id: '2', code: 'orders.view', name: 'View', description: '', module: 'Orders', createdAt: DateTime.now());
+          id: '2',
+          code: 'orders.view',
+          name: 'View',
+          description: '',
+          module: 'Orders',
+          createdAt: DateTime.now());
       expect(p1, equals(p2));
     });
 
     test('Permissions.grouped contains all modules', () {
-      expect(Permissions.grouped.keys, containsAll([
-        'Dashboard', 'Orders', 'Customers', 'Sellers', 'Riders',
-        'Payments', 'Withdrawals', 'Marketing', 'Support', 'Finance',
-        'Analytics', 'Settings', 'Roles', 'Audit', 'System',
-      ]));
+      expect(
+          Permissions.grouped.keys,
+          containsAll([
+            'Dashboard',
+            'Orders',
+            'Customers',
+            'Sellers',
+            'Riders',
+            'Payments',
+            'Withdrawals',
+            'Marketing',
+            'Support',
+            'Finance',
+            'Analytics',
+            'Settings',
+            'Roles',
+            'Audit',
+            'System',
+          ]));
     });
 
     test('all permission codes are unique', () {
@@ -51,14 +75,23 @@ void main() {
 
   // ── 2. RoleModel tests ───────────────────────────────────────
   group('RoleModel', () {
-    PermissionModel _perm(String code) => PermissionModel(
-        id: code, code: code, name: code, description: '', module: 'Test', createdAt: DateTime.now());
+    PermissionModel perm(String code) => PermissionModel(
+        id: code,
+        code: code,
+        name: code,
+        description: '',
+        module: 'Test',
+        createdAt: DateTime.now());
 
     test('fromMap parses system flag', () {
       final map = {
-        'id': 'r1', 'name': 'Admin', 'slug': 'admin',
-        'description': 'Full access', 'is_system': true,
-        'color': '#8B2FC9', 'icon': 'shield',
+        'id': 'r1',
+        'name': 'Admin',
+        'slug': 'admin',
+        'description': 'Full access',
+        'is_system': true,
+        'color': '#8B2FC9',
+        'icon': 'shield',
         'created_at': '2024-01-01T00:00:00Z',
         'updated_at': '2024-01-01T00:00:00Z',
         'role_permissions': [],
@@ -70,10 +103,16 @@ void main() {
 
     test('hasPermission returns true for matching code', () {
       final role = RoleModel(
-        id: 'r1', name: 'Test', slug: 'test', description: '',
-        isSystem: false, color: '#8B2FC9', icon: 'shield',
-        permissions: [_perm('orders.view'), _perm('orders.refund')],
-        createdAt: DateTime.now(), updatedAt: DateTime.now(),
+        id: 'r1',
+        name: 'Test',
+        slug: 'test',
+        description: '',
+        isSystem: false,
+        color: '#8B2FC9',
+        icon: 'shield',
+        permissions: [perm('orders.view'), perm('orders.refund')],
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
       expect(role.hasPermission('orders.view'), isTrue);
       expect(role.hasPermission('orders.cancel'), isFalse);
@@ -81,28 +120,46 @@ void main() {
 
     test('permissionCount returns correct count', () {
       final role = RoleModel(
-        id: 'r1', name: 'Test', slug: 'test', description: '',
-        isSystem: false, color: '#8B2FC9', icon: 'shield',
-        permissions: [_perm('a'), _perm('b'), _perm('c')],
-        createdAt: DateTime.now(), updatedAt: DateTime.now(),
+        id: 'r1',
+        name: 'Test',
+        slug: 'test',
+        description: '',
+        isSystem: false,
+        color: '#8B2FC9',
+        icon: 'shield',
+        permissions: [perm('a'), perm('b'), perm('c')],
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
       expect(role.permissionCount, 3);
     });
 
     test('badgeColor parses hex string', () {
       final role = RoleModel(
-        id: 'r1', name: 'Test', slug: 'test', description: '',
-        isSystem: false, color: '#FF5722', icon: 'shield',
-        createdAt: DateTime.now(), updatedAt: DateTime.now(),
+        id: 'r1',
+        name: 'Test',
+        slug: 'test',
+        description: '',
+        isSystem: false,
+        color: '#FF5722',
+        icon: 'shield',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
       expect(role.badgeColor.value, isNot(0));
     });
 
     test('copyWith replaces only specified fields', () {
       final role = RoleModel(
-        id: 'r1', name: 'Original', slug: 'original', description: 'desc',
-        isSystem: false, color: '#8B2FC9', icon: 'shield',
-        createdAt: DateTime.now(), updatedAt: DateTime.now(),
+        id: 'r1',
+        name: 'Original',
+        slug: 'original',
+        description: 'desc',
+        isSystem: false,
+        color: '#8B2FC9',
+        icon: 'shield',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
       final copy = role.copyWith(name: 'Updated');
       expect(copy.name, 'Updated');
@@ -114,45 +171,70 @@ void main() {
   group('AdminUserModel', () {
     test('initials from two-word name', () {
       final u = AdminUserModel(
-        id: 'u1', email: 'j@z.com', fullName: 'John Doe',
-        adminLevel: 'admin', isActive: true, isSuspended: false,
-        createdAt: DateTime.now(), updatedAt: DateTime.now(),
+        id: 'u1',
+        email: 'j@z.com',
+        fullName: 'John Doe',
+        adminLevel: 'admin',
+        isActive: true,
+        isSuspended: false,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
       expect(u.initials, 'JD');
     });
 
     test('initials from single word name', () {
       final u = AdminUserModel(
-        id: 'u1', email: 'j@z.com', fullName: 'Admin',
-        adminLevel: 'admin', isActive: true, isSuspended: false,
-        createdAt: DateTime.now(), updatedAt: DateTime.now(),
+        id: 'u1',
+        email: 'j@z.com',
+        fullName: 'Admin',
+        adminLevel: 'admin',
+        isActive: true,
+        isSuspended: false,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
       expect(u.initials, 'A');
     });
 
     test('status returns suspended when suspended', () {
       final u = AdminUserModel(
-        id: 'u1', email: 'j@z.com', fullName: 'Jane',
-        adminLevel: 'admin', isActive: true, isSuspended: true,
-        createdAt: DateTime.now(), updatedAt: DateTime.now(),
+        id: 'u1',
+        email: 'j@z.com',
+        fullName: 'Jane',
+        adminLevel: 'admin',
+        isActive: true,
+        isSuspended: true,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
       expect(u.status, AdminStatus.suspended);
     });
 
     test('status returns active when active and not suspended', () {
       final u = AdminUserModel(
-        id: 'u1', email: 'j@z.com', fullName: 'Jane',
-        adminLevel: 'admin', isActive: true, isSuspended: false,
-        createdAt: DateTime.now(), updatedAt: DateTime.now(),
+        id: 'u1',
+        email: 'j@z.com',
+        fullName: 'Jane',
+        adminLevel: 'admin',
+        isActive: true,
+        isSuspended: false,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
       expect(u.status, AdminStatus.active);
     });
 
     test('hasPermission always true for superadmin', () {
       final u = AdminUserModel(
-        id: 'u1', email: 'j@z.com', fullName: 'Super',
-        adminLevel: 'superadmin', isActive: true, isSuspended: false,
-        createdAt: DateTime.now(), updatedAt: DateTime.now(),
+        id: 'u1',
+        email: 'j@z.com',
+        fullName: 'Super',
+        adminLevel: 'superadmin',
+        isActive: true,
+        isSuspended: false,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
       );
       expect(u.hasPermission('any.random.code'), isTrue);
     });
@@ -162,7 +244,10 @@ void main() {
   group('AuditLogModel', () {
     test('actionLabel formats snake_case to Title Case', () {
       final log = AuditLogModel(
-        id: 'l1', action: 'role_created', metadata: {}, createdAt: DateTime.now());
+          id: 'l1',
+          action: 'role_created',
+          metadata: {},
+          createdAt: DateTime.now());
       expect(log.actionLabel, 'Role Created');
     });
 
@@ -183,8 +268,11 @@ void main() {
   group('AdminInvitationModel', () {
     test('isExpired returns true for past expiry', () {
       final inv = AdminInvitationModel(
-        id: 'i1', email: 'a@b.com', roleId: 'r1',
-        token: 'tok', invitedBy: 'u1',
+        id: 'i1',
+        email: 'a@b.com',
+        roleId: 'r1',
+        token: 'tok',
+        invitedBy: 'u1',
         status: InvitationStatus.pending,
         expiresAt: DateTime.now().subtract(const Duration(days: 1)),
         createdAt: DateTime.now(),
@@ -194,8 +282,11 @@ void main() {
 
     test('isExpired returns false for future expiry', () {
       final inv = AdminInvitationModel(
-        id: 'i1', email: 'a@b.com', roleId: 'r1',
-        token: 'tok', invitedBy: 'u1',
+        id: 'i1',
+        email: 'a@b.com',
+        roleId: 'r1',
+        token: 'tok',
+        invitedBy: 'u1',
         status: InvitationStatus.pending,
         expiresAt: DateTime.now().add(const Duration(days: 7)),
         createdAt: DateTime.now(),

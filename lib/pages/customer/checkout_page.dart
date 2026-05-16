@@ -24,7 +24,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool _isProcessing = false;
   final _notesController = TextEditingController();
   String? _selectedPaymentMethod = 'upi';
-  List<XFile> _prescriptions = [];
+  final List<XFile> _prescriptions = [];
 
   @override
   void dispose() {
@@ -55,7 +55,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
     try {
       if (cart.requiresPrescription && _prescriptions.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('A valid prescription is required for medicines in your cart.'), backgroundColor: AppColors.danger),
+          const SnackBar(
+              content: Text(
+                  'A valid prescription is required for medicines in your cart.'),
+              backgroundColor: AppColors.danger),
         );
         setState(() => _isProcessing = false);
         return;
@@ -90,7 +93,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
       // Fetch customer phone
       String? customerPhone;
       try {
-        final profile = await supabase.from('profiles').select('phone').eq('id', auth.currentUserId ?? '').maybeSingle();
+        final profile = await supabase
+            .from('profiles')
+            .select('phone')
+            .eq('id', auth.currentUserId ?? '')
+            .maybeSingle();
         if (profile != null) customerPhone = profile['phone'];
       } catch (_) {}
 
@@ -98,7 +105,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final shopPhones = <String, String?>{};
       for (final shop in cart.shops) {
         try {
-          final profile = await supabase.from('profiles').select('phone').eq('id', shop.sellerId).maybeSingle();
+          final profile = await supabase
+              .from('profiles')
+              .select('phone')
+              .eq('id', shop.sellerId)
+              .maybeSingle();
           if (profile != null) shopPhones[shop.id] = profile['phone'];
         } catch (_) {}
       }
@@ -110,8 +121,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
           final bytes = await file.readAsBytes();
           final ext = file.name.split('.').last;
           final path = '${auth.currentUserId}/${cartGroupId}_$i.$ext';
-          await supabase.storage.from('prescription_docs').uploadBinary(path, bytes);
-          uploadedPrescriptionUrls.add(supabase.storage.from('prescription_docs').getPublicUrl(path));
+          await supabase.storage
+              .from('prescription_docs')
+              .uploadBinary(path, bytes);
+          uploadedPrescriptionUrls.add(
+              supabase.storage.from('prescription_docs').getPublicUrl(path));
         }
       }
 
@@ -147,7 +161,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
         double shopNonFoodGst = 0;
         for (final item in shopItems) {
           final cat = item.product.category;
-          final rate = TaxConfig.gstRateForCategory(cat, itemPrice: item.product.price);
+          final rate =
+              TaxConfig.gstRateForCategory(cat, itemPrice: item.product.price);
           final lineGst = item.totalPrice * rate;
           if (TaxConfig.isZappyDeemedSupplier(cat)) {
             shopS9_5Gst += lineGst;
@@ -179,6 +194,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
               'rider_earnings': shopRiderEarnings,
               'platform_fee': shopPlatformFee,
               'address': location.currentAddress,
+              'delivery_lat': location.currentLocation?.latitude,
+              'delivery_lng': location.currentLocation?.longitude,
               'delivery_notes':
                   _notesController.text.isEmpty ? null : _notesController.text,
               'payment_method': _selectedPaymentMethod,
@@ -194,11 +211,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
               'seller_payout': (breakdown.sellerPayout / numShops) - shopTcs,
               'gateway_deduction': (breakdown.gatewayDeduction / numShops),
               // New GST compliance columns
-              's9_5_gst_amount': shopS9_5Gst,      // Zappy remits to Govt
+              's9_5_gst_amount': shopS9_5Gst, // Zappy remits to Govt
               'non_food_gst_amount': shopNonFoodGst, // Seller remits in GSTR-1
-              'tcs_amount': shopTcs,                 // Zappy files GSTR-8
+              'tcs_amount': shopTcs, // Zappy files GSTR-8
               'grand_total_collected': shopGrandTotal,
-              'gst_rate_snapshot': rateSnapshot,     // Frozen rate map
+              'gst_rate_snapshot': rateSnapshot, // Frozen rate map
               'prescription_urls': uploadedPrescriptionUrls,
             })
             .select()
@@ -392,7 +409,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   children: [
                     const Text(
                       'Your order contains medicines that require a valid doctor\'s prescription under Govt of India norms. Please upload it here.',
-                      style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      style: TextStyle(
+                          fontSize: 13, color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 12),
                     if (_prescriptions.isEmpty)
@@ -404,14 +422,20 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           decoration: BoxDecoration(
                             color: AppColors.primary.withOpacity(0.05),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.primary.withOpacity(0.3), style: BorderStyle.solid),
+                            border: Border.all(
+                                color: AppColors.primary.withOpacity(0.3),
+                                style: BorderStyle.solid),
                           ),
                           child: const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_photo_alternate_outlined, color: AppColors.primary, size: 32),
+                              Icon(Icons.add_photo_alternate_outlined,
+                                  color: AppColors.primary, size: 32),
                               SizedBox(height: 8),
-                              Text('Tap to upload prescription', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600)),
+                              Text('Tap to upload prescription',
+                                  style: TextStyle(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w600)),
                             ],
                           ),
                         ),
@@ -432,9 +456,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                   decoration: BoxDecoration(
                                     color: AppColors.primary.withOpacity(0.05),
                                     borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                                    border: Border.all(
+                                        color:
+                                            AppColors.primary.withOpacity(0.3)),
                                   ),
-                                  child: const Center(child: Icon(Icons.add, color: AppColors.primary)),
+                                  child: const Center(
+                                      child: Icon(Icons.add,
+                                          color: AppColors.primary)),
                                 ),
                               );
                             }
@@ -445,17 +473,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                   margin: const EdgeInsets.only(right: 8),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
-                                    image: DecorationImage(image: FileImage(File(_prescriptions[index].path)), fit: BoxFit.cover),
+                                    image: DecorationImage(
+                                        image: FileImage(
+                                            File(_prescriptions[index].path)),
+                                        fit: BoxFit.cover),
                                   ),
                                 ),
                                 Positioned(
-                                  top: 4, right: 12,
+                                  top: 4,
+                                  right: 12,
                                   child: GestureDetector(
                                     onTap: () => _removePrescription(index),
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
-                                      decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                                      child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                      decoration: const BoxDecoration(
+                                          color: Colors.black54,
+                                          shape: BoxShape.circle),
+                                      child: const Icon(Icons.close,
+                                          color: Colors.white, size: 14),
                                     ),
                                   ),
                                 ),
@@ -639,8 +674,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       Text(
                         '+ ₹${gstBreakdown.itemGstTotal.toStringAsFixed(2)} GST',
                         style: const TextStyle(
-                            fontSize: 10,
-                            color: AppColors.textSecondary),
+                            fontSize: 10, color: AppColors.textSecondary),
                       ),
                   ],
                 ),
@@ -750,8 +784,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color:
-              isSelected ? iconColor.withValues(alpha: 0.07) : AppColors.background,
+          color: isSelected
+              ? iconColor.withValues(alpha: 0.07)
+              : AppColors.background,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected ? iconColor : AppColors.divider,

@@ -28,7 +28,8 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
     _scrollCtrl.addListener(() {
-      if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
+      if (_scrollCtrl.position.pixels >=
+          _scrollCtrl.position.maxScrollExtent - 200) {
         context.read<AuditProvider>().loadMore();
       }
     });
@@ -43,7 +44,8 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
 
   void _load() {
     context.read<AuditProvider>().load(
-          action: _actionCtrl.text.trim().isEmpty ? null : _actionCtrl.text.trim(),
+          action:
+              _actionCtrl.text.trim().isEmpty ? null : _actionCtrl.text.trim(),
           entityType: _entityType,
           from: _from,
           to: _to,
@@ -63,7 +65,10 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
       ),
     );
     if (range != null) {
-      setState(() { _from = range.start; _to = range.end; });
+      setState(() {
+        _from = range.start;
+        _to = range.end;
+      });
       _load();
     }
   }
@@ -86,17 +91,27 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
         ),
         title: Text('Audit Logs',
             style: GoogleFonts.outfit(
-                color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+                color: Colors.white,
+                fontSize: 17,
+                fontWeight: FontWeight.w800)),
         actions: [
-          if (_from != null || _actionCtrl.text.isNotEmpty || _entityType != null)
+          if (_from != null ||
+              _actionCtrl.text.isNotEmpty ||
+              _entityType != null)
             TextButton(
               onPressed: () {
                 _actionCtrl.clear();
-                setState(() { _entityType = null; _from = null; _to = null; });
+                setState(() {
+                  _entityType = null;
+                  _from = null;
+                  _to = null;
+                });
                 context.read<AuditProvider>().reset();
                 _load();
               },
-              child: Text('Clear', style: GoogleFonts.outfit(color: const Color(0xFFFF5722), fontSize: 12)),
+              child: Text('Clear',
+                  style: GoogleFonts.outfit(
+                      color: const Color(0xFFFF5722), fontSize: 12)),
             ),
         ],
       ),
@@ -110,24 +125,31 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
                 Expanded(
                   child: TextField(
                     controller: _actionCtrl,
-                    style: GoogleFonts.outfit(color: Colors.white, fontSize: 13),
+                    style:
+                        GoogleFonts.outfit(color: Colors.white, fontSize: 13),
                     onSubmitted: (_) => _load(),
                     decoration: InputDecoration(
                       hintText: 'Filter by action...',
-                      hintStyle: GoogleFonts.outfit(color: Colors.white24, fontSize: 12),
-                      prefixIcon: const Icon(Icons.search_rounded, color: Colors.white24, size: 17),
+                      hintStyle: GoogleFonts.outfit(
+                          color: Colors.white24, fontSize: 12),
+                      prefixIcon: const Icon(Icons.search_rounded,
+                          color: Colors.white24, size: 17),
                       filled: true,
                       fillColor: Colors.white.withOpacity(0.05),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.white.withOpacity(0.1))),
+                          borderSide:
+                              BorderSide(color: Colors.white.withOpacity(0.1))),
                       enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(color: Colors.white.withOpacity(0.08))),
+                          borderSide: BorderSide(
+                              color: Colors.white.withOpacity(0.08))),
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFF8B2FC9))),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          borderSide:
+                              const BorderSide(color: Color(0xFF8B2FC9))),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                     ),
                   ),
                 ),
@@ -136,7 +158,8 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
                   onTap: _pickDateRange,
                   borderRadius: BorderRadius.circular(10),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
                       color: _from != null
                           ? const Color(0xFF8B2FC9).withOpacity(0.2)
@@ -148,7 +171,9 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
                               : Colors.white.withOpacity(0.08)),
                     ),
                     child: Icon(Icons.date_range_rounded,
-                        color: _from != null ? const Color(0xFF8B2FC9) : Colors.white38,
+                        color: _from != null
+                            ? const Color(0xFF8B2FC9)
+                            : Colors.white38,
                         size: 18),
                   ),
                 ),
@@ -164,11 +189,13 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
-                  const Icon(Icons.calendar_today_rounded, color: Colors.white38, size: 12),
+                  const Icon(Icons.calendar_today_rounded,
+                      color: Colors.white38, size: 12),
                   const SizedBox(width: 6),
                   Text(
                     '${DateFormat('dd MMM').format(_from!)} – ${DateFormat('dd MMM yyyy').format(_to ?? _from!)}',
-                    style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11),
+                    style:
+                        GoogleFonts.outfit(color: Colors.white38, fontSize: 11),
                   ),
                 ],
               ),
@@ -185,10 +212,12 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.history_rounded, color: Colors.white12, size: 56),
+                            const Icon(Icons.history_rounded,
+                                color: Colors.white12, size: 56),
                             const SizedBox(height: 16),
                             Text('No audit logs found',
-                                style: GoogleFonts.outfit(color: Colors.white38, fontSize: 15)),
+                                style: GoogleFonts.outfit(
+                                    color: Colors.white38, fontSize: 15)),
                           ],
                         ),
                       )
@@ -227,7 +256,8 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
       itemBuilder: (_) => [
         PopupMenuItem(
           value: null,
-          child: Text('All types', style: GoogleFonts.outfit(color: Colors.white70)),
+          child: Text('All types',
+              style: GoogleFonts.outfit(color: Colors.white70)),
         ),
         ...types.map((t) => PopupMenuItem(
               value: t,
@@ -236,7 +266,8 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
                   Text(t, style: GoogleFonts.outfit(color: Colors.white70)),
                   if (_entityType == t) ...[
                     const Spacer(),
-                    const Icon(Icons.check_rounded, color: Color(0xFF8B2FC9), size: 14),
+                    const Icon(Icons.check_rounded,
+                        color: Color(0xFF8B2FC9), size: 14),
                   ],
                 ],
               ),
@@ -255,7 +286,8 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
                   : Colors.white.withOpacity(0.08)),
         ),
         child: Icon(Icons.filter_list_rounded,
-            color: _entityType != null ? const Color(0xFF8B2FC9) : Colors.white38,
+            color:
+                _entityType != null ? const Color(0xFF8B2FC9) : Colors.white38,
             size: 18),
       ),
     );
@@ -271,9 +303,9 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
             color: Colors.white.withOpacity(0.04),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Column(
+          child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               SkeletonBox(width: 100, height: 11),
               SizedBox(height: 6),
               SkeletonBox(height: 13),
@@ -297,13 +329,19 @@ class _LogCardState extends State<_LogCard> {
   bool _expanded = false;
 
   Color _actionColor(String action) {
-    if (action.contains('delete') || action.contains('suspend') || action.contains('reject')) {
+    if (action.contains('delete') ||
+        action.contains('suspend') ||
+        action.contains('reject')) {
       return const Color(0xFFFF5722);
     }
-    if (action.contains('create') || action.contains('approve') || action.contains('accept')) {
+    if (action.contains('create') ||
+        action.contains('approve') ||
+        action.contains('accept')) {
       return const Color(0xFF4CAF50);
     }
-    if (action.contains('update') || action.contains('edit') || action.contains('assign')) {
+    if (action.contains('update') ||
+        action.contains('edit') ||
+        action.contains('assign')) {
       return const Color(0xFF2196F3);
     }
     return const Color(0xFF9E9E9E);
@@ -334,7 +372,8 @@ class _LogCardState extends State<_LogCard> {
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                    decoration:
+                        BoxDecoration(color: color, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -351,7 +390,8 @@ class _LogCardState extends State<_LogCard> {
                         const SizedBox(height: 2),
                         Text(
                           log.actorName ?? log.actorId ?? 'System',
-                          style: GoogleFonts.outfit(color: Colors.white38, fontSize: 11),
+                          style: GoogleFonts.outfit(
+                              color: Colors.white38, fontSize: 11),
                         ),
                       ],
                     ),
@@ -361,12 +401,14 @@ class _LogCardState extends State<_LogCard> {
                     children: [
                       Text(
                         fmt.format(log.createdAt.toLocal()),
-                        style: GoogleFonts.outfit(color: Colors.white24, fontSize: 10),
+                        style: GoogleFonts.outfit(
+                            color: Colors.white24, fontSize: 10),
                       ),
                       if (log.entityType != null)
                         Container(
                           margin: const EdgeInsets.only(top: 3),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.05),
                             borderRadius: BorderRadius.circular(6),
@@ -379,7 +421,9 @@ class _LogCardState extends State<_LogCard> {
                   ),
                   const SizedBox(width: 6),
                   Icon(
-                    _expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                    _expanded
+                        ? Icons.expand_less_rounded
+                        : Icons.expand_more_rounded,
                     color: Colors.white24,
                     size: 16,
                   ),

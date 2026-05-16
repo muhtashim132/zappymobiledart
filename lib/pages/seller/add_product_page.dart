@@ -138,8 +138,10 @@ class _AddProductPageState extends State<AddProductPage> {
             ? null
             : int.tryParse(_inventoryController.text.trim()),
         'images': uploadedUrls,
-        'requires_prescription': _productCategory == 'Pharmacy' ? _requiresPrescription : false,
-        'medicine_type': _productCategory == 'Pharmacy' ? _medicineType : 'General',
+        'requires_prescription':
+            _productCategory == 'Pharmacy' ? _requiresPrescription : false,
+        'medicine_type':
+            _productCategory == 'Pharmacy' ? _medicineType : 'General',
       });
 
       if (mounted) {
@@ -453,23 +455,31 @@ class _AddProductPageState extends State<AddProductPage> {
                 const SizedBox(height: 16),
                 _card(
                   children: [
-                    Text('Pharmacy & Medical Regulations',
+                    const Text('Pharmacy & Medical Regulations',
                         style: TextStyle(
                             fontFamily: 'Poppins',
                             fontWeight: FontWeight.w600,
                             color: AppColors.primary)),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: _medicineType,
+                      initialValue: _medicineType,
                       decoration: const InputDecoration(
                         labelText: 'Medicine Type',
                         prefixIcon: Icon(Icons.medical_services_outlined),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'General', child: Text('General / Wellness')),
-                        DropdownMenuItem(value: 'OTC', child: Text('Over The Counter (OTC)')),
-                        DropdownMenuItem(value: 'Schedule H', child: Text('Schedule H (Prescription)')),
-                        DropdownMenuItem(value: 'Schedule H1', child: Text('Schedule H1 (Prescription)')),
+                        DropdownMenuItem(
+                            value: 'General',
+                            child: Text('General / Wellness')),
+                        DropdownMenuItem(
+                            value: 'OTC',
+                            child: Text('Over The Counter (OTC)')),
+                        DropdownMenuItem(
+                            value: 'Schedule H',
+                            child: Text('Schedule H (Prescription)')),
+                        DropdownMenuItem(
+                            value: 'Schedule H1',
+                            child: Text('Schedule H1 (Prescription)')),
                       ],
                       onChanged: (v) {
                         if (v != null) {
@@ -483,7 +493,7 @@ class _AddProductPageState extends State<AddProductPage> {
                       },
                     ),
                     const SizedBox(height: 8),
-                    Text(
+                    const Text(
                       'Note: Schedule X, NDPS (Narcotics), and Psychotropic substances are strictly PROHIBITED for online sale under Govt of India norms. Do not list them.',
                       style: TextStyle(fontSize: 11, color: AppColors.danger),
                     ),
@@ -498,7 +508,8 @@ class _AddProductPageState extends State<AddProductPage> {
                       ),
                       value: _requiresPrescription,
                       activeThumbColor: AppColors.primary,
-                      onChanged: (v) => setState(() => _requiresPrescription = v),
+                      onChanged: (v) =>
+                          setState(() => _requiresPrescription = v),
                     ),
                   ],
                 ),

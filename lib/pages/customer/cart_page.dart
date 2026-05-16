@@ -222,8 +222,7 @@ class CartPage extends StatelessWidget {
             icon: const Icon(Icons.shopping_bag_outlined),
             label: const Text('Explore Shops'),
             style: ElevatedButton.styleFrom(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
             ),
           ),
         ],
@@ -240,7 +239,8 @@ class CartPage extends StatelessWidget {
     final heavyFee = cart.heavyOrderFee;
     final discount = cart.calculateDeliveryDiscount(baseDistanceKm);
     final effectiveBase = baseCharge >= 0 ? baseCharge : 0.0;
-    final totalDelivery = effectiveBase + surcharge + heavyFee + cart.smallCartFee - discount;
+    final totalDelivery =
+        effectiveBase + surcharge + heavyFee + cart.smallCartFee - discount;
     final total = cart.subtotal + totalDelivery + cart.platformFee;
 
     return Container(
@@ -254,8 +254,7 @@ class CartPage extends StatelessWidget {
             offset: const Offset(0, -4),
           ),
         ],
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -273,8 +272,12 @@ class CartPage extends StatelessWidget {
           const SizedBox(height: 6),
           _summaryRow(
             'Delivery Charges',
-            baseCharge < 0 ? 'Out of range' : '₹${effectiveBase.toStringAsFixed(0)}',
-            valueColor: baseCharge < 0 ? AppColors.textSecondary : AppColors.textPrimary,
+            baseCharge < 0
+                ? 'Out of range'
+                : '₹${effectiveBase.toStringAsFixed(0)}',
+            valueColor: baseCharge < 0
+                ? AppColors.textSecondary
+                : AppColors.textPrimary,
           ),
           if (discount > 0) ...[
             const SizedBox(height: 6),
@@ -289,7 +292,8 @@ class CartPage extends StatelessWidget {
             _summaryRow(
               'Small Cart Fee',
               '+₹${cart.smallCartFee.toStringAsFixed(0)}',
-              hint: 'For orders under ₹${PaymentConfig.smallCartThreshold.toInt()}',
+              hint:
+                  'For orders under ₹${PaymentConfig.smallCartThreshold.toInt()}',
               valueColor: Colors.orange.shade700,
             ),
           ],
@@ -298,21 +302,21 @@ class CartPage extends StatelessWidget {
             _summaryRow(
               'Heavy Order Fee',
               '+₹${heavyFee.toStringAsFixed(0)}',
-              hint: 'For orders over ${PaymentConfig.heavyOrderThreshold.toInt()} kg',
+              hint:
+                  'For orders over ${PaymentConfig.heavyOrderThreshold.toInt()} kg',
               valueColor: Colors.orange.shade700,
             ),
           ],
           // Multi-shop surcharge row — only visible when ordering from 2+ shops
-          if (surcharge > 0) ...
-            [
-              const SizedBox(height: 6),
-              _summaryRow(
-                'Multi-shop fee (${cart.shops.length} shops)',
-                '+₹${surcharge.toStringAsFixed(0)}',
-                valueColor: Colors.orange.shade700,
-                hint: '₹7/km between shops',
-              ),
-            ],
+          if (surcharge > 0) ...[
+            const SizedBox(height: 6),
+            _summaryRow(
+              'Multi-shop fee (${cart.shops.length} shops)',
+              '+₹${surcharge.toStringAsFixed(0)}',
+              valueColor: Colors.orange.shade700,
+              hint: '₹7/km between shops',
+            ),
+          ],
           const SizedBox(height: 6),
           _summaryRow(
             'Handling/Platform Fee',
@@ -332,14 +336,14 @@ class CartPage extends StatelessWidget {
             height: 52,
             child: ElevatedButton(
               onPressed: cart.meetsMinimumOrder
-                  ? () =>
-                      Navigator.pushNamed(context, AppRoutes.checkout)
+                  ? () => Navigator.pushNamed(context, AppRoutes.checkout)
                   : null,
               child: cart.meetsMinimumOrder
                   ? Text('Proceed to Checkout • ₹${total.toStringAsFixed(0)}',
                       style: const TextStyle(
                           fontSize: 15, fontWeight: FontWeight.w700))
-                  : Text('Minimum order ₹${PaymentConfig.minimumOrderValue.toInt()}',
+                  : Text(
+                      'Minimum order ₹${PaymentConfig.minimumOrderValue.toInt()}',
                       style: const TextStyle(fontSize: 14)),
             ),
           ),
@@ -359,7 +363,8 @@ class CartPage extends StatelessWidget {
           children: [
             Text(label,
                 style: TextStyle(
-                  color: isBold ? AppColors.textPrimary : AppColors.textSecondary,
+                  color:
+                      isBold ? AppColors.textPrimary : AppColors.textSecondary,
                   fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
                   fontSize: isBold ? 16 : 14,
                   fontFamily: 'Poppins',
@@ -389,20 +394,19 @@ class CartPage extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text('Clear Cart?', style: TextStyle(fontFamily: 'Poppins')),
+        title:
+            const Text('Clear Cart?', style: TextStyle(fontFamily: 'Poppins')),
         content: const Text('Remove all items from your cart?',
             style: TextStyle(fontFamily: 'Poppins')),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             onPressed: () {
               cart.clear();
               Navigator.pop(ctx);
             },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.danger),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             child: const Text('Clear'),
           ),
         ],

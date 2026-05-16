@@ -47,9 +47,11 @@ class _RolesListPageState extends State<RolesListPage> {
     final all = context.read<RbacProvider>().allRoles;
     _filtered = q.isEmpty
         ? all
-        : all.where((r) =>
-            r.name.toLowerCase().contains(q) ||
-            r.description.toLowerCase().contains(q)).toList();
+        : all
+            .where((r) =>
+                r.name.toLowerCase().contains(q) ||
+                r.description.toLowerCase().contains(q))
+            .toList();
   }
 
   Future<void> _deleteRole(RoleModel role) async {
@@ -68,7 +70,8 @@ class _RolesListPageState extends State<RolesListPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: const Color(0xFF4CAF50),
-            content: Text('Role deleted', style: GoogleFonts.outfit(color: Colors.white)),
+            content: Text('Role deleted',
+                style: GoogleFonts.outfit(color: Colors.white)),
           ),
         );
       }
@@ -77,7 +80,8 @@ class _RolesListPageState extends State<RolesListPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: const Color(0xFFFF5722),
-            content: Text('Error: $e', style: GoogleFonts.outfit(color: Colors.white)),
+            content: Text('Error: $e',
+                style: GoogleFonts.outfit(color: Colors.white)),
           ),
         );
       }
@@ -92,7 +96,8 @@ class _RolesListPageState extends State<RolesListPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: const Color(0xFF8B2FC9),
-            content: Text('Role cloned', style: GoogleFonts.outfit(color: Colors.white)),
+            content: Text('Role cloned',
+                style: GoogleFonts.outfit(color: Colors.white)),
           ),
         );
       }
@@ -101,7 +106,8 @@ class _RolesListPageState extends State<RolesListPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: const Color(0xFFFF5722),
-            content: Text('Error: $e', style: GoogleFonts.outfit(color: Colors.white)),
+            content: Text('Error: $e',
+                style: GoogleFonts.outfit(color: Colors.white)),
           ),
         );
       }
@@ -143,12 +149,14 @@ class _RolesListPageState extends State<RolesListPage> {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8B2FC9),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10)),
                   elevation: 0,
                 ),
-                icon: const Icon(Icons.add_rounded, size: 16, color: Colors.white),
+                icon: const Icon(Icons.add_rounded,
+                    size: 16, color: Colors.white),
                 label: Text('New Role',
                     style: GoogleFonts.outfit(
                         color: Colors.white,
@@ -168,12 +176,18 @@ class _RolesListPageState extends State<RolesListPage> {
               style: GoogleFonts.outfit(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Search roles...',
-                hintStyle: GoogleFonts.outfit(color: Colors.white30, fontSize: 13),
-                prefixIcon: const Icon(Icons.search_rounded, color: Colors.white30, size: 18),
+                hintStyle:
+                    GoogleFonts.outfit(color: Colors.white30, fontSize: 13),
+                prefixIcon: const Icon(Icons.search_rounded,
+                    color: Colors.white30, size: 18),
                 suffixIcon: _searchCtrl.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear_rounded, color: Colors.white30, size: 16),
-                        onPressed: () { _searchCtrl.clear(); setState(() {}); })
+                        icon: const Icon(Icons.clear_rounded,
+                            color: Colors.white30, size: 16),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() {});
+                        })
                     : null,
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.05),
@@ -189,7 +203,8 @@ class _RolesListPageState extends State<RolesListPage> {
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: Color(0xFF8B2FC9)),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
             ),
           ),
@@ -202,13 +217,15 @@ class _RolesListPageState extends State<RolesListPage> {
               children: [
                 Text(
                   '${_filtered.length} roles',
-                  style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12),
+                  style:
+                      GoogleFonts.outfit(color: Colors.white38, fontSize: 12),
                 ),
                 const Spacer(),
                 Text(
                   '${_filtered.where((r) => r.isSystem).length} system · '
                   '${_filtered.where((r) => !r.isSystem).length} custom',
-                  style: GoogleFonts.outfit(color: Colors.white38, fontSize: 12),
+                  style:
+                      GoogleFonts.outfit(color: Colors.white38, fontSize: 12),
                 ),
               ],
             ),
@@ -233,7 +250,8 @@ class _RolesListPageState extends State<RolesListPage> {
                               await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => RoleEditorPage(role: _filtered[i]),
+                                  builder: (_) =>
+                                      RoleEditorPage(role: _filtered[i]),
                                 ),
                               );
                               _loadRoles();
@@ -259,14 +277,14 @@ class _RolesListPageState extends State<RolesListPage> {
             color: Colors.white.withOpacity(0.04),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Column(
+          child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SkeletonBox(width: 120, height: 14),
-              const SizedBox(height: 8),
-              const SkeletonBox(height: 11),
-              const SizedBox(height: 10),
-              Row(children: const [
+              SkeletonBox(width: 120, height: 14),
+              SizedBox(height: 8),
+              SkeletonBox(height: 11),
+              SizedBox(height: 10),
+              Row(children: [
                 SkeletonBox(width: 60, height: 22, radius: 12),
                 SizedBox(width: 8),
                 SkeletonBox(width: 80, height: 22, radius: 12),
@@ -327,7 +345,8 @@ class _RoleCard extends StatelessWidget {
                     color: role.badgeColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.shield_rounded, color: role.badgeColor, size: 18),
+                  child: Icon(Icons.shield_rounded,
+                      color: role.badgeColor, size: 18),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -355,9 +374,11 @@ class _RoleCard extends StatelessWidget {
                 ),
                 if (isSuperAdmin)
                   PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert_rounded, color: Colors.white38, size: 18),
+                    icon: const Icon(Icons.more_vert_rounded,
+                        color: Colors.white38, size: 18),
                     color: const Color(0xFF1A1030),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     onSelected: (v) {
                       HapticFeedback.lightImpact();
                       if (v == 'edit') onEdit();
@@ -369,27 +390,34 @@ class _RoleCard extends StatelessWidget {
                         PopupMenuItem(
                           value: 'edit',
                           child: Row(children: [
-                            const Icon(Icons.edit_rounded, color: Colors.white54, size: 16),
+                            const Icon(Icons.edit_rounded,
+                                color: Colors.white54, size: 16),
                             const SizedBox(width: 10),
-                            Text('Edit', style: GoogleFonts.outfit(color: Colors.white70)),
+                            Text('Edit',
+                                style:
+                                    GoogleFonts.outfit(color: Colors.white70)),
                           ]),
                         ),
                       PopupMenuItem(
                         value: 'clone',
                         child: Row(children: [
-                          const Icon(Icons.copy_rounded, color: Colors.white54, size: 16),
+                          const Icon(Icons.copy_rounded,
+                              color: Colors.white54, size: 16),
                           const SizedBox(width: 10),
-                          Text('Duplicate', style: GoogleFonts.outfit(color: Colors.white70)),
+                          Text('Duplicate',
+                              style: GoogleFonts.outfit(color: Colors.white70)),
                         ]),
                       ),
                       if (!role.isSystem)
                         PopupMenuItem(
                           value: 'delete',
                           child: Row(children: [
-                            const Icon(Icons.delete_rounded, color: Color(0xFFFF5722), size: 16),
+                            const Icon(Icons.delete_rounded,
+                                color: Color(0xFFFF5722), size: 16),
                             const SizedBox(width: 10),
                             Text('Delete',
-                                style: GoogleFonts.outfit(color: const Color(0xFFFF5722))),
+                                style: GoogleFonts.outfit(
+                                    color: const Color(0xFFFF5722))),
                           ]),
                         ),
                     ],
@@ -409,14 +437,16 @@ class _RoleCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.05),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '${role.permissionCount} permissions',
-                    style: GoogleFonts.outfit(color: Colors.white38, fontSize: 10),
+                    style:
+                        GoogleFonts.outfit(color: Colors.white38, fontSize: 10),
                   ),
                 ),
               ],
