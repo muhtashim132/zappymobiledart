@@ -3,6 +3,8 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    // Firebase / FCM — reads google-services.json and wires push notification support
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -24,7 +26,7 @@ android {
         applicationId = "com.muhtaashimnazki.enything"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion // Razorpay & modern SDKs require >= 21
+        minSdk = flutter.minSdkVersion // Razorpay requires API 21+; flutter.minSdkVersion can resolve to 16
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

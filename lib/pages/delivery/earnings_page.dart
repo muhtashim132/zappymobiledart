@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 
@@ -21,6 +22,8 @@ class _EarningsPageState extends State<EarningsPage> {
   int _totalDeliveries = 0;
   double _averageRating = 0.0;
   List<Map<String, dynamic>> _recentDeliveries = [];
+  // 7-day earnings: index 0 = 6 days ago, index 6 = today
+  List<double> _weeklyEarnings = List.filled(7, 0.0);
 
   @override
   void initState() {
@@ -44,6 +47,8 @@ class _EarningsPageState extends State<EarningsPage> {
 
       final deliveries = allDeliveries as List;
       double today = 0, total = 0;
+      // 7-day buckets: index 0 = 6 days ago … index 6 = today
+      final Map<int, double> weekMap = {};
 
       for (final d in deliveries) {
         final charge =
@@ -52,6 +57,13 @@ class _EarningsPageState extends State<EarningsPage> {
             DateTime.tryParse(d['created_at'] ?? '') ?? DateTime(2000);
         total += charge;
         if (createdAt.isAfter(DateTime.parse(todayStart))) today += charge;
+        // weekly breakdown
+        final daysAgo = now.difference(DateTime(
+          createdAt.year, createdAt.month, createdAt.day,
+        )).inDays;
+        if (daysAgo >= 0 && daysAgo < 7) {
+          weekMap[6 - daysAgo] = (weekMap[6 - daysAgo] ?? 0) + charge;
+        }
       }
 
       double avgRating = 0.0;
@@ -71,6 +83,7 @@ class _EarningsPageState extends State<EarningsPage> {
           _todayEarnings = today;
           _totalEarnings = total;
           _totalDeliveries = deliveries.length;
+          _weeklyEarnings = List.generate(7, (i) => weekMap[i] ?? 0.0);
           _averageRating = avgRating;
           _recentDeliveries = deliveries.take(20).map((d) {
             return {
@@ -349,6 +362,157 @@ class _EarningsPageState extends State<EarningsPage> {
                 fontSize: 11,
                 fontWeight: FontWeight.w600)),
       ],
+    );
+  }
+
+  // ── Weekly Bar Chart ──────────────────────────────────────────
+  Widget _buildWeeklyChart() {
+    final maxY = _weeklyEarnings.reduce((a, b) => a > b ? a : b);
+    final chartMax = maxY < 50 ? 200.0 : (maxY * 1.25).ceilToDouble();
+
+    final dayLabels = List.generate(7, (i) {
+      final dt = DateTime.now().subtract(Duration(days: 6 - i));
+      return DateFormat('E').format(dt); // Mon, Tue...
+    });
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Last 7 Days',
+                  style: GoogleFonts.outfit(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '₹${_weeklyEarnings.reduce((a, b) => a + b).toStringAsFixed(0)}',
+                    style: GoogleFonts.outfit(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              height: 160,
+              child: BarChart(
+                BarChartData(
+                  maxY: chartMax,
+                  minY: 0,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: chartMax / 4,
+                    getDrawingHorizontalLine: (_) => FlLine(
+                      color: Colors.grey.shade100,
+                      strokeWidth: 1,
+                    ),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    leftTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        getTitlesWidget: (value, _) {
+                          final i = value.toInt();
+                          if (i < 0 || i >= dayLabels.length) return const SizedBox.shrink();
+                          final isToday = i == 6;
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              dayLabels[i],
+                              style: GoogleFonts.outfit(
+                                fontSize: 11,
+                                fontWeight: isToday ? FontWeight.w800 : FontWeight.w500,
+                                color: isToday ? AppColors.primary : AppColors.textSecondary,
+                              ),
+                            ),
+                          );
+                        },
+                        reservedSize: 28,
+                      ),
+                    ),
+                  ),
+                  barGroups: List.generate(7, (i) {
+                    final earning = _weeklyEarnings[i];
+                    final isToday = i == 6;
+                    return BarChartGroupData(
+                      x: i,
+                      barRods: [
+                        BarChartRodData(
+                          toY: earning,
+                          width: 28,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(8),
+                          ),
+                          gradient: LinearGradient(
+                            colors: isToday
+                                ? [AppColors.primary, const Color(0xFF071D6B)]
+                                : [AppColors.primary.withOpacity(0.4), AppColors.primary.withOpacity(0.2)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipColor: (_) => AppColors.primary,
+                      getTooltipItem: (group, _, rod, __) => BarTooltipItem(
+                        '₹${rod.toY.toStringAsFixed(0)}',
+                        GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

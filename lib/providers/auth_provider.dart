@@ -1,7 +1,5 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 
@@ -12,8 +10,7 @@ class AuthProvider extends ChangeNotifier {
   String? _error;
   String? _pendingPhone; // Phone waiting for OTP verification
   String? _mockUserId; // ID used for magic numbers
-  String? _verificationId; // Firebase Verification ID
-  int? _resendToken; // Firebase Resend Token
+
 
   // ─── Admin (God Mode) State ───────────────────────────────────────────────
   bool _isAdminVerified = false; // true after 2nd-factor password gate
@@ -256,20 +253,37 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ─── OTP Auth (Phone) via Fast2SMS ──────────────────────────────────────
-  /// Step 1: Trigger Firebase Phone Authentication OTP.
+  // ─── OTP Auth (Phone) via Supabase Edge Functions + Fast2SMS ───────────
+
+  /// Derives a stable email+password pair from a phone number so we can
+  /// create a real Supabase Auth session after OTP verification.
+  String _emailFromPhone(String phone) {
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    return '$digits@auth.enything.app';
+  }
+
+  String _passwordFromPhone(String phone) {
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    return 'Enything$digits#Auth2025';
+  }
+
+  bool _isMagicNumber(String phone) {
+    return phone.contains('9999999991') ||
+        phone.contains('9999999992') ||
+        phone.contains('9999999993') ||
+        phone.contains('9999999994') ||
+        phone.contains('9999999995') ||
+        phone.contains('9999999996');
+  }
+
+  /// Step 1: Send OTP via the `send-otp` Supabase Edge Function (Fast2SMS).
   Future<String?> sendPhoneOtp(String phone) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     // ── Magic number bypass for internal testing ──────────────────────────
-    if (phone.contains('9999999991') ||
-        phone.contains('9999999992') ||
-        phone.contains('9999999993') ||
-        phone.contains('9999999994') ||
-        phone.contains('9999999995') ||
-        phone.contains('9999999996')) {
+    if (_isMagicNumber(phone)) {
       _pendingPhone = phone;
       _isLoading = false;
       notifyListeners();
@@ -277,36 +291,24 @@ class AuthProvider extends ChangeNotifier {
     }
 
     try {
-      final completer = Completer<String?>();
-
-      await FirebaseAuth.instance.verifyPhoneNumber(
-        phoneNumber: phone,
-        timeout: const Duration(seconds: 60),
-        forceResendingToken: _resendToken,
-        verificationCompleted: (PhoneAuthCredential credential) async {
-          // Auto-resolution (mostly Android).
-          // We could auto-sign-in here, but to keep the flow consistent, 
-          // we usually just let the user enter the code or we fill it in the UI.
-        },
-        verificationFailed: (FirebaseAuthException e) {
-          _error = e.message ?? 'Phone verification failed.';
-          if (!completer.isCompleted) completer.complete(_error);
-        },
-        codeSent: (String verificationId, int? resendToken) {
-          _verificationId = verificationId;
-          _resendToken = resendToken;
-          _pendingPhone = phone;
-          if (!completer.isCompleted) completer.complete(null); // Success
-        },
-        codeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-        },
+      final response = await _supabase.functions.invoke(
+        'send-otp',
+        body: {'phone': phone},
       );
 
-      final result = await completer.future;
+      if (response.status != 200) {
+        final data = response.data;
+        _error = (data is Map ? data['error'] as String? : null) ??
+            'Failed to send OTP. Please try again.';
+        _isLoading = false;
+        notifyListeners();
+        return _error;
+      }
+
+      _pendingPhone = phone;
       _isLoading = false;
       notifyListeners();
-      return result;
+      return null; // null = success
     } catch (e) {
       _error = 'Could not send OTP: ${e.toString()}';
       debugPrint('sendPhoneOtp error: $e');
@@ -316,9 +318,8 @@ class AuthProvider extends ChangeNotifier {
     return _error;
   }
 
-  /// Step 2: Verify OTP against Firebase, then create
-  /// or sign in to the Supabase Auth session using an email derived from
-  /// the phone number.
+  /// Step 2: Verify OTP via the `verify-otp` Edge Function, then create
+  /// or sign in to the Supabase Auth session using a phone-derived credential.
   ///
   /// Returns:
   ///   'existing' — user has a profile (may have multiple roles)
@@ -331,12 +332,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     // ─── Magic Number Bypass (internal testing) ────────────────────────────
-    if (phone.contains('9999999991') ||
-        phone.contains('9999999992') ||
-        phone.contains('9999999993') ||
-        phone.contains('9999999994') ||
-        phone.contains('9999999995') ||
-        phone.contains('9999999996')) {
+    if (_isMagicNumber(phone)) {
       await Future.delayed(const Duration(seconds: 1));
 
       String mockId =
@@ -363,23 +359,16 @@ class AuthProvider extends ChangeNotifier {
     // ──────────────────────────────────────────────────────────────────────
 
     try {
-      // 1️⃣ Validate OTP using Firebase Auth
-      if (_verificationId == null) {
-        _error = 'Session expired. Please request a new OTP.';
-        _isLoading = false;
-        notifyListeners();
-        return null;
-      }
-
-      PhoneAuthCredential credential = PhoneAuthProvider.credential(
-        verificationId: _verificationId!,
-        smsCode: otp.trim(),
+      // 1️⃣ Verify OTP via Edge Function
+      final verifyResp = await _supabase.functions.invoke(
+        'verify-otp',
+        body: {'phone': phone, 'otp': otp.trim()},
       );
 
-      try {
-        await FirebaseAuth.instance.signInWithCredential(credential);
-      } on FirebaseAuthException catch (e) {
-        _error = e.message ?? 'Invalid OTP. Please try again.';
+      if (verifyResp.status != 200) {
+        final data = verifyResp.data;
+        _error = (data is Map ? data['error'] as String? : null) ??
+            'Invalid OTP. Please try again.';
         _isLoading = false;
         notifyListeners();
         return null;

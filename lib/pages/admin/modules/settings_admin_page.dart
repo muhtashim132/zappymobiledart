@@ -294,7 +294,7 @@ class _NotificationSheetState extends State<_NotificationSheet> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Firebase FCM not configured. Configure it first to send real notifications.',
+                    'Push notifications require FCM/APNs setup. This feature is coming soon.',
                     style: AdminStyles.caption(color: AdminColors.warning),
                   ),
                 ),
@@ -352,7 +352,7 @@ class _NotificationSheetState extends State<_NotificationSheet> {
                       ? null
                       : () {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text('Firebase FCM not configured yet.',
+                            content: Text('Push notifications not configured yet.',
                                 style: AdminStyles.body(size: 13)),
                             backgroundColor: AdminColors.surface,
                             behavior: SnackBarBehavior.floating,

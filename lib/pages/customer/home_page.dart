@@ -94,7 +94,9 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userId = _supabase.auth.currentUser?.id;
       if (userId != null) {
-        context.read<NotificationProvider>().listenAsCustomer(userId);
+        final notifProvider = context.read<NotificationProvider>();
+        notifProvider.listenAsCustomer(userId);
+        notifProvider.registerFcmToken(userId); // Register push token
       }
     });
   }

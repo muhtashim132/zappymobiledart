@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/rbac_provider.dart';
 import '../../config/routes.dart';
@@ -11,6 +12,7 @@ import '../../theme/admin_theme.dart';
 import 'modules/overview_admin_page.dart';
 import 'modules/orders_admin_page.dart';
 import 'modules/users_admin_page.dart';
+import 'modules/kyc_review_page.dart';
 import 'modules/finance_admin_page.dart';
 import 'modules/settings_admin_page.dart';
 import 'modules/analytics_admin_page.dart';
@@ -27,6 +29,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
   int _currentIndex = 0;
   late AnimationController _bgCtrl;
   late Animation<double> _bgAnim;
+  int _kycPendingCount = 0;
 
   @override
   void initState() {
@@ -47,6 +50,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
       if (userId != null) {
         context.read<RbacProvider>().loadCurrentAdmin(userId);
       }
+      _loadKycPendingCount();
     });
   }
 
@@ -54,6 +58,24 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
   void dispose() {
     _bgCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadKycPendingCount() async {
+    try {
+      final supabase = Supabase.instance.client;
+      final sellers = await supabase
+          .from('shops')
+          .select('id')
+          .eq('verification_status', 'pending');
+      final riders = await supabase
+          .from('delivery_partners')
+          .select('id')
+          .eq('verification_status', 'pending');
+      if (mounted) {
+        setState(() => _kycPendingCount =
+            (sellers as List).length + (riders as List).length);
+      }
+    } catch (_) {}
   }
 
   void _signOut() {
@@ -85,6 +107,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
               rbac.can('sellers.view') ||
               rbac.can('riders.view') ||
               rbac.isSuperAdmin,
+        ),
+        _NavDef(
+          icon: Icons.verified_user_outlined,
+          activeIcon: Icons.verified_user_rounded,
+          label: 'KYC',
+          visible: rbac.isSuperAdmin,
+          badgeCount: _kycPendingCount,
         ),
         _NavDef(
           icon: Icons.account_balance_outlined,
@@ -184,6 +213,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
       'Orders' => const OrdersAdminPage(),
       'Users' => ChangeNotifierProvider.value(
           value: rbac, child: const UsersAdminPage()),
+      'KYC' => const KycReviewPage(),
       'Finance' => const FinanceAdminPage(),
       'Settings' => ChangeNotifierProvider.value(
           value: rbac, child: const SettingsAdminPage()),
@@ -219,7 +249,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: items
             .map((n) => NavigationDestination(
-                  icon: Icon(n.icon, color: AdminColors.textMuted),
+                  icon: n.badgeCount > 0
+                      ? Badge(
+                          label: Text('${n.badgeCount}'),
+                          child: Icon(n.icon, color: AdminColors.textMuted),
+                        )
+                      : Icon(n.icon, color: AdminColors.textMuted),
                   selectedIcon: Icon(n.activeIcon, color: AdminColors.primary),
                   label: n.label,
                 ))
@@ -346,10 +381,12 @@ class _NavDef {
   final IconData activeIcon;
   final String label;
   final bool visible;
+  final int badgeCount;
   const _NavDef({
     required this.icon,
     required this.activeIcon,
     required this.label,
     required this.visible,
+    this.badgeCount = 0,
   });
 }

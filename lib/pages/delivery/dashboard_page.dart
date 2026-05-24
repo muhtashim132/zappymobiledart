@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -34,6 +35,9 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
   double? _riderLng;
   bool _locationUnavailable = false;
 
+  // Location broadcast timer — updates rider_lat/rider_lng every 15s
+  Timer? _locationBroadcastTimer;
+
   late AnimationController _bgCtrl;
   late Animation<double> _bgAnim;
 
@@ -58,15 +62,48 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
       final auth = context.read<AuthProvider>();
       final userId = auth.currentUserId;
       if (userId != null) {
-        context.read<NotificationProvider>().listenAsDelivery(userId);
+        final notifProvider = context.read<NotificationProvider>();
+        notifProvider.listenAsDelivery(userId);
+        notifProvider.registerFcmToken(userId); // Register push token
       }
     });
   }
 
   @override
   void dispose() {
+    _locationBroadcastTimer?.cancel();
     _bgCtrl.dispose();
     super.dispose();
+  }
+
+  // Starts pushing GPS location to DB every 15s while out_for_delivery.
+  void _startLocationBroadcast() {
+    _locationBroadcastTimer?.cancel();
+    _locationBroadcastTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
+      final outOrders = _myOrders.where((o) => o.status == 'out_for_delivery').toList();
+      if (outOrders.isEmpty) {
+        _stopLocationBroadcast();
+        return;
+      }
+      await _fetchRiderLocation();
+      if (_riderLat == null || _riderLng == null) return;
+      for (final order in outOrders) {
+        try {
+          await _supabase.from('orders').update({
+            'rider_lat': _riderLat,
+            'rider_lng': _riderLng,
+            'rider_location_updated_at': DateTime.now().toIso8601String(),
+          }).eq('id', order.id);
+        } catch (e) {
+          debugPrint('Location broadcast error: $e');
+        }
+      }
+    });
+  }
+
+  void _stopLocationBroadcast() {
+    _locationBroadcastTimer?.cancel();
+    _locationBroadcastTimer = null;
   }
 
   /// Attempt to get the rider's current GPS position.
@@ -160,6 +197,13 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         }).toList();
         _isLoading = false;
       });
+
+      // Auto-start broadcast if rider already has an out_for_delivery order
+      final hasOutForDelivery =
+          _myOrders.any((o) => o.status == 'out_for_delivery');
+      if (hasOutForDelivery && _locationBroadcastTimer == null) {
+        _startLocationBroadcast();
+      }
     } catch (e) {
       setState(() => _isLoading = false);
     }
@@ -212,6 +256,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         await _supabase.from('orders').update({
           'status': status,
         }).eq('id', order.id);
+        _stopLocationBroadcast();
         _loadOrders();
         // Show rating prompt after delivering
         if (mounted && !order.hasDeliveryRated) {
@@ -223,6 +268,10 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         await _supabase
             .from('orders')
             .update({'status': status}).eq('id', order.id);
+      }
+      // Start broadcasting location when rider is out for delivery
+      if (status == 'out_for_delivery') {
+        _startLocationBroadcast();
       }
       _loadOrders();
     } catch (e) {

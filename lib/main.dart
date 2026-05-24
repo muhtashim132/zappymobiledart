@@ -5,7 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
 
 import 'theme/app_theme.dart';
 import 'config/routes.dart';
@@ -20,20 +21,19 @@ import 'providers/audit_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Disable runtime fetching to prevent ClientException when network is unstable
   // or blocked. This avoids "Connection closed before full header was received" errors.
   GoogleFonts.config.allowRuntimeFetching = false;
 
   await dotenv.load(fileName: '.env');
 
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (e) {
-    debugPrint('Firebase initialization error: $e');
-  }
+  // Initialize Firebase (used only for FCM push notifications — NOT for auth)
+  await Firebase.initializeApp();
+
+  // Must be a top-level function for background FCM handling
+  FirebaseMessaging.onBackgroundMessage(_fcmBackgroundHandler);
+
 
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL'] ?? '',
@@ -55,6 +55,14 @@ void main() async {
   await cartProvider.loadCart();
 
   runApp(EnythingApp(cartProvider: cartProvider));
+}
+
+/// Background FCM handler — MUST be a top-level function (not a closure).
+@pragma('vm:entry-point')
+Future<void> _fcmBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  // No UI work here — just log or store the notification if needed
+  debugPrint('FCM background: ${message.notification?.title}');
 }
 
 class EnythingApp extends StatelessWidget {

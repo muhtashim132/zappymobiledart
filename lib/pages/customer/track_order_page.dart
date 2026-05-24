@@ -5,6 +5,7 @@ import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
 import '../../widgets/common/zappy_map.dart';
 import '../../widgets/common/rating_bottom_sheet.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -25,6 +26,8 @@ class _TrackOrderPageState extends State<TrackOrderPage>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnim;
   RealtimeChannel? _channel;
+  // Live rider GPS position (updated by delivery partner every 15s)
+  LatLng? _riderLatLng;
 
   final List<Map<String, dynamic>> _steps = [
     {
@@ -99,6 +102,10 @@ class _TrackOrderPageState extends State<TrackOrderPage>
         setState(() {
           _order = order;
           _isLoading = false;
+          // Set initial rider location if available
+          if (order.riderLat != null && order.riderLng != null) {
+            _riderLatLng = LatLng(order.riderLat!, order.riderLng!);
+          }
         });
         // If already delivered and not yet rated, show rating prompt
         if (order.status == 'delivered' && !order.hasCustomerRated) {
@@ -127,7 +134,15 @@ class _TrackOrderPageState extends State<TrackOrderPage>
               final updatedOrder = OrderModel.fromMap(payload.newRecord);
               final wasDelivered = _order?.status != 'delivered' &&
                   updatedOrder.status == 'delivered';
-              setState(() => _order = updatedOrder);
+              setState(() {
+                _order = updatedOrder;
+                // Update live rider marker position
+                if (updatedOrder.riderLat != null && updatedOrder.riderLng != null) {
+                  _riderLatLng = LatLng(updatedOrder.riderLat!, updatedOrder.riderLng!);
+                }
+                // Clear rider marker once delivered
+                if (updatedOrder.status == 'delivered') _riderLatLng = null;
+              });
               // Trigger rating prompt the moment delivery is confirmed
               if (wasDelivered && !updatedOrder.hasCustomerRated) {
                 Future.delayed(
@@ -293,13 +308,55 @@ class _TrackOrderPageState extends State<TrackOrderPage>
   }
 
   /// Returns the best available map centre for this order.
-  /// Priority: persisted delivery coords → Delhi fallback.
+  /// Priority: rider live position → customer delivery address → Delhi fallback.
   LatLng _mapCenter() {
+    if (_riderLatLng != null && _order?.status == 'out_for_delivery') {
+      return _riderLatLng!;
+    }
     if (_order?.deliveryLat != null && _order?.deliveryLng != null) {
       return LatLng(_order!.deliveryLat!, _order!.deliveryLng!);
     }
-    // Last-resort fallback – will be replaced once delivery_lat/lng columns exist
     return const LatLng(28.6139, 77.2090);
+  }
+
+  /// Builds the rider motorcycle marker when live location is available.
+  List<Marker> _buildMapMarkers() {
+    final markers = <Marker>[];
+
+    // Customer delivery address pin (always shown)
+    if (_order?.deliveryLat != null && _order?.deliveryLng != null) {
+      markers.add(Marker(
+        point: LatLng(_order!.deliveryLat!, _order!.deliveryLng!),
+        width: 44,
+        height: 44,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.15),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.home_rounded, color: AppColors.primary, size: 26),
+        ),
+      ));
+    }
+
+    // Live rider marker (only when out_for_delivery)
+    if (_riderLatLng != null && _order?.status == 'out_for_delivery') {
+      markers.add(Marker(
+        point: _riderLatLng!,
+        width: 52,
+        height: 52,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.success.withOpacity(0.2),
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.success, width: 2),
+          ),
+          child: const Icon(Icons.delivery_dining_rounded,
+              color: AppColors.success, size: 28),
+        ),
+      ));
+    }
+    return markers;
   }
 
   @override
@@ -352,6 +409,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
                   center: _mapCenter(),
                   zoom: 14,
                   interactive: true,
+                  markers: _buildMapMarkers(),
                 ),
               ),
             ),

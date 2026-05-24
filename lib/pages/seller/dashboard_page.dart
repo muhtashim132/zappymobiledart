@@ -151,7 +151,11 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
   void _startNotifications(String shopId) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<NotificationProvider>().listenAsSeller(shopId);
+        final auth = context.read<AuthProvider>();
+        final userId = auth.currentUserId;
+        final notifProvider = context.read<NotificationProvider>();
+        notifProvider.listenAsSeller(shopId);
+        if (userId != null) notifProvider.registerFcmToken(userId);
       }
     });
   }

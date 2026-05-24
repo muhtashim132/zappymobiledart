@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 /// A single in-app notification entry.
 class AppNotification {
@@ -41,7 +42,59 @@ class NotificationProvider extends ChangeNotifier {
 
   int get unreadCount => _notifications.where((n) => !n.isRead).length;
 
-  // ── Start listening ───────────────────────────────────────────────────────
+  // ── FCM Push Notification Registration ───────────────────────────────────
+
+  /// Call this once after the user logs in to register their FCM device token.
+  /// Stores the token in Supabase `device_tokens` table for push delivery.
+  Future<void> registerFcmToken(String userId) async {
+    try {
+      final messaging = FirebaseMessaging.instance;
+
+      // Request permission (required for iOS; no-op on Android)
+      await messaging.requestPermission(
+        alert: true, badge: true, sound: true,
+      );
+
+      final token = await messaging.getToken();
+      if (token == null) return;
+
+      await _supabase.from('device_tokens').upsert({
+        'user_id': userId,
+        'token': token,
+        'platform': 'android',
+        'updated_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'user_id,token');
+
+      debugPrint('FCM token registered: ${token.substring(0, 20)}...');
+
+      // Listen for token refresh and re-register
+      messaging.onTokenRefresh.listen((newToken) async {
+        await _supabase.from('device_tokens').upsert({
+          'user_id': userId,
+          'token': newToken,
+          'platform': 'android',
+          'updated_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'user_id,token');
+      });
+
+      // Handle foreground messages by adding them as in-app notifications
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        final notif = message.notification;
+        if (notif == null) return;
+        _notifications.add(AppNotification(
+          id: message.messageId ?? DateTime.now().toIso8601String(),
+          title: notif.title ?? 'Notification',
+          body: notif.body ?? '',
+          orderId: message.data['order_id'] as String?,
+        ));
+        notifyListeners();
+      });
+    } catch (e) {
+      debugPrint('FCM token registration failed: $e');
+    }
+  }
+
+  // ── Start listening ──────────────────────────────────────────────────────────────
 
   /// Customer: watches their own orders for status changes.
   void listenAsCustomer(String customerId) {

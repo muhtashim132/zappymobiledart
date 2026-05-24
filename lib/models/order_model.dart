@@ -57,6 +57,11 @@ class OrderModel {
   final double? deliveryLat;
   final double? deliveryLng;
 
+  // Rider's LIVE GPS position (updated every 15s by delivery partner while out_for_delivery)
+  final double? riderLat;
+  final double? riderLng;
+  final DateTime? riderLocationUpdatedAt;
+
   // Prescription validation
   final List<String> prescriptionUrls;
 
@@ -134,6 +139,9 @@ class OrderModel {
     this.hasDeliveryRated = false,
     this.deliveryLat,
     this.deliveryLng,
+    this.riderLat,
+    this.riderLng,
+    this.riderLocationUpdatedAt,
     // Financial snapshot fields
     this.gstItemTotal = 0.0,
     this.s9_5GstAmount = 0.0,
@@ -183,6 +191,11 @@ class OrderModel {
       hasDeliveryRated: map['has_delivery_rated'] ?? false,
       deliveryLat: (map['delivery_lat'] as num?)?.toDouble(),
       deliveryLng: (map['delivery_lng'] as num?)?.toDouble(),
+      riderLat: (map['rider_lat'] as num?)?.toDouble(),
+      riderLng: (map['rider_lng'] as num?)?.toDouble(),
+      riderLocationUpdatedAt: map['rider_location_updated_at'] != null
+          ? DateTime.tryParse(map['rider_location_updated_at'])
+          : null,
       // ── Financial snapshot — read from frozen DB values ────────────────
       gstItemTotal: (map['gst_item_total'] ?? 0.0).toDouble(),
       s9_5GstAmount: (map['s9_5_gst_amount'] ?? 0.0).toDouble(),
@@ -231,6 +244,9 @@ class OrderModel {
     bool? hasDeliveryRated,
     double? deliveryLat,
     double? deliveryLng,
+    double? riderLat,
+    double? riderLng,
+    DateTime? riderLocationUpdatedAt,
   }) {
     return OrderModel(
       id: id,
@@ -262,6 +278,9 @@ class OrderModel {
       hasDeliveryRated: hasDeliveryRated ?? this.hasDeliveryRated,
       deliveryLat: deliveryLat ?? this.deliveryLat,
       deliveryLng: deliveryLng ?? this.deliveryLng,
+      riderLat: riderLat ?? this.riderLat,
+      riderLng: riderLng ?? this.riderLng,
+      riderLocationUpdatedAt: riderLocationUpdatedAt ?? this.riderLocationUpdatedAt,
       // Preserve frozen financial fields unchanged
       gstItemTotal: gstItemTotal,
       s9_5GstAmount: s9_5GstAmount,

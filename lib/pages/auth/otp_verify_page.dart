@@ -84,11 +84,14 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
 
   void _onChanged(int i, String val) {
     if (val.length > 1) {
+      // User pasted — distribute digits across all 6 boxes starting from 0
       final digits = val.replaceAll(RegExp(r'\D'), '').split('');
-      for (int j = 0; j < 6 && j < digits.length; j++) {
-        _ctrlList[j].text = digits[j];
+      for (int j = 0; j < 6; j++) {
+        _ctrlList[j].text = j < digits.length ? digits[j] : '';
       }
-      _focusList[5].requestFocus();
+      // Focus the last filled box (or box 5 if all filled)
+      final lastFilled = (digits.length - 1).clamp(0, 5);
+      _focusList[lastFilled].requestFocus();
       if (_otp.length == 6) _verify();
       return;
     }
@@ -319,10 +322,10 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
                 padding: const EdgeInsets.symmetric(
                     horizontal: 20, vertical: 8),
                 decoration: BoxDecoration(
-                  color: _roleColor(_welcomeRole).withOpacity(0.20),
+                  color: _roleColor(_welcomeRole).withValues(alpha: 0.20),
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(
-                      color: _roleColor(_welcomeRole).withOpacity(0.50)),
+                      color: _roleColor(_welcomeRole).withValues(alpha: 0.50)),
                 ),
                 child: Text(
                   _roleLabel(_welcomeRole),
@@ -373,10 +376,10 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2F9E44).withOpacity(0.20),
+                      color: const Color(0xFF2F9E44).withValues(alpha: 0.20),
                       shape: BoxShape.circle,
                       border: Border.all(
-                          color: const Color(0xFF51CF66).withOpacity(0.50),
+                          color: const Color(0xFF51CF66).withValues(alpha: 0.50),
                           width: 2),
                     ),
                     child: const Center(
@@ -410,10 +413,10 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
                           child: Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: _roleColor(role).withOpacity(0.10),
+                              color: _roleColor(role).withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                  color: _roleColor(role).withOpacity(0.35),
+                                  color: _roleColor(role).withValues(alpha: 0.35),
                                   width: 1.5),
                             ),
                             child: Row(
@@ -422,11 +425,11 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
                                   width: 56,
                                   height: 56,
                                   decoration: BoxDecoration(
-                                    color: _roleColor(role).withOpacity(0.18),
+                                    color: _roleColor(role).withValues(alpha: 0.18),
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
                                         color: _roleColor(role)
-                                            .withOpacity(0.40)),
+                                            .withValues(alpha: 0.40)),
                                   ),
                                   child: Center(
                                     child: Text(_roleEmoji(role),
@@ -481,10 +484,10 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.04),
+                        color: Colors.white.withValues(alpha: 0.04),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                            color: Colors.white.withOpacity(0.10)),
+                            color: Colors.white.withValues(alpha: 0.10)),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -546,7 +549,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
                 shape: BoxShape.circle),
             child: const Icon(Icons.arrow_back_ios_new,
                 color: Colors.white, size: 16),
@@ -580,10 +583,10 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: roleColor.withOpacity(0.15),
+                        color: roleColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(30),
                         border:
-                            Border.all(color: roleColor.withOpacity(0.40)),
+                            Border.all(color: roleColor.withValues(alpha: 0.40)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -667,7 +670,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                              color: const Color(0xFFF4C542).withOpacity(0.40),
+                              color: const Color(0xFFF4C542).withValues(alpha: 0.40),
                               blurRadius: 20,
                               offset: const Offset(0, 8))
                         ],
@@ -732,7 +735,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient:
-                RadialGradient(colors: [color, color.withOpacity(0)]),
+                RadialGradient(colors: [color, color.withValues(alpha: 0)]),
           ),
         ),
       );
@@ -760,10 +763,10 @@ class _OtpBox extends StatelessWidget {
       height: 56,
       margin: const EdgeInsets.symmetric(horizontal: 5),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
+        color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(14),
         border:
-            Border.all(color: Colors.white.withOpacity(0.12), width: 1.5),
+            Border.all(color: Colors.white.withValues(alpha: 0.12), width: 1.5),
       ),
       child: KeyboardListener(
         focusNode: FocusNode(),
@@ -811,7 +814,7 @@ class _MiniLogo extends StatelessWidget {
         borderRadius: BorderRadius.circular(size * 0.28),
         boxShadow: [
           BoxShadow(
-              color: const Color(0xFFF4C542).withOpacity(0.20),
+              color: const Color(0xFFF4C542).withValues(alpha: 0.20),
               blurRadius: 20,
               spreadRadius: 2)
         ],
