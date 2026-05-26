@@ -139,12 +139,12 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                                     borderRadius: BorderRadius.circular(20),
                                     border: Border.all(
                                         color: const Color(0xFF5B8BFF)
-                                            .withOpacity(0.40),
+                                            .withValues(alpha: 0.40),
                                         width: 1.5),
                                     boxShadow: [
                                       BoxShadow(
                                           color: const Color(0xFF5B8BFF)
-                                              .withOpacity(0.30),
+                                              .withValues(alpha: 0.30),
                                           blurRadius: 22,
                                           spreadRadius: 2),
                                     ],
@@ -191,7 +191,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                                 Text(
                                   'Join as who you are',
                                   style: GoogleFonts.outfit(
-                                    color: Colors.white.withOpacity(0.50),
+                                    color: Colors.white.withValues(alpha: 0.50),
                                     fontSize: 14,
                                     fontWeight: FontWeight.w400,
                                     letterSpacing: 0.4,
@@ -224,7 +224,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                                   'One account — multiple roles. Pick one to start.',
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.outfit(
-                                    color: Colors.white.withOpacity(0.50),
+                                    color: Colors.white.withValues(alpha: 0.50),
                                     fontSize: 13,
                                     height: 1.5,
                                   ),
@@ -294,14 +294,14 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                                     ])
                                   : null,
                               color: _selectedRole == null
-                                  ? Colors.white.withOpacity(0.08)
+                                  ? Colors.white.withValues(alpha: 0.08)
                                   : null,
                               borderRadius: BorderRadius.circular(18),
                               boxShadow: _selectedRole != null
                                   ? [
                                       BoxShadow(
                                           color: const Color(0xFFF4C542)
-                                              .withOpacity(0.40),
+                                              .withValues(alpha: 0.40),
                                           blurRadius: 20,
                                           offset: const Offset(0, 8))
                                     ]
@@ -367,7 +367,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
           height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: RadialGradient(colors: [color, color.withOpacity(0.0)]),
+            gradient: RadialGradient(colors: [color, color.withValues(alpha: 0.0)]),
           ),
         ),
       );
@@ -407,17 +407,17 @@ class _AnimatedRoleCard extends StatelessWidget {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: selected
-                ? accentColor.withOpacity(0.14)
-                : Colors.white.withOpacity(0.05),
+                ? accentColor.withValues(alpha: 0.14)
+                : Colors.white.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: selected ? accentColor : Colors.white.withOpacity(0.10),
+              color: selected ? accentColor : Colors.white.withValues(alpha: 0.10),
               width: selected ? 2.0 : 1.0,
             ),
             boxShadow: selected
                 ? [
                     BoxShadow(
-                        color: accentColor.withOpacity(0.22),
+                        color: accentColor.withValues(alpha: 0.22),
                         blurRadius: 20,
                         offset: const Offset(0, 6))
                   ]
@@ -432,13 +432,13 @@ class _AnimatedRoleCard extends StatelessWidget {
                 height: 60,
                 decoration: BoxDecoration(
                   color: selected
-                      ? accentColor.withOpacity(0.20)
-                      : Colors.white.withOpacity(0.07),
+                      ? accentColor.withValues(alpha: 0.20)
+                      : Colors.white.withValues(alpha: 0.07),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: selected
-                        ? accentColor.withOpacity(0.40)
-                        : Colors.white.withOpacity(0.08),
+                        ? accentColor.withValues(alpha: 0.40)
+                        : Colors.white.withValues(alpha: 0.08),
                   ),
                 ),
                 child: Center(
@@ -486,7 +486,7 @@ class _AnimatedRoleCard extends StatelessWidget {
                     Text(
                       subtitle,
                       style: GoogleFonts.outfit(
-                        color: Colors.white.withOpacity(0.50),
+                        color: Colors.white.withValues(alpha: 0.50),
                         fontSize: 12,
                         height: 1.4,
                       ),
@@ -504,7 +504,7 @@ class _AnimatedRoleCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(
                     color:
-                        selected ? accentColor : Colors.white.withOpacity(0.20),
+                        selected ? accentColor : Colors.white.withValues(alpha: 0.20),
                     width: 2,
                   ),
                 ),
@@ -545,7 +545,7 @@ class _StarPainter extends CustomPainter {
     final p = Paint()..style = PaintingStyle.fill;
     for (final s in _stars) {
       final tw = (math.sin(t * math.pi * 2 + s[3]) + 1) / 2;
-      p.color = Colors.white.withOpacity(0.03 + tw * 0.13);
+      p.color = Colors.white.withValues(alpha: 0.03 + tw * 0.13);
       canvas.drawCircle(Offset(s[0] * size.width, s[1] * size.height), s[2], p);
     }
   }

@@ -239,7 +239,7 @@ class _TransactionsTab extends StatelessWidget {
             Container(
               width: 38, height: 38,
               decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
+                  color: statusColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12)),
               child: Icon(Icons.receipt_rounded, color: statusColor, size: 18),
             ),

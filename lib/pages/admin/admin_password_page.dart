@@ -24,7 +24,6 @@ class _AdminPasswordPageState extends State<AdminPasswordPage>
   bool _loading = false;
   bool _obscure = true;
   String? _error;
-  final bool _shakeError = false;
 
   late AnimationController _bgCtrl;
   late AnimationController _shakeCtrl;
@@ -205,10 +204,10 @@ class _AdminPasswordPageState extends State<AdminPasswordPage>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: AdminColors.danger.withOpacity(0.1),
+                        color: AdminColors.danger.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: AdminColors.danger.withOpacity(0.4)),
+                            color: AdminColors.danger.withValues(alpha: 0.4)),
                       ),
                       child: Row(children: [
                         const Icon(Icons.error_outline_rounded,
@@ -272,7 +271,7 @@ class _AdminPasswordPageState extends State<AdminPasswordPage>
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: AdminColors.primary.withOpacity(0.3),
+            color: AdminColors.primary.withValues(alpha: 0.3),
             blurRadius: 40,
             spreadRadius: 4,
           ),
@@ -298,13 +297,13 @@ class _AdminPasswordPageState extends State<AdminPasswordPage>
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: _error != null
-              ? AdminColors.danger.withOpacity(0.6)
+              ? AdminColors.danger.withValues(alpha: 0.6)
               : AdminColors.cardBorder,
         ),
         boxShadow: [
           BoxShadow(
             color: (_error != null ? AdminColors.danger : AdminColors.primary)
-                .withOpacity(0.08),
+                .withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -354,8 +353,8 @@ class _AdminPasswordPageState extends State<AdminPasswordPage>
         decoration: BoxDecoration(
           gradient: _loading
               ? LinearGradient(colors: [
-                  AdminColors.primary.withOpacity(0.5),
-                  AdminColors.primaryEnd.withOpacity(0.5),
+                  AdminColors.primary.withValues(alpha: 0.5),
+                  AdminColors.primaryEnd.withValues(alpha: 0.5),
                 ])
               : AdminGradients.primary,
           borderRadius: BorderRadius.circular(20),
@@ -363,7 +362,7 @@ class _AdminPasswordPageState extends State<AdminPasswordPage>
               ? []
               : [
                   BoxShadow(
-                    color: AdminColors.primary.withOpacity(0.45),
+                    color: AdminColors.primary.withValues(alpha: 0.45),
                     blurRadius: 24,
                     offset: const Offset(0, 10),
                   ),
@@ -411,7 +410,7 @@ class _Aura extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: RadialGradient(
-                colors: [color, color.withOpacity(0.0)]),
+                colors: [color, color.withValues(alpha: 0.0)]),
           ),
         ),
       );
@@ -421,7 +420,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.02)
+      ..color = Colors.white.withValues(alpha: 0.02)
       ..strokeWidth = 0.5;
     const spacing = 32.0;
     for (double x = 0; x < size.width; x += spacing) {

@@ -67,7 +67,7 @@ class CartPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -86,7 +86,7 @@ class CartPage extends StatelessWidget {
                     errorWidget: (c, e, s) => Container(
                       width: 70,
                       height: 70,
-                      color: AppColors.primary.withOpacity(0.08),
+                      color: AppColors.primary.withValues(alpha: 0.08),
                       child: const Icon(Icons.shopping_bag_outlined,
                           color: AppColors.primary, size: 30),
                     ),
@@ -94,7 +94,7 @@ class CartPage extends StatelessWidget {
                 : Container(
                     width: 70,
                     height: 70,
-                    color: AppColors.primary.withOpacity(0.08),
+                    color: AppColors.primary.withValues(alpha: 0.08),
                     child: const Icon(Icons.shopping_bag_outlined,
                         color: AppColors.primary, size: 30),
                   ),
@@ -192,7 +192,7 @@ class CartPage extends StatelessWidget {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.08),
+              color: AppColors.primary.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: const Center(
@@ -249,7 +249,7 @@ class CartPage extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),

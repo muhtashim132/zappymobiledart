@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
-import 'package:zappymobilenew/models/rbac/permission_model.dart';
-import 'package:zappymobilenew/models/rbac/role_model.dart';
-import 'package:zappymobilenew/models/rbac/admin_user_model.dart';
-import 'package:zappymobilenew/models/rbac/audit_log_model.dart';
-import 'package:zappymobilenew/models/rbac/invitation_model.dart';
-import 'package:zappymobilenew/providers/rbac_provider.dart';
-import 'package:zappymobilenew/widgets/rbac/rbac_widgets.dart';
+import 'package:enythingmobilenew/models/rbac/permission_model.dart';
+import 'package:enythingmobilenew/models/rbac/role_model.dart';
+import 'package:enythingmobilenew/models/rbac/admin_user_model.dart';
+import 'package:enythingmobilenew/models/rbac/audit_log_model.dart';
+import 'package:enythingmobilenew/models/rbac/invitation_model.dart';
+import 'package:enythingmobilenew/providers/rbac_provider.dart';
+import 'package:enythingmobilenew/widgets/rbac/rbac_widgets.dart';
 
 void main() {
   // ── 1. PermissionModel tests ─────────────────────────────────
@@ -146,7 +146,7 @@ void main() {
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
-      expect(role.badgeColor.value, isNot(0));
+      expect(role.badgeColor.toARGB32(), isNot(0));
     });
 
     test('copyWith replaces only specified fields', () {
@@ -402,3 +402,4 @@ void main() {
     });
   });
 }
+

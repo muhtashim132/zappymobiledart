@@ -1,4 +1,4 @@
-# codemagic.yaml — Enything (ZappyMobile)
+# codemagic.yaml — Enything (EnythingMobile)
 # Builds iOS IPA in the cloud using Codemagic's macOS M2 runners.
 # Sign up free at: https://codemagic.io
 #
@@ -26,6 +26,10 @@ workflows:
         # RAZORPAY_KEY         → your Razorpay key
         # FAST2SMS_API_KEY     → your Fast2SMS API key
         # MAPBOX_TOKEN         → your Mapbox token
+        #
+        # GOOGLE_SERVICE_INFO_PLIST → paste the ENTIRE contents of
+        #   GoogleService-Info.plist as a multi-line secret (mark as sensitive)
+        #
         APP_STORE_CONNECT_KEY_IDENTIFIER: Encrypted(...)  # Replace after adding in Codemagic UI
         APP_STORE_CONNECT_ISSUER_ID: Encrypted(...)       # Replace after adding in Codemagic UI
         APP_STORE_CONNECT_PRIVATE_KEY: Encrypted(...)     # Replace after adding in Codemagic UI
@@ -44,17 +48,22 @@ workflows:
           MAPBOX_TOKEN=$MAPBOX_TOKEN
           EOF
 
-      # 2. Get Flutter dependencies
+      # 2. Inject GoogleService-Info.plist from Codemagic secret
+      - name: Inject GoogleService-Info.plist
+        script: |
+          echo "$GOOGLE_SERVICE_INFO_PLIST" > $CM_BUILD_DIR/ios/Runner/GoogleService-Info.plist
+
+      # 3. Get Flutter dependencies
       - name: Flutter pub get
         script: flutter pub get
 
-      # 3. Install CocoaPods dependencies
+      # 4. Install CocoaPods dependencies
       - name: Pod install
         script: |
           cd ios
           pod install
 
-      # 4. Set up iOS code signing (automatic via App Store Connect API)
+      # 5. Set up iOS code signing (automatic via App Store Connect API)
       #    Only needed when you have an Apple Developer account.
       #    Comment this step out for unsigned test builds.
       - name: Set up code signing
@@ -66,7 +75,7 @@ workflows:
           keychain add-certificates
           xcode-project use-profiles
 
-      # 5. Build the iOS IPA
+      # 6. Build the iOS IPA
       - name: Flutter build iOS
         script: |
           flutter build ipa --release \
@@ -114,6 +123,11 @@ workflows:
           MAPBOX_TOKEN=$MAPBOX_TOKEN
           EOF
 
+      # Inject GoogleService-Info.plist from Codemagic secret
+      - name: Inject GoogleService-Info.plist
+        script: |
+          echo "$GOOGLE_SERVICE_INFO_PLIST" > $CM_BUILD_DIR/ios/Runner/GoogleService-Info.plist
+
       - name: Flutter pub get
         script: flutter pub get
 
@@ -127,6 +141,8 @@ workflows:
         script: |
           flutter build ios --release --no-codesign
 
+
     artifacts:
       - build/ios/iphoneos/Runner.app
       - /tmp/xcodebuild_logs/*.log
+

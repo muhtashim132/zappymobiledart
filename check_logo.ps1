@@ -1,5 +1,5 @@
-Add-Type -AssemblyName System.Drawing
-$img = [System.Drawing.Image]::FromFile("d:\zappymobile\logo\Enything.png")
+﻿Add-Type -AssemblyName System.Drawing
+$img = [System.Drawing.Image]::FromFile("d:\enythingmobile\logo\Enything.png")
 $bmp = new-object System.Drawing.Bitmap($img)
 $w = $bmp.Width
 $h = $bmp.Height
@@ -14,3 +14,4 @@ Write-Host "Bottom-Left: $p3"
 Write-Host "Bottom-Right: $p4"
 $img.Dispose()
 $bmp.Dispose()
+

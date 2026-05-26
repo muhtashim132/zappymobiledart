@@ -55,3 +55,7 @@ build_log.txt
 
 lib/firebase_options.dart
 android/app/google-services.json
+# iOS Firebase config — download from Firebase Console and add on Mac (never commit real keys)
+# The placeholder ios/Runner/GoogleService-Info.plist IS tracked as a template.
+# ios/Runner/GoogleService-Info.plist
+

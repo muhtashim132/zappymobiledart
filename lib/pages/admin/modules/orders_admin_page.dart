@@ -219,7 +219,7 @@ class _OrdersAdminPageState extends State<OrdersAdminPage> {
                         Expanded(
                             child: Container(
                                 height: 2,
-                                color: Colors.white.withOpacity(0.06))),
+                                color: Colors.white.withValues(alpha: 0.06))),
                     ]),
                   ))),
         ]),
@@ -285,7 +285,7 @@ class _OrderCardState extends State<_OrderCard> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.15),
+                    color: statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Icon(Icons.receipt_long_rounded,
@@ -351,7 +351,7 @@ class _OrderCardState extends State<_OrderCard> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AdminColors.surface.withOpacity(0.5),
+        color: AdminColors.surface.withValues(alpha: 0.5),
         borderRadius:
             const BorderRadius.vertical(bottom: Radius.circular(20)),
         border: const Border(top: BorderSide(color: AdminColors.cardBorder)),
@@ -460,7 +460,7 @@ class _OrderCardState extends State<_OrderCard> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AdminColors.danger,
                     side: BorderSide(
-                        color: AdminColors.danger.withOpacity(0.5)),
+                        color: AdminColors.danger.withValues(alpha: 0.5)),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 10),
@@ -541,6 +541,7 @@ class _OrderCardState extends State<_OrderCard> {
     );
 
     if (confirmed != true) return;
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(
           'Refund of ₹${amount.toStringAsFixed(0)} queued. Configure Razorpay to process.'),

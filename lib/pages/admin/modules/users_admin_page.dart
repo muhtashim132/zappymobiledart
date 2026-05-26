@@ -657,7 +657,7 @@ class _UserCard extends StatelessWidget {
       child: Row(children: [
         CircleAvatar(
           radius: 22,
-          backgroundColor: AdminColors.primary.withOpacity(0.2),
+          backgroundColor: AdminColors.primary.withValues(alpha: 0.2),
           backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
           child: avatarUrl == null
               ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?',

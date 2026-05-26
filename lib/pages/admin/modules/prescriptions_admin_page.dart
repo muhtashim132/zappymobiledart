@@ -227,7 +227,7 @@ class _PrescriptionsAdminPageState extends State<PrescriptionsAdminPage> {
                                     style: TextStyle(color: Colors.white)),
                                 style: ElevatedButton.styleFrom(
                                     backgroundColor:
-                                        Colors.red.withOpacity(0.8)),
+                                        Colors.red.withValues(alpha: 0.8)),
                               ),
                             ),
                             const SizedBox(width: 12),

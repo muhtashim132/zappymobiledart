@@ -386,7 +386,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                          color: grad.first.withOpacity(0.4),
+                                          color: grad.first.withValues(alpha: 0.4),
                                           blurRadius: 12,
                                           offset: const Offset(0, 4))
                                     ]
@@ -611,7 +611,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-              color: const Color(0xFF162AC4).withOpacity(0.4),
+              color: const Color(0xFF162AC4).withValues(alpha: 0.4),
               blurRadius: 24,
               offset: const Offset(0, 12)),
         ],
@@ -627,7 +627,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                   height: 160,
                   decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.05)))),
+                      color: Colors.white.withValues(alpha: 0.05)))),
           Positioned(
               right: 30,
               bottom: -40,
@@ -636,12 +636,12 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                   height: 120,
                   decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFFF4C542).withOpacity(0.12)))),
+                      color: const Color(0xFFF4C542).withValues(alpha: 0.12)))),
           Positioned(
               right: -10,
               bottom: -10,
               child: Icon(Icons.bolt_rounded,
-                  size: 140, color: Colors.white.withOpacity(0.06))),
+                  size: 140, color: Colors.white.withValues(alpha: 0.06))),
           // Content
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
@@ -673,7 +673,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                 const SizedBox(height: 8),
                 Text('Supporting local sellers · 5% commission',
                     style: GoogleFonts.outfit(
-                        fontSize: 12, color: Colors.white.withOpacity(0.7))),
+                        fontSize: 12, color: Colors.white.withValues(alpha: 0.7))),
               ],
             ),
           ),
@@ -760,7 +760,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           borderRadius: BorderRadius.circular(32),
           boxShadow: [
             BoxShadow(
-                color: const Color(0xFF162AC4).withOpacity(0.5),
+                color: const Color(0xFF162AC4).withValues(alpha: 0.5),
                 blurRadius: 24,
                 offset: const Offset(0, 8)),
           ],
@@ -798,10 +798,10 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color:
-              isSelected ? Colors.white.withOpacity(0.15) : Colors.transparent,
+              isSelected ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(22),
           border: isSelected
-              ? Border.all(color: Colors.white.withOpacity(0.2))
+              ? Border.all(color: Colors.white.withValues(alpha: 0.2))
               : null,
         ),
         child: Column(

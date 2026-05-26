@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zappymobilenew/main.dart';
-import 'package:zappymobilenew/providers/cart_provider.dart';
+import 'package:enythingmobilenew/main.dart';
+import 'package:enythingmobilenew/providers/cart_provider.dart';
 
 void main() {
   testWidgets('Enything app smoke test', (WidgetTester tester) async {
@@ -11,3 +11,4 @@ void main() {
     expect(find.byType(MaterialApp), findsOneWidget);
   });
 }
+

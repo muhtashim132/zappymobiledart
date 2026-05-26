@@ -166,12 +166,12 @@ class _DeliveryKycUploadPageState extends State<DeliveryKycUploadPage> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [const Color(0xFF51CF66).withOpacity(0.2), Colors.transparent],
+                  colors: [const Color(0xFF51CF66).withValues(alpha: 0.2), Colors.transparent],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF51CF66).withOpacity(0.3)),
+                border: Border.all(color: const Color(0xFF51CF66).withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -198,9 +198,9 @@ class _DeliveryKycUploadPageState extends State<DeliveryKycUploadPage> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.03),
+                color: Colors.white.withValues(alpha: 0.03),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withOpacity(0.05)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
               ),
               child: Text(
                 _db.auth.currentUser?.phone ?? 'Phone number not available',
@@ -330,9 +330,9 @@ class _DeliveryKycUploadPageState extends State<DeliveryKycUploadPage> {
               hintText: hint,
               hintStyle: GoogleFonts.outfit(color: Colors.white24, fontSize: 16),
               filled: true,
-              fillColor: Colors.white.withOpacity(0.04),
+              fillColor: Colors.white.withValues(alpha: 0.04),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withOpacity(0.05))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
               focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF51CF66))),
               contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             ),
@@ -355,9 +355,9 @@ class _DeliveryKycUploadPageState extends State<DeliveryKycUploadPage> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.02),
+        color: Colors.white.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,14 +384,14 @@ class _DeliveryKycUploadPageState extends State<DeliveryKycUploadPage> {
       child: Container(
         height: 110,
         decoration: BoxDecoration(
-          color: file != null ? Colors.transparent : Colors.white.withOpacity(0.04),
+          color: file != null ? Colors.transparent : Colors.white.withValues(alpha: 0.04),
           border: Border.all(
-            color: file != null ? const Color(0xFF51CF66) : Colors.white.withOpacity(0.1),
+            color: file != null ? const Color(0xFF51CF66) : Colors.white.withValues(alpha: 0.1),
             style: file != null ? BorderStyle.solid : BorderStyle.none,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(16),
-          image: file != null ? DecorationImage(image: FileImage(file), fit: BoxFit.cover, colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.4), BlendMode.darken)) : null,
+          image: file != null ? DecorationImage(image: FileImage(file), fit: BoxFit.cover, colorFilter: ColorFilter.mode(Colors.black.withValues(alpha: 0.4), BlendMode.darken)) : null,
         ),
         child: file != null
             ? const Center(child: Icon(Icons.check_circle_rounded, color: Color(0xFF51CF66), size: 36))
@@ -402,7 +402,7 @@ class _DeliveryKycUploadPageState extends State<DeliveryKycUploadPage> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
+                        color: Colors.white.withValues(alpha: 0.05),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(Icons.add_a_photo_rounded, color: Colors.white54, size: 24),

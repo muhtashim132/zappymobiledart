@@ -1,7 +1,7 @@
--- ============================================================================
+﻿-- ============================================================================
 -- Migration: enable_rls_and_policies.sql
 -- Description: Enables Row Level Security (RLS) on all public tables and
---              creates fine-grained access policies for the Zappy mobile app.
+--              creates fine-grained access policies for the Enything mobile app.
 --
 -- HOW TO RUN:
 --   1. Open your Supabase Dashboard → SQL Editor
@@ -659,3 +659,4 @@ WHERE schemaname = 'public'
   )
 ORDER BY tablename;
 */
+

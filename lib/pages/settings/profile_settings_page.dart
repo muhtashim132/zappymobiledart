@@ -42,7 +42,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               children: [
                 CircleAvatar(
                   radius: 36,
-                  backgroundColor: AppColors.primary.withOpacity(0.1),
+                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                   child: Text(
                     user.initials,
                     style: GoogleFonts.outfit(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.primary),
@@ -60,7 +60,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -264,7 +264,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.3 : 0.03),
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             )
@@ -275,7 +275,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(icon, color: AppColors.primary, size: 24),

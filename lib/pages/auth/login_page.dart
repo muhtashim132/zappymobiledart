@@ -126,13 +126,13 @@ class _LoginPageState extends State<LoginPage>
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFF4C542).withOpacity(0.5),
+                            color: const Color(0xFFF4C542).withValues(alpha: 0.5),
                             blurRadius: 24,
                             offset: const Offset(0, 8),
                             spreadRadius: 2,
                           ),
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.25),
+                            color: Colors.black.withValues(alpha: 0.25),
                             blurRadius: 16,
                             offset: const Offset(0, 6),
                           ),
@@ -157,7 +157,7 @@ class _LoginPageState extends State<LoginPage>
                     Text(
                       'Sign in to continue to Enything',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.75),
+                        color: Colors.white.withValues(alpha: 0.75),
                         fontSize: 14,
                         fontFamily: 'Inter',
                       ),
@@ -292,7 +292,7 @@ class _LoginPageState extends State<LoginPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -345,7 +345,7 @@ class _LoginPageState extends State<LoginPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -419,7 +419,7 @@ class _LoginPageState extends State<LoginPage>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFF8A00).withOpacity(0.45),
+            color: const Color(0xFFFF8A00).withValues(alpha: 0.45),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -469,7 +469,7 @@ class _LoginPageState extends State<LoginPage>
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFF0A2A9E).withOpacity(0.08),
+                color: const Color(0xFF0A2A9E).withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(

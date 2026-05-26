@@ -204,7 +204,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                         ),
                       ],
@@ -285,7 +285,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                                         belowBarData: BarAreaData(
                                           show: true,
                                           color: AppColors.primary
-                                              .withOpacity(0.1),
+                                              .withValues(alpha: 0.1),
                                         ),
                                         dotData: FlDotData(
                                           show: true,
@@ -319,7 +319,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 8),
         ],
       ),
       child: Column(
@@ -329,7 +329,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(icon, color: color, size: 20),

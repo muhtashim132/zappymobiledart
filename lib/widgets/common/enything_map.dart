@@ -1,16 +1,16 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:latlong2/latlong.dart';
 import '../../theme/app_colors.dart';
 
-class ZappyMap extends StatelessWidget {
+class EnythingMap extends StatelessWidget {
   final LatLng center;
   final double zoom;
   final List<Marker> markers;
   final bool interactive;
 
-  const ZappyMap({
+  const EnythingMap({
     super.key,
     required this.center,
     this.zoom = 15.0,
@@ -78,3 +78,4 @@ class ZappyMap extends StatelessWidget {
     );
   }
 }
+

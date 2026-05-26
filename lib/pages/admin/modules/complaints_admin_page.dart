@@ -210,7 +210,7 @@ class _ComplaintCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: AdminDecorations.glassCard(
-          borderColor: priorityColor.withOpacity(0.2)),
+          borderColor: priorityColor.withValues(alpha: 0.2)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -257,7 +257,7 @@ class _ComplaintCard extends StatelessWidget {
           if (status != 'resolved' && status != 'closed')
             Container(
               decoration: BoxDecoration(
-                color: AdminColors.surface.withOpacity(0.5),
+                color: AdminColors.surface.withValues(alpha: 0.5),
                 borderRadius:
                     const BorderRadius.vertical(bottom: Radius.circular(20)),
                 border:
@@ -278,7 +278,7 @@ class _ComplaintCard extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AdminColors.info,
                       side: BorderSide(
-                          color: AdminColors.info.withOpacity(0.4)),
+                          color: AdminColors.info.withValues(alpha: 0.4)),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -419,7 +419,7 @@ class _ReviewsTab extends StatelessWidget {
                   Row(children: [
                     CircleAvatar(
                       radius: 18,
-                      backgroundColor: AdminColors.primary.withOpacity(0.2),
+                      backgroundColor: AdminColors.primary.withValues(alpha: 0.2),
                       backgroundImage: profile?['avatar_url'] != null
                           ? NetworkImage(profile!['avatar_url'])
                           : null,

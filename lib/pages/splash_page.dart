@@ -222,7 +222,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                               'Everything. Everywhere. Instantly.',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.outfit(
-                                color: Colors.white.withOpacity(0.55),
+                                color: Colors.white.withValues(alpha: 0.55),
                                 fontSize: 15, fontWeight: FontWeight.w400, letterSpacing: 0.5,
                               ),
                             ),
@@ -251,7 +251,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
                           height: i == 1 ? 9 : 5.5,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Color.lerp(Colors.white.withOpacity(0.15), const Color(0xFF5B8BFF), wave),
+                            color: Color.lerp(Colors.white.withValues(alpha: 0.15), const Color(0xFF5B8BFF), wave),
                           ),
                         );
                       }),
@@ -272,7 +272,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       width: size, height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(colors: [color, color.withOpacity(0.0)]),
+        gradient: RadialGradient(colors: [color, color.withValues(alpha: 0.0)]),
       ),
     ),
   );
@@ -296,8 +296,8 @@ class _EnythingLogo extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             boxShadow: [
-              BoxShadow(color: const Color(0xFF5B8BFF).withOpacity(0.35), blurRadius: 60, spreadRadius: 12),
-              BoxShadow(color: const Color(0xFF4C6EF5).withOpacity(0.20), blurRadius: 30, spreadRadius: 4),
+              BoxShadow(color: const Color(0xFF5B8BFF).withValues(alpha: 0.35), blurRadius: 60, spreadRadius: 12),
+              BoxShadow(color: const Color(0xFF4C6EF5).withValues(alpha: 0.20), blurRadius: 30, spreadRadius: 4),
             ],
           ),
         ),
@@ -307,7 +307,7 @@ class _EnythingLogo extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             boxShadow: [
-              BoxShadow(color: const Color(0xFF8BAAFF).withOpacity(0.22), blurRadius: 20, spreadRadius: 2),
+              BoxShadow(color: const Color(0xFF8BAAFF).withValues(alpha: 0.22), blurRadius: 20, spreadRadius: 2),
             ],
           ),
         ),
@@ -321,7 +321,7 @@ class _EnythingLogo extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(r),
             border: Border.all(
-              color: const Color(0xFF5B8BFF).withOpacity(0.40),
+              color: const Color(0xFF5B8BFF).withValues(alpha: 0.40),
               width: 2.0,
             ),
           ),
@@ -360,7 +360,7 @@ class _EnythingLogo extends StatelessWidget {
                           shimmer.value.clamp(0.0, 1.0),
                           (shimmer.value + 0.45).clamp(0.0, 1.0),
                         ],
-                        colors: [Colors.transparent, Colors.white.withOpacity(0.09), Colors.transparent],
+                        colors: [Colors.transparent, Colors.white.withValues(alpha: 0.09), Colors.transparent],
                       ),
                     ),
                   ),
@@ -400,7 +400,7 @@ class _RingPainter extends CustomPainter {
     canvas.drawCircle(
       Offset(size.width / 2, size.height / 2),
       radius,
-      Paint()..color = color.withOpacity(opacity)..style = PaintingStyle.stroke..strokeWidth = strokeWidth,
+      Paint()..color = color.withValues(alpha: opacity)..style = PaintingStyle.stroke..strokeWidth = strokeWidth,
     );
   }
   @override
@@ -421,7 +421,7 @@ class _StarPainter extends CustomPainter {
     final p = Paint()..style = PaintingStyle.fill;
     for (final s in _stars) {
       final tw = (math.sin(t * math.pi * 2 + s[3]) + 1) / 2;
-      p.color = Colors.white.withOpacity(0.03 + tw * 0.15);
+      p.color = Colors.white.withValues(alpha: 0.03 + tw * 0.15);
       canvas.drawCircle(Offset(s[0] * size.width, s[1] * size.height), s[2], p);
     }
   }

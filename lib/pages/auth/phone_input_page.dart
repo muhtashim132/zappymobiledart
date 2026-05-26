@@ -121,7 +121,7 @@ class _PhoneAuthPageState extends State<PhoneAuthPage>
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
                 shape: BoxShape.circle),
             child: const Icon(Icons.arrow_back_ios_new,
                 color: Colors.white, size: 16),
@@ -161,10 +161,10 @@ class _PhoneAuthPageState extends State<PhoneAuthPage>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: _roleColor.withOpacity(0.15),
+                          color: _roleColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(30),
                           border: Border.all(
-                              color: _roleColor.withOpacity(0.40)),
+                              color: _roleColor.withValues(alpha: 0.40)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -207,10 +207,10 @@ class _PhoneAuthPageState extends State<PhoneAuthPage>
                     // Phone input card
                     Container(
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
+                        color: Colors.white.withValues(alpha: 0.06),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                            color: Colors.white.withOpacity(0.10)),
+                            color: Colors.white.withValues(alpha: 0.10)),
                       ),
                       padding: const EdgeInsets.all(20),
                       child: Column(
@@ -234,7 +234,7 @@ class _PhoneAuthPageState extends State<PhoneAuthPage>
                                       horizontal: 14, vertical: 14),
                                   decoration: BoxDecoration(
                                     color:
-                                        Colors.white.withOpacity(0.08),
+                                        Colors.white.withValues(alpha: 0.08),
                                     borderRadius:
                                         BorderRadius.circular(14),
                                   ),
@@ -300,7 +300,7 @@ class _PhoneAuthPageState extends State<PhoneAuthPage>
                           boxShadow: [
                             BoxShadow(
                                 color: const Color(0xFFF4C542)
-                                    .withOpacity(0.40),
+                                    .withValues(alpha: 0.40),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8))
                           ],
@@ -383,7 +383,7 @@ class _PhoneAuthPageState extends State<PhoneAuthPage>
                       child: Text(
                         '← Choose a different role',
                         style: GoogleFonts.outfit(
-                          color: const Color(0xFFF4C542).withOpacity(0.70),
+                          color: const Color(0xFFF4C542).withValues(alpha: 0.70),
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
@@ -408,7 +408,7 @@ class _PhoneAuthPageState extends State<PhoneAuthPage>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient:
-                RadialGradient(colors: [color, color.withOpacity(0)]),
+                RadialGradient(colors: [color, color.withValues(alpha: 0)]),
           ),
         ),
       );
@@ -467,7 +467,7 @@ class _MiniLogo extends StatelessWidget {
         borderRadius: BorderRadius.circular(size * 0.28),
         boxShadow: [
           BoxShadow(
-              color: const Color(0xFFF4C542).withOpacity(0.20),
+              color: const Color(0xFFF4C542).withValues(alpha: 0.20),
               blurRadius: 20,
               spreadRadius: 2)
         ],

@@ -251,7 +251,7 @@ class _OverviewAdminPageState extends State<OverviewAdminPage> {
                     width: 38,
                     height: 38,
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.15),
+                      color: color.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(Icons.receipt_rounded, color: color, size: 18),
@@ -337,8 +337,8 @@ class _OverviewAdminPageState extends State<OverviewAdminPage> {
             show: true,
             gradient: LinearGradient(
               colors: [
-                AdminColors.primary.withOpacity(0.3),
-                AdminColors.primaryEnd.withOpacity(0.0),
+                AdminColors.primary.withValues(alpha: 0.3),
+                AdminColors.primaryEnd.withValues(alpha: 0.0),
               ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,

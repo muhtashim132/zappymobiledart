@@ -160,7 +160,7 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
         child: Container(
           margin: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.45),
+            color: Colors.black.withValues(alpha: 0.45),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.arrow_back_ios_new,
@@ -174,7 +174,7 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
             margin: const EdgeInsets.all(10),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.45),
+              color: Colors.black.withValues(alpha: 0.45),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -217,7 +217,7 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
                 gradient: LinearGradient(
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.75),
+                    Colors.black.withValues(alpha: 0.75),
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -250,7 +250,7 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
                       _shop!.cuisineType!,
                       style: GoogleFonts.outfit(
                         fontSize: 14,
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.white.withValues(alpha: 0.85),
                       ),
                     ),
                   ],
@@ -387,9 +387,9 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
   Widget _badge(String label, IconData icon, Color color) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -519,7 +519,7 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 12,
               offset: const Offset(0, 4)),
         ],
@@ -615,7 +615,7 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
                               Border.all(color: AppColors.primary, width: 1.5),
                           boxShadow: [
                             BoxShadow(
-                                color: AppColors.primary.withOpacity(0.12),
+                                color: AppColors.primary.withValues(alpha: 0.12),
                                 blurRadius: 8),
                           ],
                         ),
@@ -703,7 +703,7 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                  color: const Color(0xFF0A2A9E).withOpacity(0.4),
+                  color: const Color(0xFF0A2A9E).withValues(alpha: 0.4),
                   blurRadius: 18,
                   offset: const Offset(0, 8)),
             ],
@@ -714,7 +714,7 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -737,7 +737,7 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
               Text(
                 '₹${cart.subtotal.toStringAsFixed(0)}',
                 style: GoogleFonts.outfit(
-                    color: Colors.white.withOpacity(0.85),
+                    color: Colors.white.withValues(alpha: 0.85),
                     fontWeight: FontWeight.w700,
                     fontSize: 13),
               ),

@@ -1,5 +1,5 @@
-Add-Type -AssemblyName System.Drawing
-$img = [System.Drawing.Image]::FromFile("d:\zappymobile\logo\Enything.png")
+﻿Add-Type -AssemblyName System.Drawing
+$img = [System.Drawing.Image]::FromFile("d:\enythingmobile\logo\Enything.png")
 $bmp = new-object System.Drawing.Bitmap(1024, 1024)
 $graphics = [System.Drawing.Graphics]::FromImage($bmp)
 $graphics.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
@@ -17,6 +17,7 @@ $destRect = new-object System.Drawing.Rectangle(0, 0, 1024, 1024)
 $graphics.DrawImage($img, $destRect, $srcRect, [System.Drawing.GraphicsUnit]::Pixel)
 
 $img.Dispose()
-$bmp.Save("d:\zappymobile\logo\Enything_cropped.png", [System.Drawing.Imaging.ImageFormat]::Png)
+$bmp.Save("d:\enythingmobile\logo\Enything_cropped.png", [System.Drawing.Imaging.ImageFormat]::Png)
 $graphics.Dispose()
 $bmp.Dispose()
+

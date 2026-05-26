@@ -510,11 +510,11 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 14, vertical: 8),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.1),
+                                        color: Colors.white.withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                             color:
-                                                Colors.white.withOpacity(0.2)),
+                                                Colors.white.withValues(alpha: 0.2)),
                                       ),
                                       child: Row(children: [
                                         const Icon(
@@ -589,10 +589,10 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.12),
+                        color: Colors.orange.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
                         border:
-                            Border.all(color: Colors.orange.withOpacity(0.4)),
+                            Border.all(color: Colors.orange.withValues(alpha: 0.4)),
                       ),
                       child: Row(children: [
                         const Icon(Icons.location_off_outlined,
@@ -640,13 +640,13 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
               blurRadius: 16,
               offset: const Offset(0, 6))
         ],
         border: Border.all(
             color:
-                isDark ? Colors.white.withOpacity(0.06) : Colors.transparent),
+                isDark ? Colors.white.withValues(alpha: 0.06) : Colors.transparent),
       ),
       child: Column(children: [
         // Header strip
@@ -670,10 +670,10 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.2),
+                  color: AppColors.success.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                   border:
-                      Border.all(color: AppColors.success.withOpacity(0.5))),
+                      Border.all(color: AppColors.success.withValues(alpha: 0.5))),
               child: Text('₹${order.riderEarnings.toStringAsFixed(0)} earn',
                   style: GoogleFonts.outfit(
                       color: AppColors.success,
@@ -706,7 +706,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color:
-                      (isDark ? Colors.white : Colors.black).withOpacity(0.04),
+                      (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Column(
@@ -751,7 +751,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                   elevation: 4,
-                  shadowColor: AppColors.success.withOpacity(0.4),
+                  shadowColor: AppColors.success.withValues(alpha: 0.4),
                 ),
                 child: Text('Accept',
                     style: GoogleFonts.outfit(
@@ -825,10 +825,10 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         color: isDark ? const Color(0xFF121222) : Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-            color: statusGradient.first.withOpacity(0.3), width: 1.5),
+            color: statusGradient.first.withValues(alpha: 0.3), width: 1.5),
         boxShadow: [
           BoxShadow(
-              color: statusGradient.first.withOpacity(0.15),
+              color: statusGradient.first.withValues(alpha: 0.15),
               blurRadius: 16,
               offset: const Offset(0, 6))
         ],
@@ -913,8 +913,8 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: waitMinutes >= 10
-                      ? Colors.orange.withOpacity(0.1)
-                      : Colors.blue.withOpacity(0.1),
+                      ? Colors.orange.withValues(alpha: 0.1)
+                      : Colors.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                       color: waitMinutes >= 10 ? Colors.orange : Colors.blue),
@@ -1085,11 +1085,11 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         width: 52,
         height: 52,
         decoration: BoxDecoration(
-          gradient: LinearGradient(colors: [color, color.withOpacity(0.6)]),
+          gradient: LinearGradient(colors: [color, color.withValues(alpha: 0.6)]),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-                color: color.withOpacity(0.5),
+                color: color.withValues(alpha: 0.5),
                 blurRadius: 14,
                 offset: const Offset(0, 4))
           ],
@@ -1106,9 +1106,9 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
   Widget _badge(String label, Color color) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withOpacity(0.5))),
+            border: Border.all(color: color.withValues(alpha: 0.5))),
         child: Text(label,
             style: GoogleFonts.outfit(
                 color: color, fontSize: 11, fontWeight: FontWeight.w700)),
@@ -1123,9 +1123,9 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
   Widget _miniCard(String value, String label, Color color) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.4))),
+            border: Border.all(color: color.withValues(alpha: 0.4))),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Text(value,
               style: GoogleFonts.outfit(
@@ -1133,7 +1133,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
           const SizedBox(width: 6),
           Text(label,
               style: GoogleFonts.outfit(
-                  color: color.withOpacity(0.8),
+                  color: color.withValues(alpha: 0.8),
                   fontSize: 12,
                   fontWeight: FontWeight.w600)),
         ]),
@@ -1147,7 +1147,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
             decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient:
-                    RadialGradient(colors: [color, color.withOpacity(0)]))),
+                    RadialGradient(colors: [color, color.withValues(alpha: 0)]))),
       );
 
   Widget _actionTile({
@@ -1168,7 +1168,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
                 blurRadius: 12,
                 offset: const Offset(0, 4))
           ],
@@ -1185,7 +1185,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
               borderRadius: BorderRadius.circular(15),
               boxShadow: [
                 BoxShadow(
-                    color: gradient.first.withOpacity(0.35),
+                    color: gradient.first.withValues(alpha: 0.35),
                     blurRadius: 10,
                     offset: const Offset(0, 4))
               ],
@@ -1261,8 +1261,8 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
               Container(
                 decoration: BoxDecoration(
                   color: isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.black.withOpacity(0.03),
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: SwitchListTile(
@@ -1291,8 +1291,8 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
               Container(
                 decoration: BoxDecoration(
                   color: isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.black.withOpacity(0.03),
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: SwitchListTile(
@@ -1318,8 +1318,8 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
               Container(
                 decoration: BoxDecoration(
                   color: isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.black.withOpacity(0.03),
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: ListTile(
@@ -1346,8 +1346,8 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
               Container(
                 decoration: BoxDecoration(
                   color: isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.black.withOpacity(0.03),
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.03),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: ListTile(
@@ -1402,7 +1402,7 @@ class _MiniStarPainter extends CustomPainter {
     final p = Paint()..style = PaintingStyle.fill;
     for (final s in _stars) {
       final tw = (math.sin(t * math.pi * 2 + s[3]) + 1) / 2;
-      p.color = Colors.white.withOpacity(0.02 + tw * 0.10);
+      p.color = Colors.white.withValues(alpha: 0.02 + tw * 0.10);
       canvas.drawCircle(Offset(s[0] * size.width, s[1] * size.height), s[2], p);
     }
   }

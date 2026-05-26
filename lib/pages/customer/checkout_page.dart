@@ -530,10 +530,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                           width: double.infinity,
                           height: 120,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.05),
+                            color: AppColors.primary.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color: AppColors.primary.withOpacity(0.3),
+                                color: AppColors.primary.withValues(alpha: 0.3),
                                 style: BorderStyle.solid),
                           ),
                           child: const Column(
@@ -564,11 +564,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                                   width: 100,
                                   margin: const EdgeInsets.only(right: 8),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withOpacity(0.05),
+                                    color: AppColors.primary.withValues(alpha: 0.05),
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
                                         color:
-                                            AppColors.primary.withOpacity(0.3)),
+                                            AppColors.primary.withValues(alpha: 0.3)),
                                   ),
                                   child: const Center(
                                       child: Icon(Icons.add,

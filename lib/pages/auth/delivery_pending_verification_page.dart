@@ -42,12 +42,12 @@ class _DeliveryPendingVerificationPageState extends State<DeliveryPendingVerific
           Positioned(
             top: -100,
             left: -50,
-            child: _buildGlow(primaryColor.withOpacity(0.15), 300),
+            child: _buildGlow(primaryColor.withValues(alpha: 0.15), 300),
           ),
           Positioned(
             bottom: -50,
             right: -100,
-            child: _buildGlow(primaryColor.withOpacity(0.1), 400),
+            child: _buildGlow(primaryColor.withValues(alpha: 0.1), 400),
           ),
           SafeArea(
             child: Center(
@@ -61,12 +61,12 @@ class _DeliveryPendingVerificationPageState extends State<DeliveryPendingVerific
                       child: Container(
                         padding: const EdgeInsets.all(28),
                         decoration: BoxDecoration(
-                          color: primaryColor.withOpacity(0.1),
+                          color: primaryColor.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
-                          border: Border.all(color: primaryColor.withOpacity(0.3), width: 2),
+                          border: Border.all(color: primaryColor.withValues(alpha: 0.3), width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: primaryColor.withOpacity(0.2),
+                              color: primaryColor.withValues(alpha: 0.2),
                               blurRadius: 40,
                               spreadRadius: 10,
                             ),
@@ -94,9 +94,9 @@ class _DeliveryPendingVerificationPageState extends State<DeliveryPendingVerific
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.03),
+                        color: Colors.white.withValues(alpha: 0.03),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.05)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                       ),
                       child: Text(
                         isRejected
@@ -121,7 +121,7 @@ class _DeliveryPendingVerificationPageState extends State<DeliveryPendingVerific
                     else
                       _buildButton(
                         label: 'Return Home',
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         textColor: Colors.white,
                         onTap: () => Navigator.pushNamedAndRemoveUntil(context, AppRoutes.roleSelect, (_) => false),
                         icon: Icons.home_rounded,

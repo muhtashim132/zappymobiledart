@@ -331,7 +331,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
         height: 44,
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.15),
+            color: AppColors.primary.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.home_rounded, color: AppColors.primary, size: 26),
@@ -347,7 +347,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
         height: 52,
         child: Container(
           decoration: BoxDecoration(
-            color: AppColors.success.withOpacity(0.2),
+            color: AppColors.success.withValues(alpha: 0.2),
             shape: BoxShape.circle,
             border: Border.all(color: AppColors.success, width: 2),
           ),
@@ -398,7 +398,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 10,
                   ),
                 ],
@@ -420,12 +420,12 @@ class _TrackOrderPageState extends State<TrackOrderPage>
               decoration: BoxDecoration(
                 gradient: isCancelled
                     ? LinearGradient(colors: [
-                        AppColors.danger.withOpacity(0.8),
+                        AppColors.danger.withValues(alpha: 0.8),
                         AppColors.danger,
                       ])
                     : isDelivered
                         ? LinearGradient(colors: [
-                            AppColors.success.withOpacity(0.8),
+                            AppColors.success.withValues(alpha: 0.8),
                             AppColors.success,
                           ])
                         : AppColors.splashGradient,
@@ -441,7 +441,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -473,7 +473,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
                             ? 'Your order has been cancelled'
                             : 'Estimated delivery in 30-45 mins',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.85),
+                      color: Colors.white.withValues(alpha: 0.85),
                       fontSize: 13,
                       fontFamily: 'Poppins',
                     ),
@@ -531,7 +531,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                     ),
                   ],
@@ -659,9 +659,9 @@ class _TrackOrderPageState extends State<TrackOrderPage>
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.1),
+                  color: AppColors.success.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.success.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -696,7 +696,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
                 color: isCompleted
                     ? AppColors.success
                     : isCurrent
-                        ? AppColors.primary.withOpacity(0.1)
+                        ? AppColors.primary.withValues(alpha: 0.1)
                         : AppColors.background,
                 shape: BoxShape.circle,
                 border: Border.all(

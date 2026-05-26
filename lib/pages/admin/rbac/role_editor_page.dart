@@ -202,7 +202,7 @@ class _RoleEditorPageState extends State<RoleEditorPage> {
                           width: 2.5,
                         ),
                         boxShadow: isSelected
-                            ? [BoxShadow(color: color.withOpacity(0.5), blurRadius: 8)]
+                            ? [BoxShadow(color: color.withValues(alpha: 0.5), blurRadius: 8)]
                             : null,
                       ),
                       child: isSelected
@@ -220,9 +220,9 @@ class _RoleEditorPageState extends State<RoleEditorPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFF8B2FC9).withOpacity(0.1),
+                color: const Color(0xFF8B2FC9).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF8B2FC9).withOpacity(0.3)),
+                border: Border.all(color: const Color(0xFF8B2FC9).withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -289,9 +289,9 @@ class _RoleEditorPageState extends State<RoleEditorPage> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF5722).withOpacity(0.1),
+                  color: const Color(0xFFFF5722).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFFF5722).withOpacity(0.3)),
+                  border: Border.all(color: const Color(0xFFFF5722).withValues(alpha: 0.3)),
                 ),
                 child: Text(_error!,
                     style: GoogleFonts.outfit(
@@ -304,9 +304,9 @@ class _RoleEditorPageState extends State<RoleEditorPage> {
                 margin: const EdgeInsets.only(top: 12),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.08),
+                  color: Colors.amber.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.amber.withOpacity(0.3)),
+                  border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   children: [
@@ -333,9 +333,9 @@ class _RoleEditorPageState extends State<RoleEditorPage> {
   Widget _section(String title, List<Widget> children) => Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.04),
+          color: Colors.white.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withOpacity(0.07)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,14 +359,14 @@ class _RoleEditorPageState extends State<RoleEditorPage> {
         hintText: hint,
         hintStyle: GoogleFonts.outfit(color: Colors.white24, fontSize: 13),
         filled: true,
-        fillColor: Colors.white.withOpacity(0.04),
+        fillColor: Colors.white.withValues(alpha: 0.04),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),

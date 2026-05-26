@@ -192,7 +192,7 @@ class _SettingsTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(9),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.15),
+                  color: iconColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: iconColor, size: 20),
@@ -284,9 +284,9 @@ class _NotificationSheetState extends State<_NotificationSheet> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AdminColors.warning.withOpacity(0.1),
+                color: AdminColors.warning.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AdminColors.warning.withOpacity(0.3)),
+                border: Border.all(color: AdminColors.warning.withValues(alpha: 0.3)),
               ),
               child: Row(children: [
                 const Icon(Icons.warning_amber_rounded,

@@ -273,7 +273,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                             Text('Total Revenue',
                                                 style: GoogleFonts.outfit(
                                                     color: Colors.white
-                                                        .withOpacity(0.65),
+                                                        .withValues(alpha: 0.65),
                                                     fontSize: 13)),
                                             Text(
                                                 '₹${(_stats['revenue'] as double).toStringAsFixed(0)}',
@@ -465,7 +465,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-                color: const Color(0xFFF4C542).withOpacity(0.4),
+                color: const Color(0xFFF4C542).withValues(alpha: 0.4),
                 blurRadius: 12,
                 offset: const Offset(0, 4))
           ],
@@ -481,9 +481,9 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
   Widget _roleBadge(String label, Color color) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: color.withOpacity(0.5))),
+            border: Border.all(color: color.withValues(alpha: 0.5))),
         child: Text(label,
             style: GoogleFonts.outfit(
                 color: color, fontSize: 11, fontWeight: FontWeight.w700)),
@@ -498,16 +498,16 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
   Widget _miniStatPill(String value, String label, Color color) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.4))),
+            border: Border.all(color: color.withValues(alpha: 0.4))),
         child: Column(children: [
           Text(value,
               style: GoogleFonts.outfit(
                   color: color, fontSize: 18, fontWeight: FontWeight.w900)),
           Text(label,
               style: GoogleFonts.outfit(
-                  color: color.withOpacity(0.85),
+                  color: color.withValues(alpha: 0.85),
                   fontSize: 10,
                   fontWeight: FontWeight.w600)),
         ]),
@@ -523,11 +523,11 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-              color: light.withOpacity(0.12),
+              color: light.withValues(alpha: 0.12),
               blurRadius: 16,
               offset: const Offset(0, 6))
         ],
-        border: Border.all(color: light.withOpacity(isDark ? 0.15 : 0.08)),
+        border: Border.all(color: light.withValues(alpha: isDark ? 0.15 : 0.08)),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
@@ -538,7 +538,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                  color: light.withOpacity(0.4),
+                  color: light.withValues(alpha: 0.4),
                   blurRadius: 8,
                   offset: const Offset(0, 3))
             ],
@@ -580,7 +580,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
                 blurRadius: 12,
                 offset: const Offset(0, 4))
           ],
@@ -597,7 +597,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
               borderRadius: BorderRadius.circular(15),
               boxShadow: [
                 BoxShadow(
-                    color: gradient.first.withOpacity(0.35),
+                    color: gradient.first.withValues(alpha: 0.35),
                     blurRadius: 10,
                     offset: const Offset(0, 4))
               ],
@@ -686,7 +686,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
             decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient:
-                    RadialGradient(colors: [color, color.withOpacity(0)]))),
+                    RadialGradient(colors: [color, color.withValues(alpha: 0)]))),
       );
 }
 
@@ -707,7 +707,7 @@ class _StarPainter extends CustomPainter {
     final p = Paint()..style = PaintingStyle.fill;
     for (final s in _stars) {
       final tw = (math.sin(t * math.pi * 2 + s[3]) + 1) / 2;
-      p.color = Colors.white.withOpacity(0.03 + tw * 0.12);
+      p.color = Colors.white.withValues(alpha: 0.03 + tw * 0.12);
       canvas.drawCircle(Offset(s[0] * size.width, s[1] * size.height), s[2], p);
     }
   }

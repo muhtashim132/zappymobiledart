@@ -32,7 +32,7 @@ class RestaurantShopCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -68,7 +68,7 @@ class RestaurantShopCard extends StatelessWidget {
                       gradient: LinearGradient(
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.55),
+                          Colors.black.withValues(alpha: 0.55),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -217,7 +217,7 @@ class RestaurantShopCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 6),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 6),
           ],
         ),
         child: Row(

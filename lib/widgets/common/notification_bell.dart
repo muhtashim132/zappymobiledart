@@ -211,7 +211,7 @@ class _NotificationTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        color: notification.isRead ? Colors.transparent : AppColors.primary.withOpacity(0.04),
+        color: notification.isRead ? Colors.transparent : AppColors.primary.withValues(alpha: 0.04),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -219,7 +219,7 @@ class _NotificationTile extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Center(

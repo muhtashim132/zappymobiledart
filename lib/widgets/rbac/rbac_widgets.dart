@@ -64,7 +64,7 @@ class RoleBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = color.withOpacity(0.15);
+    final bg = color.withValues(alpha: 0.15);
     final fontSize = small ? 9.0 : 11.0;
     final padding = small
         ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2)
@@ -75,7 +75,7 @@ class RoleBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -128,9 +128,9 @@ class UserStatusBadge extends StatelessWidget {
         vertical: small ? 2 : 3,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -283,9 +283,9 @@ class _PermissionGroupCardState extends State<PermissionGroupCard> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.07)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
       ),
       child: Column(
         children: [
@@ -299,7 +299,7 @@ class _PermissionGroupCardState extends State<PermissionGroupCard> {
                   Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: moduleColor.withOpacity(0.15),
+                      color: moduleColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -339,12 +339,12 @@ class _PermissionGroupCardState extends State<PermissionGroupCard> {
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: _allSelected
-                              ? moduleColor.withOpacity(0.2)
-                              : Colors.white.withOpacity(0.05),
+                              ? moduleColor.withValues(alpha: 0.2)
+                              : Colors.white.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
                             color: _allSelected
-                                ? moduleColor.withOpacity(0.5)
+                                ? moduleColor.withValues(alpha: 0.5)
                                 : Colors.white12,
                           ),
                         ),
@@ -462,9 +462,9 @@ class AccessDeniedCard extends StatelessWidget {
         margin: const EdgeInsets.all(24),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.04),
+          color: Colors.white.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.red.withOpacity(0.3)),
+          border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -648,8 +648,8 @@ class _SkeletonBoxState extends State<SkeletonBox>
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(widget.radius),
           color: Color.lerp(
-            Colors.white.withOpacity(0.05),
-            Colors.white.withOpacity(0.10),
+            Colors.white.withValues(alpha: 0.05),
+            Colors.white.withValues(alpha: 0.10),
             _anim.value,
           ),
         ),

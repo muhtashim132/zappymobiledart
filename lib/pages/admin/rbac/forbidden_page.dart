@@ -57,8 +57,8 @@ class _ForbiddenPageState extends State<ForbiddenPage>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(colors: [
-                  const Color(0xFFFF5722).withOpacity(0.3),
-                  const Color(0xFFFF5722).withOpacity(0.0),
+                  const Color(0xFFFF5722).withValues(alpha: 0.3),
+                  const Color(0xFFFF5722).withValues(alpha: 0.0),
                 ]),
               ),
               child: const Icon(
@@ -73,7 +73,7 @@ class _ForbiddenPageState extends State<ForbiddenPage>
             Text(
               '403',
               style: GoogleFonts.outfit(
-                color: const Color(0xFFFF5722).withOpacity(0.5),
+                color: const Color(0xFFFF5722).withValues(alpha: 0.5),
                 fontSize: 72,
                 fontWeight: FontWeight.w900,
                 letterSpacing: -2,
@@ -115,7 +115,7 @@ class _ForbiddenPageState extends State<ForbiddenPage>
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white.withOpacity(0.08),
+                backgroundColor: Colors.white.withValues(alpha: 0.08),
                 foregroundColor: Colors.white70,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -163,7 +163,7 @@ class _ForbiddenPageState extends State<ForbiddenPage>
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: RadialGradient(
-                colors: [color, color.withOpacity(0.0)]),
+                colors: [color, color.withValues(alpha: 0.0)]),
           ),
         ),
       );

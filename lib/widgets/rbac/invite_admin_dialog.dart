@@ -92,7 +92,7 @@ class _InviteAdminDialogState extends State<InviteAdminDialog> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF8B2FC9).withOpacity(0.15),
+                      color: const Color(0xFF8B2FC9).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.person_add_rounded,
@@ -208,14 +208,14 @@ class _InviteAdminDialogState extends State<InviteAdminDialog> {
       hintStyle: GoogleFonts.outfit(color: Colors.white24, fontSize: 13),
       prefixIcon: Icon(icon, color: Colors.white24, size: 18),
       filled: true,
-      fillColor: Colors.white.withOpacity(0.05),
+      fillColor: Colors.white.withValues(alpha: 0.05),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),

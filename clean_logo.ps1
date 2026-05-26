@@ -1,5 +1,5 @@
-Add-Type -AssemblyName System.Drawing
-$img = [System.Drawing.Image]::FromFile("d:\zappymobile\logo\Enything.png")
+﻿Add-Type -AssemblyName System.Drawing
+$img = [System.Drawing.Image]::FromFile("d:\enythingmobile\logo\Enything.png")
 $bmp = new-object System.Drawing.Bitmap($img)
 $img.Dispose()
 
@@ -9,6 +9,7 @@ $brush = new-object System.Drawing.SolidBrush($color)
 $rect = new-object System.Drawing.Rectangle(0, 650, 1024, 400)
 $graphics.FillRectangle($brush, $rect)
 
-$bmp.Save("d:\zappymobile\logo\Enything_clean.png", [System.Drawing.Imaging.ImageFormat]::Png)
+$bmp.Save("d:\enythingmobile\logo\Enything_clean.png", [System.Drawing.Imaging.ImageFormat]::Png)
 $graphics.Dispose()
 $bmp.Dispose()
+

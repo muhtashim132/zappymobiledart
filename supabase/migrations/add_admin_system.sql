@@ -1,6 +1,6 @@
--- ============================================================================
+﻿-- ============================================================================
 -- Migration: add_admin_system.sql
--- Purpose  : Create the Zappy Admin (God Mode) access control system.
+-- Purpose  : Create the Enything Admin (God Mode) access control system.
 --            Supports superadmin + sub-admin roles with granular permissions.
 -- ============================================================================
 
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
 );
 
 COMMENT ON TABLE admin_users IS
-  'Zappy platform admin roster. superadmin has all privileges. Others get JSONB-based permissions.';
+  'Enything platform admin roster. superadmin has all privileges. Others get JSONB-based permissions.';
 
 COMMENT ON COLUMN admin_users.admin_level IS
   'superadmin=owner, operations=back-office, verification=KYC team, finance=CA-facing, support=L1';
@@ -85,7 +85,7 @@ COMMENT ON TABLE admin_activity_log IS
 -- INSERT INTO admin_users (id, full_name, admin_level, permissions, admin_password)
 -- VALUES (
 --   'YOUR-USER-UUID-HERE',
---   'Zappy Owner',
+--   'Enything Owner',
 --   'superadmin',
 --   '{
 --     "view_financials": true,
@@ -108,3 +108,4 @@ RETURNS BOOLEAN AS $$
       AND is_active = true
   );
 $$ LANGUAGE sql SECURITY DEFINER;
+

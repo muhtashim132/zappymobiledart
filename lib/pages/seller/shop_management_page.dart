@@ -188,7 +188,7 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
                                   color: (_isActive
                                           ? AppColors.success
                                           : AppColors.danger)
-                                      .withOpacity(0.12),
+                                      .withValues(alpha: 0.12),
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: Icon(
@@ -250,9 +250,9 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
                                   width: double.infinity,
                                   height: 160,
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withOpacity(0.05),
+                                    color: AppColors.primary.withValues(alpha: 0.05),
                                     borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+                                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.2), width: 1.5),
                                   ),
                                   child: _selectedImage != null
                                       ? ClipRRect(
@@ -389,7 +389,7 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
               blurRadius: 12,
               offset: const Offset(0, 4))
         ],
@@ -429,7 +429,7 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
         prefixIcon: Icon(icon, size: 18, color: AppColors.primary),
         filled: true,
         fillColor:
-            isDark ? Colors.white.withOpacity(0.05) : AppColors.background,
+            isDark ? Colors.white.withValues(alpha: 0.05) : AppColors.background,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,

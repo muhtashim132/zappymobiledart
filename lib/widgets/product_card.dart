@@ -31,7 +31,7 @@ class ProductCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 15,
               offset: const Offset(0, 8),
             ),
@@ -54,7 +54,7 @@ class ProductCard extends StatelessWidget {
                             fit: BoxFit.cover,
                             placeholder: (c, i) => Container(color: Colors.grey.shade100),
                             errorWidget: (c, e, s) => Container(
-                              color: AppColors.primary.withOpacity(0.05),
+                              color: AppColors.primary.withValues(alpha: 0.05),
                               child: const Center(
                                 child: Icon(Icons.shopping_bag_outlined, size: 40, color: AppColors.primary),
                               ),
@@ -62,7 +62,7 @@ class ProductCard extends StatelessWidget {
                           )
                         : Container(
                             width: double.infinity,
-                            color: AppColors.primary.withOpacity(0.05),
+                            color: AppColors.primary.withValues(alpha: 0.05),
                             child: const Center(
                               child: Icon(Icons.shopping_bag_outlined, size: 40, color: AppColors.primary),
                             ),

@@ -133,7 +133,7 @@ class _ManageProductsPageState extends State<ManageProductsPage> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 8,
                           ),
                         ],
@@ -144,7 +144,7 @@ class _ManageProductsPageState extends State<ManageProductsPage> {
                             width: 56,
                             height: 56,
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withOpacity(0.08),
+                              color: AppColors.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(14),
                             ),
                             child: const Icon(
@@ -180,9 +180,9 @@ class _ManageProductsPageState extends State<ManageProductsPage> {
                                       decoration: BoxDecoration(
                                         color: product.isAvailable
                                             ? AppColors.success
-                                                .withOpacity(0.1)
+                                                .withValues(alpha: 0.1)
                                             : AppColors.danger
-                                                .withOpacity(0.1),
+                                                .withValues(alpha: 0.1),
                                         borderRadius:
                                             BorderRadius.circular(6),
                                       ),

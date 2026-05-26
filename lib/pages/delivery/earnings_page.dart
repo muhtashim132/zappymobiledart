@@ -132,7 +132,7 @@ class _EarningsPageState extends State<EarningsPage> {
                           borderRadius: BorderRadius.circular(32),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.3),
+                              color: AppColors.primary.withValues(alpha: 0.3),
                               blurRadius: 20,
                               offset: const Offset(0, 10),
                             ),
@@ -162,7 +162,7 @@ class _EarningsPageState extends State<EarningsPage> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
+                                color: Colors.white.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Row(
@@ -232,6 +232,10 @@ class _EarningsPageState extends State<EarningsPage> {
                   ),
 
                   const SliverToBoxAdapter(child: SizedBox(height: 32)),
+                  SliverToBoxAdapter(
+                    child: _buildWeeklyChart(),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
 
                   // ── Recent Activity ────────────────────────────────────────
                   SliverPadding(
@@ -284,7 +288,7 @@ class _EarningsPageState extends State<EarningsPage> {
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                        color: Colors.black.withOpacity(0.02),
+                                        color: Colors.black.withValues(alpha: 0.02),
                                         blurRadius: 10,
                                         offset: const Offset(0, 4)),
                                   ],
@@ -296,7 +300,7 @@ class _EarningsPageState extends State<EarningsPage> {
                                       height: 48,
                                       decoration: BoxDecoration(
                                         color:
-                                            AppColors.primary.withOpacity(0.05),
+                                            AppColors.primary.withValues(alpha: 0.05),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Icon(
@@ -384,7 +388,7 @@ class _EarningsPageState extends State<EarningsPage> {
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.08),
+              color: AppColors.primary.withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -407,7 +411,7 @@ class _EarningsPageState extends State<EarningsPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -486,7 +490,7 @@ class _EarningsPageState extends State<EarningsPage> {
                           gradient: LinearGradient(
                             colors: isToday
                                 ? [AppColors.primary, const Color(0xFF071D6B)]
-                                : [AppColors.primary.withOpacity(0.4), AppColors.primary.withOpacity(0.2)],
+                                : [AppColors.primary.withValues(alpha: 0.4), AppColors.primary.withValues(alpha: 0.2)],
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                           ),
@@ -526,9 +530,9 @@ class _EarningsPageState extends State<EarningsPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(
           children: [

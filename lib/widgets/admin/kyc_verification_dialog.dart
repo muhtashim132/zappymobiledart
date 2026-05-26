@@ -71,11 +71,11 @@ class _KycVerificationDialogState extends State<KycVerificationDialog> {
           width: double.infinity,
           constraints: const BoxConstraints(maxWidth: 600, maxHeight: 800),
           decoration: BoxDecoration(
-            color: const Color(0xFF131524).withOpacity(0.9),
+            color: const Color(0xFF131524).withValues(alpha: 0.9),
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: Colors.white.withOpacity(0.1), width: 1.5),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.5),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.5), blurRadius: 40, spreadRadius: -10),
+              BoxShadow(color: Colors.black.withValues(alpha: 0.5), blurRadius: 40, spreadRadius: -10),
             ],
           ),
           child: Column(
@@ -84,16 +84,16 @@ class _KycVerificationDialogState extends State<KycVerificationDialog> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.02),
+                  color: Colors.white.withValues(alpha: 0.02),
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                  border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.05))),
+                  border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
                 ),
                 child: Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4C542).withOpacity(0.15),
+                        color: const Color(0xFFF4C542).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(Icons.shield_rounded, color: Color(0xFFF4C542), size: 24),
@@ -168,9 +168,9 @@ class _KycVerificationDialogState extends State<KycVerificationDialog> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(32),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.02),
+                            color: Colors.white.withValues(alpha: 0.02),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.white.withOpacity(0.05)),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                           ),
                           child: Column(
                             children: [
@@ -195,9 +195,9 @@ class _KycVerificationDialogState extends State<KycVerificationDialog> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.02),
+                  color: Colors.white.withValues(alpha: 0.02),
                   borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
-                  border: Border(top: BorderSide(color: Colors.white.withOpacity(0.05))),
+                  border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
                 ),
                 child: Row(
                   children: [
@@ -206,7 +206,7 @@ class _KycVerificationDialogState extends State<KycVerificationDialog> {
                         onPressed: _isProcessing ? null : () => _updateStatus('rejected'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.redAccent,
-                          side: BorderSide(color: Colors.redAccent.withOpacity(0.5), width: 1.5),
+                          side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.5), width: 1.5),
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
@@ -253,9 +253,9 @@ class _KycVerificationDialogState extends State<KycVerificationDialog> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.03),
+        color: Colors.white.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,9 +294,9 @@ class _KycVerificationDialogState extends State<KycVerificationDialog> {
       child: Container(
         width: 140,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.02),
+          color: Colors.white.withValues(alpha: 0.02),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.08)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -313,7 +313,7 @@ class _KycVerificationDialogState extends State<KycVerificationDialog> {
                     if (progress == null) return child;
                     return Container(
                       height: 100,
-                      color: Colors.white.withOpacity(0.02),
+                      color: Colors.white.withValues(alpha: 0.02),
                       child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
                     );
                   },
@@ -374,16 +374,16 @@ class _KycVerificationDialogState extends State<KycVerificationDialog> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
+                        color: Colors.black.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                       ),
                       child: Text(label, style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
                     ),
                     IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(color: Colors.black.withOpacity(0.5), shape: BoxShape.circle),
+                        decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.5), shape: BoxShape.circle),
                         child: const Icon(Icons.close_rounded, color: Colors.white),
                       ),
                       onPressed: () => Navigator.pop(context),

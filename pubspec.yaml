@@ -1,4 +1,4 @@
-name: zappymobilenew
+﻿name: enythingmobilenew
 description: "Enything - Everything. Everywhere. Instantly."
 publish_to: 'none'
 version: 1.0.0+1
@@ -55,3 +55,4 @@ flutter:
     - assets/animations/
     - assets/google_fonts/
     - logo/
+

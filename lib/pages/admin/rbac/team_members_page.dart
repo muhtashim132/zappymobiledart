@@ -114,14 +114,14 @@ class _TeamMembersPageState extends State<TeamMembersPage>
                 prefixIcon: const Icon(Icons.search_rounded,
                     color: Colors.white30, size: 18),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: Colors.white.withValues(alpha: 0.05),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.white.withOpacity(0.08)),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -171,10 +171,10 @@ class _TeamMembersPageState extends State<TeamMembersPage>
                                 margin: const EdgeInsets.only(bottom: 10),
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.04),
+                                  color: Colors.white.withValues(alpha: 0.04),
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                      color: Colors.white.withOpacity(0.07)),
+                                      color: Colors.white.withValues(alpha: 0.07)),
                                 ),
                                 child: Row(children: [
                                   const Icon(Icons.mail_outline_rounded,
@@ -232,9 +232,9 @@ class _TeamMembersPageState extends State<TeamMembersPage>
       margin: const EdgeInsets.only(right: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(label,
           style: GoogleFonts.outfit(
@@ -249,7 +249,7 @@ class _TeamMembersPageState extends State<TeamMembersPage>
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.04),
+            color: Colors.white.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(14),
           ),
           child: const Row(children: [
@@ -338,6 +338,7 @@ class _MemberCard extends StatelessWidget {
     );
 
     if (picked == null) return;
+    if (!context.mounted) return;
     await context.read<TeamProvider>().assignRole(
           userId: member.id,
           roleId: picked!.id,
@@ -368,7 +369,7 @@ class _MemberCard extends StatelessWidget {
                 hintText: 'New Password',
                 hintStyle: const TextStyle(color: Colors.white24),
                 filled: true,
-                fillColor: Colors.white.withOpacity(0.05),
+                fillColor: Colors.white.withValues(alpha: 0.05),
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -391,6 +392,7 @@ class _MemberCard extends StatelessWidget {
     );
 
     if (ok == true && ctrl.text.isNotEmpty) {
+      if (!context.mounted) return;
       await context.read<TeamProvider>().resetPassword(
             userId: member.id,
             newPassword: ctrl.text.trim(),
@@ -414,16 +416,16 @@ class _MemberCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.07)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(children: [
           CircleAvatar(
             radius: 22,
-            backgroundColor: const Color(0xFF8B2FC9).withOpacity(0.2),
+            backgroundColor: const Color(0xFF8B2FC9).withValues(alpha: 0.2),
             backgroundImage: member.avatarUrl != null
                 ? NetworkImage(member.avatarUrl!)
                 : null,
@@ -476,9 +478,11 @@ class _MemberCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12)),
               onSelected: (v) async {
                 HapticFeedback.lightImpact();
-                if (v == 'role') await _changeRole(context);
-                if (v == 'password') await _resetPassword(context);
-                if (v == 'suspend') {
+                if (v == 'role') {
+                  await _changeRole(context);
+                } else if (v == 'password') {
+                  await _resetPassword(context);
+                } else if (v == 'suspend') {
                   final ok = await ConfirmActionDialog.show(
                     context,
                     title: 'Suspend Member',
@@ -493,8 +497,7 @@ class _MemberCard extends StatelessWidget {
                         actorId: actorId,
                         actorRole: actorRole);
                   }
-                }
-                if (v == 'reactivate') {
+                } else if (v == 'reactivate') {
                   await team.reactivateMember(
                       userId: member.id,
                       actorId: actorId,

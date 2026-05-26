@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart';
+
 import '../../../widgets/admin/kyc_verification_dialog.dart';
 
 class RidersAdminPage extends StatefulWidget {
@@ -70,18 +70,14 @@ class _RidersAdminPageState extends State<RidersAdminPage> {
                   final isActive = rider['is_active'] == true;
                   final isOnline = rider['is_online'] == true;
                   final vStatus = rider['verification_status'] ?? 'none';
-                  final createdAt = rider['created_at'] != null
-                      ? DateFormat('MMM dd, yyyy')
-                          .format(DateTime.parse(rider['created_at']))
-                      : 'Unknown';
 
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.04),
+                      color: Colors.white.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withOpacity(0.07)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,7 +85,7 @@ class _RidersAdminPageState extends State<RidersAdminPage> {
                         CircleAvatar(
                           radius: 24,
                           backgroundColor:
-                              const Color(0xFF00BCD4).withOpacity(0.2),
+                              const Color(0xFF00BCD4).withValues(alpha: 0.2),
                           backgroundImage: profile['avatar_url'] != null
                               ? NetworkImage(profile['avatar_url'])
                               : null,
@@ -163,7 +159,7 @@ class _RidersAdminPageState extends State<RidersAdminPage> {
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 12, vertical: 0),
                                         backgroundColor: const Color(0xFF00BCD4)
-                                            .withOpacity(0.1),
+                                            .withValues(alpha: 0.1),
                                       ),
                                     ),
                                   ],
@@ -203,9 +199,9 @@ class _RidersAdminPageState extends State<RidersAdminPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         label,

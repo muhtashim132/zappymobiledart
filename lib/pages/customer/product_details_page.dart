@@ -79,7 +79,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               child: Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.35),
+                  color: Colors.black.withValues(alpha: 0.35),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.arrow_back, color: Colors.white),
@@ -91,7 +91,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 child: Container(
                   margin: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.35),
+                    color: Colors.black.withValues(alpha: 0.35),
                     shape: BoxShape.circle,
                   ),
                   child: const Padding(
@@ -114,7 +114,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                             imageUrl: _product!.images[i],
                             fit: BoxFit.cover,
                             errorWidget: (c, e, s) => Container(
-                              color: AppColors.primary.withOpacity(0.1),
+                              color: AppColors.primary.withValues(alpha: 0.1),
                               child: const Center(
                                   child: Icon(Icons.shopping_bag_outlined,
                                       size: 80, color: AppColors.primary)),
@@ -139,7 +139,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   decoration: BoxDecoration(
                                     color: i == _currentImageIndex
                                         ? Colors.white
-                                        : Colors.white.withOpacity(0.5),
+                                        : Colors.white.withValues(alpha: 0.5),
                                     borderRadius:
                                         BorderRadius.circular(3),
                                   ),
@@ -150,7 +150,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       ],
                     )
                   : Container(
-                      color: AppColors.primary.withOpacity(0.1),
+                      color: AppColors.primary.withValues(alpha: 0.1),
                       child: const Center(
                         child: Icon(Icons.shopping_bag_outlined,
                             size: 100, color: AppColors.primary),
@@ -234,7 +234,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.success.withOpacity(0.1),
+                              color: AppColors.success.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -317,7 +317,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 20,
               offset: const Offset(0, -4),
             ),

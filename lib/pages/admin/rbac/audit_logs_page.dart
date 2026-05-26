@@ -135,15 +135,15 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
                       prefixIcon: const Icon(Icons.search_rounded,
                           color: Colors.white24, size: 17),
                       filled: true,
-                      fillColor: Colors.white.withOpacity(0.05),
+                      fillColor: Colors.white.withValues(alpha: 0.05),
                       border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide:
-                              BorderSide(color: Colors.white.withOpacity(0.1))),
+                              BorderSide(color: Colors.white.withValues(alpha: 0.1))),
                       enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: BorderSide(
-                              color: Colors.white.withOpacity(0.08))),
+                              color: Colors.white.withValues(alpha: 0.08))),
                       focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide:
@@ -162,13 +162,13 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
                         horizontal: 12, vertical: 10),
                     decoration: BoxDecoration(
                       color: _from != null
-                          ? const Color(0xFF8B2FC9).withOpacity(0.2)
-                          : Colors.white.withOpacity(0.05),
+                          ? const Color(0xFF8B2FC9).withValues(alpha: 0.2)
+                          : Colors.white.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                           color: _from != null
-                              ? const Color(0xFF8B2FC9).withOpacity(0.5)
-                              : Colors.white.withOpacity(0.08)),
+                              ? const Color(0xFF8B2FC9).withValues(alpha: 0.5)
+                              : Colors.white.withValues(alpha: 0.08)),
                     ),
                     child: Icon(Icons.date_range_rounded,
                         color: _from != null
@@ -277,13 +277,13 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           color: _entityType != null
-              ? const Color(0xFF8B2FC9).withOpacity(0.2)
-              : Colors.white.withOpacity(0.05),
+              ? const Color(0xFF8B2FC9).withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
               color: _entityType != null
-                  ? const Color(0xFF8B2FC9).withOpacity(0.5)
-                  : Colors.white.withOpacity(0.08)),
+                  ? const Color(0xFF8B2FC9).withValues(alpha: 0.5)
+                  : Colors.white.withValues(alpha: 0.08)),
         ),
         child: Icon(Icons.filter_list_rounded,
             color:
@@ -300,7 +300,7 @@ class _AuditLogsPageState extends State<AuditLogsPage> {
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.04),
+            color: Colors.white.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Column(
@@ -356,9 +356,9 @@ class _LogCardState extends State<_LogCard> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Column(
         children: [
@@ -410,7 +410,7 @@ class _LogCardState extends State<_LogCard> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.05),
+                            color: Colors.white.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(log.entityType!,
@@ -438,9 +438,9 @@ class _LogCardState extends State<_LogCard> {
               child: Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white.withOpacity(0.06)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
                 ),
                 child: Text(
                   const JsonEncoder.withIndent('  ').convert(log.metadata),

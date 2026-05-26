@@ -232,7 +232,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
             top: BorderSide(color: AdminColors.cardBorder, width: 1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -245,7 +245,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
           setState(() => _currentIndex = i);
         },
         backgroundColor: Colors.transparent,
-        indicatorColor: AdminColors.primary.withOpacity(0.2),
+        indicatorColor: AdminColors.primary.withValues(alpha: 0.2),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: items
             .map((n) => NavigationDestination(
@@ -282,7 +282,7 @@ class _Header extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 16, 12),
       decoration: BoxDecoration(
-        color: AdminColors.surface.withOpacity(0.7),
+        color: AdminColors.surface.withValues(alpha: 0.7),
         border: const Border(
             bottom: BorderSide(color: AdminColors.cardBorder, width: 1)),
       ),
@@ -368,7 +368,7 @@ class _Aura extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: RadialGradient(colors: [color, color.withOpacity(0.0)]),
+          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0.0)]),
         ),
       ),
     );

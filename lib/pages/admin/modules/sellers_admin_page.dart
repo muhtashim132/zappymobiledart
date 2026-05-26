@@ -75,16 +75,16 @@ class _SellersAdminPageState extends State<SellersAdminPage> {
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.04),
+                      color: Colors.white.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withOpacity(0.07)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CircleAvatar(
                           backgroundColor:
-                              const Color(0xFF8B2FC9).withOpacity(0.2),
+                              const Color(0xFF8B2FC9).withValues(alpha: 0.2),
                           child: const Icon(Icons.store_rounded,
                               color: Color(0xFF8B2FC9)),
                         ),
@@ -140,7 +140,7 @@ class _SellersAdminPageState extends State<SellersAdminPage> {
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 12, vertical: 0),
                                         backgroundColor:
-                                            AppColors.primary.withOpacity(0.1),
+                                            AppColors.primary.withValues(alpha: 0.1),
                                       ),
                                     ),
                                   ],
@@ -180,9 +180,9 @@ class _SellersAdminPageState extends State<SellersAdminPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         label,

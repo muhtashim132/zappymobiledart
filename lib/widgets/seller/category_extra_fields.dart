@@ -167,15 +167,15 @@ class CategoryExtraFieldsState extends State<CategoryExtraFields>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  _groupAccent(widget.group).withOpacity(0.18),
-                  _groupAccent(widget.group).withOpacity(0.05),
+                  _groupAccent(widget.group).withValues(alpha: 0.18),
+                  _groupAccent(widget.group).withValues(alpha: 0.05),
                 ],
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: _groupAccent(widget.group).withOpacity(0.35),
+                color: _groupAccent(widget.group).withValues(alpha: 0.35),
               ),
             ),
             child: Row(
@@ -379,9 +379,9 @@ class _DarkField extends StatelessWidget {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
+            color: Colors.white.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.12)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
           ),
           child: TextField(
             controller: controller,
@@ -447,9 +447,9 @@ class _DropdownField<T> extends StatelessWidget {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
+            color: Colors.white.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.12)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: DropdownButtonHideUnderline(
@@ -508,9 +508,9 @@ class _ToggleField extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
+        color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.12)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
       child: Row(
         children: [

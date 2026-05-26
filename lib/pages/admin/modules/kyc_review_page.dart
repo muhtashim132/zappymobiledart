@@ -216,7 +216,7 @@ class _KycReviewPageState extends State<KycReviewPage>
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 const Icon(Icons.store_outlined, size: 16),
                 const SizedBox(width: 6),
-                Text('Sellers'),
+                const Text('Sellers'),
                 if (_sellerPending.isNotEmpty) ...[
                   const SizedBox(width: 6),
                   _badge(_sellerPending.length),
@@ -227,7 +227,7 @@ class _KycReviewPageState extends State<KycReviewPage>
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 const Icon(Icons.delivery_dining_outlined, size: 16),
                 const SizedBox(width: 6),
-                Text('Riders'),
+                const Text('Riders'),
                 if (_riderPending.isNotEmpty) ...[
                   const SizedBox(width: 6),
                   _badge(_riderPending.length),
@@ -402,8 +402,8 @@ class _KycCardState extends State<_KycCard> {
       decoration: BoxDecoration(
         color: AdminColors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: widget.accentColor.withOpacity(0.3)),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10)],
+        border: Border.all(color: widget.accentColor.withValues(alpha: 0.3)),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10)],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         // ── Header ────────────────────────────────────────────────────────
@@ -413,9 +413,9 @@ class _KycCardState extends State<_KycCard> {
             Container(
               width: 52, height: 52,
               decoration: BoxDecoration(
-                color: widget.accentColor.withOpacity(0.15),
+                color: widget.accentColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: widget.accentColor.withOpacity(0.3)),
+                border: Border.all(color: widget.accentColor.withValues(alpha: 0.3)),
               ),
               child: Center(child: Text(widget.emoji, style: const TextStyle(fontSize: 26))),
             ),
@@ -431,9 +431,9 @@ class _KycCardState extends State<_KycCard> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AdminColors.warning.withOpacity(0.15),
+                color: AdminColors.warning.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AdminColors.warning.withOpacity(0.4)),
+                border: Border.all(color: AdminColors.warning.withValues(alpha: 0.4)),
               ),
               child: Text('PENDING', style: GoogleFonts.poppins(
                 color: AdminColors.warning, fontSize: 10, fontWeight: FontWeight.w800,

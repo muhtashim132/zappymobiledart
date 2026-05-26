@@ -405,7 +405,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFF4C542).withOpacity(0.20),
+                  color: const Color(0xFFF4C542).withValues(alpha: 0.20),
                   blurRadius: 20,
                   spreadRadius: 2,
                 )
@@ -475,7 +475,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFF4C542).withOpacity(0.20),
+                    color: const Color(0xFFF4C542).withValues(alpha: 0.20),
                     blurRadius: 20,
                     spreadRadius: 2,
                   )

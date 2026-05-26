@@ -166,7 +166,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -181,7 +181,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(_getStatusIcon(order.status),
@@ -216,7 +216,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
@@ -261,10 +261,10 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 5),
                                 decoration: BoxDecoration(
-                                  color: AppColors.danger.withOpacity(0.1),
+                                  color: AppColors.danger.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
-                                      color: AppColors.danger.withOpacity(0.4)),
+                                      color: AppColors.danger.withValues(alpha: 0.4)),
                                 ),
                                 child: const Text(
                                   'Cancel',
@@ -310,7 +310,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.08),
+              color: AppColors.primary.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: const Center(

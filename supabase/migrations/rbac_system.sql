@@ -1,5 +1,5 @@
--- ============================================================
--- ZAPPY RBAC SYSTEM - Complete Database Migration
+﻿-- ============================================================
+-- ENYTHING RBAC SYSTEM - Complete Database Migration
 -- ============================================================
 
 -- ── 1. PERMISSIONS TABLE ────────────────────────────────────
@@ -448,3 +448,4 @@ CREATE POLICY "superadmin_invitations" ON admin_invitations
 CREATE POLICY "superadmin_overrides" ON user_role_overrides
   FOR ALL TO authenticated
   USING (is_super_admin(auth.uid()));
+

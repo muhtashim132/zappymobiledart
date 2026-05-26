@@ -235,7 +235,7 @@ class _AnalyticsAdminPageState extends State<AnalyticsAdminPage> {
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
                                 value: pct,
-                                backgroundColor: color.withOpacity(0.1),
+                                backgroundColor: color.withValues(alpha: 0.1),
                                 valueColor: AlwaysStoppedAnimation(color),
                                 minHeight: 6,
                               ),
@@ -339,8 +339,8 @@ class _AnalyticsAdminPageState extends State<AnalyticsAdminPage> {
               toY: s.y,
               gradient: isPeak ? AdminGradients.primary : LinearGradient(
                 colors: [
-                  AdminColors.primary.withOpacity(0.4),
-                  AdminColors.primaryEnd.withOpacity(0.4),
+                  AdminColors.primary.withValues(alpha: 0.4),
+                  AdminColors.primaryEnd.withValues(alpha: 0.4),
                 ],
               ),
               width: 8,
@@ -413,12 +413,12 @@ class _AiInsightBanner extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AdminColors.primary.withOpacity(0.25),
-            AdminColors.primaryEnd.withOpacity(0.15),
+            AdminColors.primary.withValues(alpha: 0.25),
+            AdminColors.primaryEnd.withValues(alpha: 0.15),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AdminColors.primary.withOpacity(0.35)),
+        border: Border.all(color: AdminColors.primary.withValues(alpha: 0.35)),
       ),
       child: Row(children: [
         Container(
@@ -470,12 +470,12 @@ class _AiCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
-      decoration: AdminDecorations.glassCard(borderColor: color.withOpacity(0.25)),
+      decoration: AdminDecorations.glassCard(borderColor: color.withValues(alpha: 0.25)),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: color, size: 18),

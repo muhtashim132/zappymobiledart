@@ -297,7 +297,7 @@ class _SectionHeader extends StatelessWidget {
         children: [
           Expanded(
               child:
-                  Container(height: 1, color: Colors.white.withOpacity(0.08))),
+                  Container(height: 1, color: Colors.white.withValues(alpha: 0.08))),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Text(title,
@@ -308,7 +308,7 @@ class _SectionHeader extends StatelessWidget {
           ),
           Expanded(
               child:
-                  Container(height: 1, color: Colors.white.withOpacity(0.08))),
+                  Container(height: 1, color: Colors.white.withValues(alpha: 0.08))),
         ],
       ),
     );
@@ -343,7 +343,7 @@ class _DarkField extends StatelessWidget {
           style: GoogleFonts.outfit(color: Colors.white, fontSize: 15),
           decoration: InputDecoration(
             filled: true,
-            fillColor: Colors.white.withOpacity(0.05),
+            fillColor: Colors.white.withValues(alpha: 0.05),
             border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none),
@@ -414,17 +414,17 @@ class _UploadBox extends StatelessWidget {
       child: Container(
         height: 100,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.03),
+          color: Colors.white.withValues(alpha: 0.03),
           border: Border.all(
               color:
-                  file != null ? Colors.green : Colors.white.withOpacity(0.15)),
+                  file != null ? Colors.green : Colors.white.withValues(alpha: 0.15)),
           borderRadius: BorderRadius.circular(12),
           image: file != null
               ? DecorationImage(
                   image: FileImage(file!),
                   fit: BoxFit.cover,
                   colorFilter: ColorFilter.mode(
-                      Colors.black.withOpacity(0.4), BlendMode.darken))
+                      Colors.black.withValues(alpha: 0.4), BlendMode.darken))
               : null,
         ),
         child: Center(
