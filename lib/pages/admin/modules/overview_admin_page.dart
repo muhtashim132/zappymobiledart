@@ -55,7 +55,7 @@ class _OverviewAdminPageState extends State<OverviewAdminPage> {
       final kyc = await _db
           .from('shops')
           .select('id')
-          .or('verification_status.eq.pending,verification_status.is.null,verification_status.eq.unverified');
+          .eq('verification_status', 'pending');
       _pendingKyc = kyc.length;
 
       // Pending withdrawals — fallback to 0 if table missing
@@ -124,7 +124,7 @@ class _OverviewAdminPageState extends State<OverviewAdminPage> {
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.35,
+            childAspectRatio: 1.15,
             children: [
               AdminKpiCard(
                 title: 'Total Revenue',

@@ -78,6 +78,13 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         await Future.delayed(const Duration(milliseconds: 200));
       }
       if (!mounted) return;
+
+      if (auth.user == null) {
+        // Active session exists, but profile wasn't created yet!
+        Navigator.pushReplacementNamed(context, AppRoutes.roleSelect);
+        return;
+      }
+
       final role = auth.user?.activeSessionRole ?? auth.user?.role;
       final status = auth.user?.verificationStatus ?? 'verified';
 

@@ -170,8 +170,10 @@ class _SellerKycUploadPageState extends State<SellerKycUploadPage> {
         centerTitle: true,
         leading: const SizedBox.shrink(),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -281,6 +283,36 @@ class _SellerKycUploadPageState extends State<SellerKycUploadPage> {
             const SizedBox(height: 40),
           ],
         ),
+      ),
+          if (_loading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.7),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(
+                        color: Color(0xFFF4C542),
+                        strokeWidth: 3,
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Uploading Documents...\nPlease do not close the app',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

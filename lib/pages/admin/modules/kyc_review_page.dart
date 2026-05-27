@@ -19,6 +19,8 @@ class _KycReviewPageState extends State<KycReviewPage>
   List<Map<String, dynamic>> _riderPending = [];
   bool _loadingSellers = true;
   bool _loadingRiders = true;
+  String? _sellerError;
+  String? _riderError;
 
   @override
   void initState() {
@@ -37,36 +39,35 @@ class _KycReviewPageState extends State<KycReviewPage>
   // ── Data Loading ─────────────────────────────────────────────────────────
 
   Future<void> _loadSellers() async {
-    setState(() => _loadingSellers = true);
+    setState(() { _loadingSellers = true; _sellerError = null; });
     try {
-      final rows = await _supabase
-          .from('shops')
-          .select('id, seller_id, name, aadhar_number, pan_number, gst_number, '
-              'bank_account_holder, bank_account_number, bank_ifsc, '
-              'kyc_documents, verification_status, created_at, '
-              'profiles:seller_id(full_name, phone)')
-          .eq('verification_status', 'pending')
-          .order('created_at', ascending: true);
-      if (mounted) setState(() { _sellerPending = List<Map<String, dynamic>>.from(rows); _loadingSellers = false; });
+      // Use the admin RPC which bypasses column-level RLS restrictions.
+      // Direct .select() from 'shops' is blocked for sensitive columns.
+      final rows = await _supabase.rpc('admin_get_all_shops');
+      final allShops = List<Map<String, dynamic>>.from(rows);
+      final pending = allShops
+          .where((s) => (s['verification_status'] as String?) == 'pending')
+          .toList();
+      if (mounted) setState(() { _sellerPending = pending; _loadingSellers = false; });
     } catch (e) {
-      if (mounted) setState(() => _loadingSellers = false);
+      debugPrint('Error loading seller KYC: $e');
+      if (mounted) setState(() { _loadingSellers = false; _sellerError = e.toString(); });
     }
   }
 
   Future<void> _loadRiders() async {
-    setState(() => _loadingRiders = true);
+    setState(() { _loadingRiders = true; _riderError = null; });
     try {
-      final rows = await _supabase
-          .from('delivery_partners')
-          .select('id, aadhar_number, pan_number, driving_license, '
-              'bank_account_holder, bank_account_number, bank_ifsc, '
-              'kyc_documents, verification_status, created_at, '
-              'profiles:id(full_name, phone)')
-          .eq('verification_status', 'pending')
-          .order('created_at', ascending: true);
-      if (mounted) setState(() { _riderPending = List<Map<String, dynamic>>.from(rows); _loadingRiders = false; });
+      // Use the admin RPC which bypasses column-level RLS restrictions.
+      final rows = await _supabase.rpc('admin_get_all_riders');
+      final allRiders = List<Map<String, dynamic>>.from(rows);
+      final pending = allRiders
+          .where((r) => (r['verification_status'] as String?) == 'pending')
+          .toList();
+      if (mounted) setState(() { _riderPending = pending; _loadingRiders = false; });
     } catch (e) {
-      if (mounted) setState(() => _loadingRiders = false);
+      debugPrint('Error loading rider KYC: $e');
+      if (mounted) setState(() { _loadingRiders = false; _riderError = e.toString(); });
     }
   }
 
@@ -78,7 +79,6 @@ class _KycReviewPageState extends State<KycReviewPage>
     try {
       await _supabase.from('shops').update({
         'verification_status': 'approved',
-        'is_verified': true,
       }).eq('id', shopId);
       await _supabase.from('profiles').update({
         'kyc_status': 'approved',
@@ -99,7 +99,6 @@ class _KycReviewPageState extends State<KycReviewPage>
     try {
       await _supabase.from('shops').update({
         'verification_status': 'rejected',
-        'is_verified': false,
       }).eq('id', shopId);
       await _supabase.from('profiles').update({
         'kyc_status': 'rejected',
@@ -117,7 +116,6 @@ class _KycReviewPageState extends State<KycReviewPage>
     try {
       await _supabase.from('delivery_partners').update({
         'verification_status': 'approved',
-        'is_verified': true,
       }).eq('id', riderId);
       await _supabase.from('profiles').update({
         'kyc_status': 'approved',
@@ -137,7 +135,6 @@ class _KycReviewPageState extends State<KycReviewPage>
     try {
       await _supabase.from('delivery_partners').update({
         'verification_status': 'rejected',
-        'is_verified': false,
       }).eq('id', riderId);
       await _supabase.from('profiles').update({
         'kyc_status': 'rejected',
@@ -245,12 +242,14 @@ class _KycReviewPageState extends State<KycReviewPage>
             items: _sellerPending,
             onRefresh: _loadSellers,
             isRider: false,
+            error: _sellerError,
           ),
           _buildList(
             loading: _loadingRiders,
             items: _riderPending,
             onRefresh: _loadRiders,
             isRider: true,
+            error: _riderError,
           ),
         ],
       ),
@@ -268,8 +267,38 @@ class _KycReviewPageState extends State<KycReviewPage>
     required List<Map<String, dynamic>> items,
     required Future<void> Function() onRefresh,
     required bool isRider,
+    String? error,
   }) {
     if (loading) return const Center(child: CircularProgressIndicator(color: AdminColors.primary));
+    if (error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            const Icon(Icons.error_outline_rounded, size: 64, color: AdminColors.danger),
+            const SizedBox(height: 16),
+            Text('Failed to load KYC data', style: AdminStyles.title(color: AdminColors.danger)),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: AdminDecorations.glassCard(borderColor: AdminColors.danger.withValues(alpha: 0.4)),
+              child: SelectableText(
+                error,
+                style: AdminStyles.caption(color: AdminColors.warning),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: onRefresh,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Retry'),
+              style: ElevatedButton.styleFrom(backgroundColor: AdminColors.primary),
+            ),
+          ]),
+        ),
+      );
+    }
     if (items.isEmpty) {
       return Center(
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -297,11 +326,14 @@ class _KycReviewPageState extends State<KycReviewPage>
   // ── Seller Card ──────────────────────────────────────────────────────────
 
   Widget _buildSellerCard(Map<String, dynamic> shop) {
-    final profile = shop['profiles'] as Map<String, dynamic>? ?? {};
-    final name = profile['full_name'] as String? ?? 'Unknown';
+    // RPC returns profiles as a JSONB object (already a Map)
+    final profileData = shop['profiles'];
+    final profile = (profileData is Map<String, dynamic>) ? profileData : <String, dynamic>{};
+    final name = profile['full_name'] as String? ?? (shop['shop_name'] as String? ?? 'Unknown');
     final phone = profile['phone'] as String? ?? '';
-    final docs = shop['kyc_documents'] as Map<String, dynamic>? ?? {};
-    final submittedAt = DateTime.tryParse(shop['created_at'] ?? '');
+    // kyc_documents comes as Map from JSONB
+    final docs = (shop['kyc_documents'] as Map<String, dynamic>?) ?? {};
+    final submittedAt = DateTime.tryParse(shop['created_at']?.toString() ?? '');
 
     return _KycCard(
       emoji: '🏪',
@@ -310,13 +342,14 @@ class _KycReviewPageState extends State<KycReviewPage>
       phone: phone,
       submittedAt: submittedAt,
       details: [
-        _DetailRow('Aadhaar', shop['aadhar_number'] ?? '-'),
-        _DetailRow('PAN', shop['pan_number'] ?? '-'),
-        if ((shop['gst_number'] ?? '').toString().isNotEmpty)
-          _DetailRow('GSTIN', shop['gst_number']),
-        _DetailRow('Bank Holder', shop['bank_account_holder'] ?? '-'),
-        _DetailRow('Account No.', shop['bank_account_number'] ?? '-'),
-        _DetailRow('IFSC', shop['bank_ifsc'] ?? '-'),
+        _DetailRow('Shop', shop['shop_name']?.toString() ?? '-'),
+        _DetailRow('Aadhaar', shop['aadhar_number']?.toString() ?? '-'),
+        _DetailRow('PAN', shop['pan_number']?.toString() ?? '-'),
+        if ((shop['gst_number']?.toString() ?? '').isNotEmpty)
+          _DetailRow('GSTIN', shop['gst_number'].toString()),
+        _DetailRow('Bank Holder', shop['bank_account_holder']?.toString() ?? '-'),
+        _DetailRow('Account No.', shop['bank_account_number']?.toString() ?? '-'),
+        _DetailRow('IFSC', shop['bank_ifsc']?.toString() ?? '-'),
       ],
       docImages: _extractDocImages(docs, ['aadhar_front', 'aadhar_back', 'pan_front', 'pan_back', 'shop_proof_1', 'shop_proof_2', 'bank_proof']),
       onApprove: () => _approveSeller(shop),
@@ -327,11 +360,13 @@ class _KycReviewPageState extends State<KycReviewPage>
   // ── Rider Card ───────────────────────────────────────────────────────────
 
   Widget _buildRiderCard(Map<String, dynamic> rider) {
-    final profile = rider['profiles'] as Map<String, dynamic>? ?? {};
+    // RPC returns profiles as a JSONB object (already a Map)
+    final profileData = rider['profiles'];
+    final profile = (profileData is Map<String, dynamic>) ? profileData : <String, dynamic>{};
     final name = profile['full_name'] as String? ?? 'Unknown';
     final phone = profile['phone'] as String? ?? '';
-    final docs = rider['kyc_documents'] as Map<String, dynamic>? ?? {};
-    final submittedAt = DateTime.tryParse(rider['created_at'] ?? '');
+    final docs = (rider['kyc_documents'] as Map<String, dynamic>?) ?? {};
+    final submittedAt = DateTime.tryParse(rider['created_at']?.toString() ?? '');
 
     return _KycCard(
       emoji: '🏍️',
@@ -340,12 +375,14 @@ class _KycReviewPageState extends State<KycReviewPage>
       phone: phone,
       submittedAt: submittedAt,
       details: [
-        _DetailRow('Aadhaar', rider['aadhar_number'] ?? '-'),
-        _DetailRow('PAN', rider['pan_number'] ?? '-'),
-        _DetailRow('Driving License', rider['driving_license'] ?? '-'),
-        _DetailRow('Bank Holder', rider['bank_account_holder'] ?? '-'),
-        _DetailRow('Account No.', rider['bank_account_number'] ?? '-'),
-        _DetailRow('IFSC', rider['bank_ifsc'] ?? '-'),
+        _DetailRow('Aadhaar', rider['aadhar_number']?.toString() ?? '-'),
+        _DetailRow('PAN', rider['pan_number']?.toString() ?? '-'),
+        _DetailRow('Driving License', rider['driving_license']?.toString() ?? '-'),
+        _DetailRow('Vehicle Type', rider['vehicle_type']?.toString() ?? '-'),
+        _DetailRow('Reg. No.', rider['vehicle_reg_number']?.toString() ?? '-'),
+        _DetailRow('Bank Holder', rider['bank_account_holder']?.toString() ?? '-'),
+        _DetailRow('Account No.', rider['bank_account_number']?.toString() ?? '-'),
+        _DetailRow('IFSC', rider['bank_ifsc']?.toString() ?? '-'),
       ],
       docImages: _extractDocImages(docs, ['aadhar_front', 'aadhar_back', 'pan_front', 'pan_back', 'dl_front', 'dl_back', 'rc_front', 'rc_back']),
       onApprove: () => _approveRider(rider),

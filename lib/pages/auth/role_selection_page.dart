@@ -109,12 +109,14 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
               SafeArea(
                 child: AnimatedBuilder(
                   animation: _cardCtrl,
-                  builder: (_, __) => SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 28),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(height: 36),
+                  builder: (_, __) => LayoutBuilder(
+                    builder: (context, constraints) {
+                      final bool isSmallScreen = constraints.maxHeight < 700;
+                      
+                      Widget content = Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          if (isSmallScreen) const SizedBox(height: 32) else const Spacer(flex: 3),
 
                         // Logo
                         FadeTransition(
@@ -202,7 +204,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                           ),
                         ),
 
-                        const SizedBox(height: 44),
+                          if (isSmallScreen) const SizedBox(height: 40) else const Spacer(flex: 4),
 
                         // Heading
                         FadeTransition(
@@ -234,7 +236,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                           ),
                         ),
 
-                        const SizedBox(height: 32),
+                          if (isSmallScreen) const SizedBox(height: 32) else const Spacer(flex: 3),
 
                         // Role cards
                         _AnimatedRoleCard(
@@ -277,7 +279,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
 
 
 
-                        const SizedBox(height: 40),
+                          if (isSmallScreen) const SizedBox(height: 40) else const Spacer(flex: 4),
 
                         // CTA
                         GestureDetector(
@@ -334,9 +336,26 @@ class _RoleSelectionPageState extends State<RoleSelectionPage>
                           ),
                         ),
 
-                        const SizedBox(height: 36),
-                      ],
-                    ),
+                          if (isSmallScreen) const SizedBox(height: 32) else const Spacer(flex: 3),
+                        ],
+                      );
+
+                      if (isSmallScreen) {
+                        content = SingleChildScrollView(
+                          child: content,
+                        );
+                      }
+
+                      return Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 540),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 28),
+                            child: content,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),

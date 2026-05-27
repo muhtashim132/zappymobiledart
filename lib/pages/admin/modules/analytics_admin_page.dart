@@ -154,13 +154,14 @@ class _AnalyticsAdminPageState extends State<AnalyticsAdminPage> {
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 1.45,
+            childAspectRatio: 1.15,
             children: [
               AdminKpiCard(
-                title: 'Total Orders',
-                value: _totalOrders.toString(),
-                icon: Icons.receipt_long_rounded,
-                gradient: AdminGradients.primary,
+                title: 'Cancelled Orders',
+                value: _cancelledOrders.toString(),
+                subtitle: '$_totalOrders total orders',
+                icon: Icons.cancel_outlined,
+                gradient: AdminGradients.danger,
                 loading: _loading,
               ).animate().fadeIn(delay: 100.ms).scale(begin: const Offset(0.95, 0.95)),
               AdminKpiCard(
@@ -316,6 +317,7 @@ class _AnalyticsAdminPageState extends State<AnalyticsAdminPage> {
             interval: 6,
             getTitlesWidget: (v, _) {
               final h = v.toInt();
+              if (h % 6 != 0) return const SizedBox.shrink(); // Prevent label overlap
               final label = h == 0
                   ? '12AM'
                   : h == 12
@@ -323,7 +325,7 @@ class _AnalyticsAdminPageState extends State<AnalyticsAdminPage> {
                       : h > 12
                           ? '${h - 12}PM'
                           : '${h}AM';
-              return Text(label, style: AdminStyles.label());
+              return Text(label, style: AdminStyles.label(), softWrap: false, overflow: TextOverflow.visible);
             },
           ),
         ),

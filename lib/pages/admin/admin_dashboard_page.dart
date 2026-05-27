@@ -238,27 +238,37 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
           ),
         ],
       ),
-      child: NavigationBar(
-        selectedIndex: selected,
-        onDestinationSelected: (i) {
-          HapticFeedback.lightImpact();
-          setState(() => _currentIndex = i);
-        },
-        backgroundColor: Colors.transparent,
-        indicatorColor: AdminColors.primary.withValues(alpha: 0.2),
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: items
-            .map((n) => NavigationDestination(
-                  icon: n.badgeCount > 0
-                      ? Badge(
-                          label: Text('${n.badgeCount}'),
-                          child: Icon(n.icon, color: AdminColors.textMuted),
-                        )
-                      : Icon(n.icon, color: AdminColors.textMuted),
-                  selectedIcon: Icon(n.activeIcon, color: AdminColors.primary),
-                  label: n.label,
-                ))
-            .toList(),
+      child: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return AdminStyles.label(color: AdminColors.primary, size: 10).copyWith(fontWeight: FontWeight.w700);
+            }
+            return AdminStyles.label(color: AdminColors.textMuted, size: 10);
+          }),
+        ),
+        child: NavigationBar(
+          selectedIndex: selected,
+          onDestinationSelected: (i) {
+            HapticFeedback.lightImpact();
+            setState(() => _currentIndex = i);
+          },
+          backgroundColor: Colors.transparent,
+          indicatorColor: AdminColors.primary.withValues(alpha: 0.2),
+          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+          destinations: items
+              .map((n) => NavigationDestination(
+                    icon: n.badgeCount > 0
+                        ? Badge(
+                            label: Text('${n.badgeCount}'),
+                            child: Icon(n.icon, color: AdminColors.textMuted),
+                          )
+                        : Icon(n.icon, color: AdminColors.textMuted),
+                    selectedIcon: Icon(n.activeIcon, color: AdminColors.primary),
+                    label: n.label,
+                  ))
+              .toList(),
+        ),
       ),
     );
   }

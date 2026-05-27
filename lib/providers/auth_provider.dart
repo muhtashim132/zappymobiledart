@@ -190,31 +190,41 @@ class AuthProvider extends ChangeNotifier {
       final userId = _supabase.auth.currentUser?.id ?? _mockUserId;
       if (userId == null) return;
 
+      // Detect all roles across role-specific tables FIRST
+      final allRoles = await _detectUserRoles(userId);
+
       Map<String, dynamic>? data;
       try {
         final response =
             await _supabase.from('profiles').select().eq('id', userId).single();
         data = Map<String, dynamic>.from(response);
       } catch (e) {
-        // If profile doesn't exist, it might be an admin-only account
-        data = {
-          'id': userId,
-          'full_name': 'Admin User',
-          'phone': _supabase.auth.currentUser?.phone ?? _pendingPhone ?? '',
-          'role': 'admin'
-        };
+        // If profile doesn't exist, check if they are a real admin
+        if (allRoles.contains('admin')) {
+          data = {
+            'id': userId,
+            'full_name': 'Admin User',
+            'phone': _supabase.auth.currentUser?.phone ?? _pendingPhone ?? '',
+            'role': 'admin'
+          };
+        } else {
+          // User verified OTP but never completed profile setup!
+          _user = null;
+          notifyListeners();
+          return;
+        }
       }
 
       if (!data.containsKey('full_name') && data.containsKey('name')) {
         data['full_name'] = data['name'];
       }
 
-      // Detect all roles across role-specific tables
-      final allRoles = await _detectUserRoles(userId);
-      // If no roles detected yet, fall back to the profiles.role value
-      if (allRoles.isEmpty) allRoles.add(data['role'] ?? 'customer');
-
+      // Always include the primary profile role
       final primaryRole = data['role'] ?? 'customer';
+      if (!allRoles.contains(primaryRole)) {
+        allRoles.add(primaryRole);
+      }
+      
       // Prefer the requested role if valid, otherwise use primary
       final sessionRole =
           (preferredRole != null && allRoles.contains(preferredRole))
@@ -246,10 +256,24 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Switch the active session role (user must already be registered for that role).
-  void switchSessionRole(String role) {
+  Future<void> switchSessionRole(String role) async {
     if (_user == null) return;
     if (!_user!.activeRoles.contains(role)) return;
-    _user = _user!.copyWith(activeSessionRole: role);
+    
+    String verificationStatus = 'verified'; // Default
+    try {
+      if (role == 'seller') {
+        final sellerData = await _supabase.from('shops').select('verification_status').eq('seller_id', _user!.id).maybeSingle();
+        verificationStatus = sellerData?['verification_status'] ?? 'unverified';
+      } else if (role == 'delivery_partner') {
+        final deliveryData = await _supabase.from('delivery_partners').select('verification_status').eq('id', _user!.id).maybeSingle();
+        verificationStatus = deliveryData?['verification_status'] ?? 'unverified';
+      }
+    } catch (e) {
+      debugPrint('Error fetching verification status on role switch: $e');
+    }
+
+    _user = _user!.copyWith(activeSessionRole: role, verificationStatus: verificationStatus);
     notifyListeners();
   }
 
@@ -449,9 +473,17 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final userId = _supabase.auth.currentUser?.id ??
+      final user = _supabase.auth.currentUser;
+      final userId = user?.id ??
           '00000000-0000-0000-0000-${_pendingPhone?.replaceAll("+", "").padLeft(12, "0") ?? "000000000001"}';
-      final phone = _supabase.auth.currentUser?.phone ?? _pendingPhone ?? '';
+      
+      String phone = user?.phone ?? '';
+      if (phone.isEmpty) {
+        phone = user?.userMetadata?['phone'] as String? ?? '';
+      }
+      if (phone.isEmpty) {
+        phone = _pendingPhone ?? '';
+      }
 
       // Upsert into profiles (uses onConflict:'id' to avoid 42P10 error)
       try {
@@ -466,16 +498,33 @@ class AuthProvider extends ChangeNotifier {
         );
       } catch (profileError) {
         final s = profileError.toString();
+        if (s.contains('profiles_phone_key') || s.contains('23505')) {
+          _error = 'An account with this phone number already exists. If you recently deleted your account, please wait or contact support.';
+          _isLoading = false;
+          notifyListeners();
+          return _error;
+        }
         if (s.contains('full_name') || s.contains('PGRST204')) {
-          await _supabase.from('profiles').upsert(
-            {
-              'id': userId,
-              'role': role,
-              'name': fullName,
-              'phone': phone,
-            },
-            onConflict: 'id',
-          );
+          try {
+            await _supabase.from('profiles').upsert(
+              {
+                'id': userId,
+                'role': role,
+                'name': fullName,
+                'phone': phone,
+              },
+              onConflict: 'id',
+            );
+          } catch (innerError) {
+            final innerStr = innerError.toString();
+            if (innerStr.contains('profiles_phone_key') || innerStr.contains('23505')) {
+              _error = 'An account with this phone number already exists. If you recently deleted your account, please wait or contact support.';
+              _isLoading = false;
+              notifyListeners();
+              return _error;
+            }
+            rethrow;
+          }
         } else {
           rethrow;
         }

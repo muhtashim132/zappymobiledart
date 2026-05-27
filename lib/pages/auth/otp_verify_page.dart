@@ -125,25 +125,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
       final allRoles = auth.user?.activeRoles ?? [];
 
 
-      // ── Case A: requested role is NOT yet registered — add new role ────────
-      if (_requestedRole != null && !allRoles.contains(_requestedRole)) {
-        // User exists but chosen role is new for them → complete profile for new role
-        _showSnack(
-          '✅ Verified! Set up your ${_roleLabel(_requestedRole!)} profile.',
-          isError: false,
-        );
-        await Future.delayed(const Duration(milliseconds: 800));
-        if (!mounted) return;
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          AppRoutes.completeProfile,
-          (_) => false,
-          arguments: {'role': _requestedRole, 'isAddingRole': true},
-        );
-        return;
-      }
-
-      // ── Case B: user has multiple roles — let them pick which session ───────
+      // ── Case 1: User has multiple roles — ALWAYS let them pick ────────
       if (allRoles.length > 1) {
         setState(() {
           _showRolePicker = true;
@@ -152,7 +134,22 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
         return;
       }
 
-      // ── Case C: single role — go straight to that dashboard ────────────────
+      // ── Case 2: They requested a role they ALREADY have ────────
+      if (_requestedRole != null && allRoles.contains(_requestedRole)) {
+        _goToWelcomeThenDashboard(_requestedRole!);
+        return;
+      }
+
+      // ── Case 3: They requested a new role, show picker with option to add ────────
+      if (allRoles.isNotEmpty) {
+        setState(() {
+          _showRolePicker = true;
+          _availableRoles = allRoles;
+        });
+        return;
+      }
+
+      // Fallback (shouldn't be reached if they are 'existing' and have at least one role)
       final role = auth.user?.activeSessionRole ?? 'customer';
       _goToWelcomeThenDashboard(role);
     } else if (result == 'new') {
@@ -177,8 +174,8 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
     }
   }
 
-  void _selectRole(String role) {
-    context.read<AuthProvider>().switchSessionRole(role);
+  Future<void> _selectRole(String role) async {
+    await context.read<AuthProvider>().switchSessionRole(role);
     setState(() {
       _showRolePicker = false;
       _availableRoles = [];
@@ -568,157 +565,159 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
               right: -60,
               child: _blob(300, const Color(0xFF5E20D4), 0.14)),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                children: [
-                  const SizedBox(height: 16),
-                  const _MiniLogo(size: 64),
-                  const SizedBox(height: 20),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    const _MiniLogo(size: 64),
+                    const SizedBox(height: 20),
 
-                  // Role badge
-                  if (_requestedRole != null)
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: roleColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(30),
-                        border:
-                            Border.all(color: roleColor.withValues(alpha: 0.40)),
+                    // Role badge
+                    if (_requestedRole != null)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: roleColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(30),
+                          border:
+                              Border.all(color: roleColor.withValues(alpha: 0.40)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(_roleEmoji(_requestedRole!),
+                                style: const TextStyle(fontSize: 14)),
+                            const SizedBox(width: 6),
+                            Text(
+                              'As ${_roleLabel(_requestedRole!)}',
+                              style: GoogleFonts.outfit(
+                                  color: roleColor,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(_roleEmoji(_requestedRole!),
-                              style: const TextStyle(fontSize: 14)),
-                          const SizedBox(width: 6),
-                          Text(
-                            'As ${_roleLabel(_requestedRole!)}',
-                            style: GoogleFonts.outfit(
-                                color: roleColor,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
+
+                    Text(
+                      'Verify your number',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800),
                     ),
-
-                  Text(
-                    'Verify your number',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 8),
-                  RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(children: [
-                      TextSpan(
-                          text: 'OTP sent to ',
-                          style: GoogleFonts.outfit(
-                              color: Colors.white54, fontSize: 14)),
-                      TextSpan(
-                          text: maskedPhone,
-                          style: GoogleFonts.outfit(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700)),
-                    ]),
-                  ),
-                  const SizedBox(height: 40),
-
-                  // 6-box OTP input
-                  AnimatedBuilder(
-                    animation: _shakeAnim,
-                    builder: (_, child) => Transform.translate(
-                      offset: Offset(
-                          _shakeAnim.value > 0
-                              ? (8 * (0.5 - _shakeAnim.value).abs() * 4)
-                              : 0,
-                          0),
-                      child: child,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                          6,
-                          (i) => _OtpBox(
-                                controller: _ctrlList[i],
-                                focusNode: _focusList[i],
-                                onChanged: (v) => _onChanged(i, v),
-                                onBackspace: () => _onBackspace(i),
-                                index: i,
-                              )),
-                    ),
-                  ),
-
-                  const SizedBox(height: 36),
-
-                  // Verify button
-                  GestureDetector(
-                    onTap: _loading ? null : _verify,
-                    child: Container(
-                      width: double.infinity,
-                      height: 58,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                            colors: [Color(0xFFFFD700), Color(0xFFF4A800)]),
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                              color: const Color(0xFFF4C542).withValues(alpha: 0.40),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8))
-                        ],
-                      ),
-                      child: Center(
-                        child: _loading
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                    color: Colors.black, strokeWidth: 2.5))
-                            : Text('Verify OTP',
-                                style: GoogleFonts.outfit(
-                                    color: Colors.black,
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w800)),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Resend
-                  GestureDetector(
-                    onTap: _resendTimer == 0 ? _resend : null,
-                    child: RichText(
+                    const SizedBox(height: 8),
+                    RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(children: [
                         TextSpan(
-                            text: "Didn't receive OTP? ",
+                            text: 'OTP sent to ',
                             style: GoogleFonts.outfit(
-                                color: Colors.white38, fontSize: 14)),
+                                color: Colors.white54, fontSize: 14)),
                         TextSpan(
-                          text: _resendTimer > 0
-                              ? 'Resend in ${_resendTimer}s'
-                              : 'Resend',
-                          style: GoogleFonts.outfit(
-                            color: _resendTimer == 0
-                                ? const Color(0xFFF4C542)
-                                : Colors.white30,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                            text: maskedPhone,
+                            style: GoogleFonts.outfit(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700)),
                       ]),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 40),
+
+                    // 6-box OTP input
+                    AnimatedBuilder(
+                      animation: _shakeAnim,
+                      builder: (_, child) => Transform.translate(
+                        offset: Offset(
+                            _shakeAnim.value > 0
+                                ? (8 * (0.5 - _shakeAnim.value).abs() * 4)
+                                : 0,
+                            0),
+                        child: child,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                            6,
+                            (i) => _OtpBox(
+                                  controller: _ctrlList[i],
+                                  focusNode: _focusList[i],
+                                  onChanged: (v) => _onChanged(i, v),
+                                  onBackspace: () => _onBackspace(i),
+                                  index: i,
+                                )),
+                      ),
+                    ),
+
+                    const SizedBox(height: 36),
+
+                    // Verify button
+                    GestureDetector(
+                      onTap: _loading ? null : _verify,
+                      child: Container(
+                        width: double.infinity,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                              colors: [Color(0xFFFFD700), Color(0xFFF4A800)]),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                                color: const Color(0xFFF4C542).withValues(alpha: 0.40),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8))
+                          ],
+                        ),
+                        child: Center(
+                          child: _loading
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                      color: Colors.black, strokeWidth: 2.5))
+                              : Text('Verify OTP',
+                                  style: GoogleFonts.outfit(
+                                      color: Colors.black,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w800)),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Resend
+                    GestureDetector(
+                      onTap: _resendTimer == 0 ? _resend : null,
+                      child: RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(children: [
+                          TextSpan(
+                              text: "Didn't receive OTP? ",
+                              style: GoogleFonts.outfit(
+                                  color: Colors.white38, fontSize: 14)),
+                          TextSpan(
+                            text: _resendTimer > 0
+                                ? 'Resend in ${_resendTimer}s'
+                                : 'Resend',
+                            style: GoogleFonts.outfit(
+                              color: _resendTimer == 0
+                                  ? const Color(0xFFF4C542)
+                                  : Colors.white30,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ]),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
