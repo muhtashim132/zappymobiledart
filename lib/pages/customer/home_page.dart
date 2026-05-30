@@ -162,22 +162,39 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     _loadData(_categories[_selectedTabIndex]['name']!);
   }
 
-  Future<void> _loadData(String category) async {
+  /// Maps broad tab name → actual DB category values
+  static const Map<String, List<String>> _tabCategories = {
+    'Food': ['Restaurant', 'Fast Food', 'Bakery', 'Sweets & Mithai', 'Tea & Coffee', 'Ice Cream', 'Paan Shop', 'Beverages'],
+    'Grocery': ['Grocery', 'Fruits & Vegs', 'Dairy & Eggs', 'Butcher', 'Fish & Seafood', 'Organic'],
+    'Pharmacy': ['Pharmacy', 'Medical Store'],
+    'Clothing': ['Clothing', 'Footwear', 'Jewellery'],
+    'Electronics': ['Electronics', 'Mobile & Repair'],
+    'More': ['Hardware Store', 'Stationery', 'Toys & Games', 'Sports', 'Pet Supplies', 'Salon & Beauty', 'Flowers', 'Home Decor', 'Furniture', 'Auto Parts', 'Other'],
+  };
+
+  Future<void> _loadData(String tabName) async {
     setState(() => _isLoading = true);
     try {
       final locationProvider = context.read<LocationProvider>();
+      final subcategories = _tabCategories[tabName] ?? [tabName];
+
+      // Build OR filter for all subcategories in this tab
+      final catFilter = subcategories
+          .map((c) => 'category.eq.$c')
+          .join(',');
 
       final shopsResponse = await _supabase
           .from('shops')
           .select()
           .eq('is_active', true)
-          .or('category.eq.$category,categories.cs.{"$category"}');
+          .or(catFilter);
 
+      // Fetch products for all subcategories
       final productsResponse = await _supabase
           .from('products')
           .select()
           .eq('is_available', true)
-          .eq('category', category)
+          .inFilter('category', subcategories)
           .limit(20);
 
       if (mounted) {
@@ -190,14 +207,13 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           for (final shop in allShops) {
             shop.distanceKm = locationProvider.distanceTo(shop.location);
           }
-          // Keep shops within max radius OR shops with no stored GPS location
-          // (brand-new / unlocated shops should still be visible rather than silently hidden).
+          // Keep shops within 9 km OR shops with no GPS stored (show them as local)
           nearby = allShops
               .where((s) =>
-                  s.location.latitude == 0 && s.location.longitude == 0 ||
+                  (s.location.latitude == 0 && s.location.longitude == 0) ||
                   DeliveryCalculator.isWithinRange(s.distanceKm!))
               .toList()
-            ..sort((a, b) => a.distanceKm!.compareTo(b.distanceKm!));
+            ..sort((a, b) => (a.distanceKm ?? 0).compareTo(b.distanceKm ?? 0));
         } else {
           nearby = allShops;
         }
@@ -213,6 +229,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
+
     }
   }
 
