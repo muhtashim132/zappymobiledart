@@ -94,7 +94,29 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     // Load ALL shops/products on startup — no tab pre-selected
     _checkLocationAndLoad();
     _startNotifications();
+    // Subscribe to live GPS updates so distance filter stays accurate
+    _startLiveLocationUpdates();
   }
+
+  void _startLiveLocationUpdates() {
+    // Re-fetch data whenever GPS location changes significantly
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<LocationProvider>().addListener(_onLocationChanged);
+    });
+  }
+
+  void _onLocationChanged() {
+    // When location provider updates (new GPS fix), refresh the shop list
+    // so distance calculations use the latest coordinates
+    if (mounted && !_isLoading && _searchQuery.isEmpty) {
+      if (_selectedTabIndex < 0) {
+        _loadAllData();
+      } else {
+        _loadData(_categories[_selectedTabIndex]['name']! as String);
+      }
+    }
+  }
+
 
   void _startNotifications() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -109,10 +131,13 @@ class _CustomerHomePageState extends State<CustomerHomePage>
 
   @override
   void dispose() {
+    // Remove live location listener to avoid memory leaks
+    context.read<LocationProvider>().removeListener(_onLocationChanged);
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
   }
+
 
   /// Runs a Supabase text search for shops by name across all categories.
   Future<void> _searchShops(String query) async {
@@ -190,15 +215,13 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     try {
       final locationProvider = context.read<LocationProvider>();
 
-      // DB column is 'average_rating' (see migration add_all_missing_schema_columns.sql line 62)
+      // No .order() on the server — some columns may not exist in the DB yet.
+      // All sorting is done client-side to prevent 400 errors.
       final shopsResponse = await _supabase
           .from('shops')
           .select()
-          .eq('is_active', true)
-          .order('average_rating', ascending: false);
+          .eq('is_active', true);
 
-      // BUG FIX: products table may not have sortable 'rating' index — fetch all
-      // available products; sort client-side so no server-side column error.
       final productsResponse = await _supabase
           .from('products')
           .select()
@@ -216,31 +239,37 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           }
           nearby = allShops
               .where((s) =>
+                  // Show shops with no GPS stored (0,0) OR within 9 km
                   (s.location.latitude == 0 && s.location.longitude == 0) ||
                   DeliveryCalculator.isWithinRange(s.distanceKm!))
               .toList()
             ..sort((a, b) {
-              // Primary: rating descending
-              final ratingCmp = b.rating.compareTo(a.rating);
+              // Primary sort: higher rating first
+              final ratingCmp = (b.rating).compareTo(a.rating);
               if (ratingCmp != 0) return ratingCmp;
-              // Secondary: distance ascending
+              // Secondary: closer distance first
               return (a.distanceKm ?? 0).compareTo(b.distanceKm ?? 0);
             });
         } else {
-          nearby = allShops;
+          // No GPS yet — show all active shops sorted by rating
+          nearby = allShops
+            ..sort((a, b) => b.rating.compareTo(a.rating));
         }
 
         final prods = (productsResponse as List)
             .map((p) => ProductModel.fromMap(p))
             .toList()
           ..sort((a, b) => b.rating.compareTo(a.rating));
+
         setState(() {
           _shops = nearby;
           _products = prods;
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (e, st) {
+      // Log full error so we can debug exactly what Supabase query failed
+      debugPrint('_loadAllData ERROR: $e\n$st');
       if (mounted) setState(() => _isLoading = false);
     }
   }
@@ -256,13 +285,13 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           .map((c) => 'category.eq.$c')
           .join(',');
 
+      // No .order() calls — sort client-side to avoid column-not-found errors
       final shopsResponse = await _supabase
           .from('shops')
           .select()
           .eq('is_active', true)
           .or(catFilter);
 
-      // Fetch products for all subcategories
       final productsResponse = await _supabase
           .from('products')
           .select()
@@ -271,7 +300,6 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           .limit(20);
 
       if (mounted) {
-        // Compute distance for each shop and filter to max radius
         final allShops =
             (shopsResponse as List).map((s) => ShopModel.fromMap(s)).toList();
 
@@ -280,7 +308,6 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           for (final shop in allShops) {
             shop.distanceKm = locationProvider.distanceTo(shop.location);
           }
-          // Keep shops within 9 km OR shops with no GPS stored (show them as local)
           nearby = allShops
               .where((s) =>
                   (s.location.latitude == 0 && s.location.longitude == 0) ||
@@ -288,19 +315,22 @@ class _CustomerHomePageState extends State<CustomerHomePage>
               .toList()
             ..sort((a, b) => (a.distanceKm ?? 0).compareTo(b.distanceKm ?? 0));
         } else {
-          nearby = allShops;
+          nearby = allShops
+            ..sort((a, b) => b.rating.compareTo(a.rating));
         }
 
         final prods = (productsResponse as List)
             .map((p) => ProductModel.fromMap(p))
-            .toList();
+            .toList()
+          ..sort((a, b) => b.rating.compareTo(a.rating));
         setState(() {
           _shops = nearby;
           _products = prods;
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('_loadData ERROR: $e\n$st');
       if (mounted) setState(() => _isLoading = false);
     }
   }
