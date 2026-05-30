@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/location_provider.dart';
 import '../../theme/app_colors.dart';
 
 class ShopManagementPage extends StatefulWidget {
@@ -21,6 +22,7 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
 
   String? _shopId;
   bool _isActive = false;
+  String? _currentAddress;
 
   final _bannerCtrl = TextEditingController();
   final _openTimeCtrl = TextEditingController();
@@ -48,7 +50,7 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
     try {
       final resp = await _supabase
           .from('shops')
-          .select()
+          .select('id, is_active, banner_url, open_time, close_time, address')
           .eq('seller_id', auth.currentUserId ?? '')
           .maybeSingle();
 
@@ -60,6 +62,7 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
       setState(() {
         _shopId = resp['id'];
         _isActive = resp['is_active'] ?? false;
+        _currentAddress = resp['address'];
         _bannerCtrl.text = resp['banner_url'] ?? '';
         _openTimeCtrl.text = resp['open_time'] ?? '09:00';
         _closeTimeCtrl.text = resp['close_time'] ?? '21:00';
@@ -142,6 +145,39 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
       final h = picked.hour.toString().padLeft(2, '0');
       final m = picked.minute.toString().padLeft(2, '0');
       ctrl.text = '$h:$m';
+    }
+  }
+
+  Future<void> _updateLocation(BuildContext context) async {
+    if (_shopId == null) return;
+    setState(() => _isSaving = true);
+    try {
+      final locProv = context.read<LocationProvider>();
+      if (!locProv.hasLocation) {
+        await locProv.requestLocation();
+      }
+      final currentLoc = locProv.currentLocation;
+      if (currentLoc == null) {
+        _showSnack('Could not fetch location', isError: true);
+        return;
+      }
+      
+      final point = 'POINT(${currentLoc.longitude} ${currentLoc.latitude})';
+      final addr = await locProv.getAddressForLocation(currentLoc);
+      
+      await _supabase.from('shops').update({
+        'location': point,
+        'address': addr
+      }).eq('id', _shopId!);
+      
+      if (mounted) {
+        setState(() => _currentAddress = addr);
+      }
+      _showSnack('✅ Location updated to current position!');
+    } catch (e) {
+      _showSnack('Failed to update location: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -230,6 +266,63 @@ class _ShopManagementPageState extends State<ShopManagementPage> {
                                 onChanged: _toggleShopStatus,
                                 activeThumbColor: AppColors.success,
                                 inactiveThumbColor: AppColors.danger,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // ── Update Location ──────────────────────────────────────
+                        _sectionCard(
+                          isDark: isDark,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Shop Location',
+                                  style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15,
+                                      color: isDark ? Colors.white : const Color(0xFF0A0A14))),
+                              const SizedBox(height: 8),
+                              if (_currentAddress != null && _currentAddress!.isNotEmpty)
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withValues(alpha: 0.05),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.1)),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Icon(Icons.location_on, color: AppColors.primary, size: 20),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          _currentAddress!,
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 14,
+                                            color: isDark ? Colors.white70 : Colors.black87,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              Text('Update your shop location to your current GPS location so customers can find you within 9km.',
+                                  style: GoogleFonts.outfit(fontSize: 13, color: AppColors.textSecondary)),
+                              const SizedBox(height: 12),
+                              ElevatedButton.icon(
+                                onPressed: () => _updateLocation(context),
+                                icon: const Icon(Icons.my_location),
+                                label: const Text('Update to Current GPS'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                                  foregroundColor: AppColors.primary,
+                                  elevation: 0,
+                                ),
                               ),
                             ],
                           ),

@@ -86,13 +86,16 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
               context, AppRoutes.sellerPendingVerification, (_) => false);
         }
         return;
-      } else if (verificationStatus == null || verificationStatus == 'rejected' || verificationStatus == 'unverified') {
-         if (mounted) {
+      } else if (verificationStatus == null ||
+          verificationStatus == 'rejected' ||
+          verificationStatus == 'unverified') {
+        if (mounted) {
           Navigator.pushNamedAndRemoveUntil(
               context, AppRoutes.sellerKycUpload, (_) => false);
         }
         return;
       }
+      // 'approved' and 'verified' both proceed to the dashboard normally
 
       final shopId = shopData['id'];
       _startNotifications(shopId as String);
@@ -106,7 +109,8 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
           .from('orders')
           .select()
           .eq('shop_id', shopId)
-          .not('status', 'in', '("cancelled","seller_rejected")');
+          .neq('status', 'cancelled')
+          .neq('status', 'seller_rejected');
 
       final productsResp =
           await _supabase.from('products').select('id').eq('shop_id', shopId);
@@ -140,8 +144,15 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
         });
         _entryCtrl.forward();
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('Error loading seller stats: $e\n$stackTrace');
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to load dashboard data. Please try again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
         setState(() => _isLoading = false);
         _entryCtrl.forward();
       }
@@ -176,7 +187,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
           slivers: [
             // ── Animated Hero Header ──────────────────────────────────────
             SliverAppBar(
-              expandedHeight: 280,
+              expandedHeight: 240,
               pinned: true,
               elevation: 0,
               backgroundColor: const Color(0xFF0A1260),
@@ -213,7 +224,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                 0.10 + (1 - _bgAnim.value) * 0.06)),
                         // Stars
                         CustomPaint(
-                            size: Size(size.width, 280),
+                            size: Size(size.width, 240),
                             painter: _StarPainter(_bgCtrl.value)),
                         // Content
                         SafeArea(
@@ -283,14 +294,6 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                                     fontWeight: FontWeight.w900,
                                                     letterSpacing: -1)),
                                           ]),
-                                      const Spacer(),
-                                      _miniStatPill(
-                                          '${_stats['pending_orders']}',
-                                          'Pending',
-                                          const Color(0xFFFF8C42)),
-                                      const SizedBox(width: 8),
-                                      _miniStatPill('${_stats['total_orders']}',
-                                          'Orders', const Color(0xFF4C6EF5)),
                                     ],
                                   ),
                               ],
@@ -331,7 +334,8 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                         '${_stats['pending_orders']}',
                                         Icons.pending_actions_rounded,
                                         const Color(0xFFFF8C42),
-                                        const Color(0xFFE8590C))),
+                                        const Color(0xFFE8590C),
+                                        onTap: () => Navigator.pushNamed(context, AppRoutes.sellerOrders))),
                               ]),
                               const SizedBox(height: 14),
                               Row(children: [
@@ -341,7 +345,8 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                         '${_stats['total_orders']}',
                                         Icons.receipt_long_rounded,
                                         const Color(0xFF4C6EF5),
-                                        const Color(0xFF364FC7))),
+                                        const Color(0xFF364FC7),
+                                        onTap: () => Navigator.pushNamed(context, AppRoutes.sellerOrders))),
                                 const SizedBox(width: 14),
                                 Expanded(
                                     child: _statCard(
@@ -349,7 +354,8 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                         '${_stats['products']}',
                                         Icons.inventory_2_rounded,
                                         const Color(0xFFCC5DE8),
-                                        const Color(0xFF9C36B5))),
+                                        const Color(0xFF9C36B5),
+                                        onTap: () => Navigator.pushNamed(context, AppRoutes.manageProducts))),
                               ]),
                             ],
                           ),
@@ -385,31 +391,12 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                     subtitle: 'List items in your catalog',
                     badge: null,
                     isDark: isDark,
-                    onTap: () =>
-                        Navigator.pushNamed(context, AppRoutes.addProduct),
+                    onTap: () async {
+                      await Navigator.pushNamed(context, AppRoutes.addProduct);
+                      _loadStats();
+                    },
                   ),
-                  _actionTile(
-                    icon: Icons.inventory_2_rounded,
-                    gradient: const [Color(0xFFCC5DE8), Color(0xFF9C36B5)],
-                    title: 'Manage Inventory',
-                    subtitle: 'Update stock & prices',
-                    badge: null,
-                    isDark: isDark,
-                    onTap: () =>
-                        Navigator.pushNamed(context, AppRoutes.manageProducts),
-                  ),
-                  _actionTile(
-                    icon: Icons.receipt_long_rounded,
-                    gradient: const [Color(0xFFFF8C42), Color(0xFFE8590C)],
-                    title: 'Orders',
-                    subtitle: 'Accept and track orders',
-                    badge: _stats['pending_orders'] > 0
-                        ? '${_stats['pending_orders']} new'
-                        : null,
-                    isDark: isDark,
-                    onTap: () =>
-                        Navigator.pushNamed(context, AppRoutes.sellerOrders),
-                  ),
+
                   _actionTile(
                     icon: Icons.insights_rounded,
                     gradient: const [Color(0xFF51CF66), Color(0xFF2F9E44)],
@@ -442,6 +429,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                     onTap: () async {
                       await Navigator.pushNamed(
                           context, AppRoutes.shopManagement);
+                      setState(() => _isLoading = true);
                       _loadStats(); // refresh after returning
                     },
                   ),
@@ -495,28 +483,12 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
         splashRadius: 20,
       );
 
-  Widget _miniStatPill(String value, String label, Color color) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withValues(alpha: 0.4))),
-        child: Column(children: [
-          Text(value,
-              style: GoogleFonts.outfit(
-                  color: color, fontSize: 18, fontWeight: FontWeight.w900)),
-          Text(label,
-              style: GoogleFonts.outfit(
-                  color: color.withValues(alpha: 0.85),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600)),
-        ]),
-      );
-
   Widget _statCard(
-      String title, String value, IconData icon, Color light, Color dark) {
+      String title, String value, IconData icon, Color light, Color dark, {VoidCallback? onTap}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF141425) : Colors.white,
@@ -558,6 +530,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                 color: isDark ? Colors.white54 : Colors.grey.shade600,
                 fontWeight: FontWeight.w600)),
       ]),
+    ),
     );
   }
 

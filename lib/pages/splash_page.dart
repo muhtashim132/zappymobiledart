@@ -73,9 +73,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     if (session != null) {
       final auth = context.read<AuthProvider>();
       // Wait for profile to load after session restore
-      for (int i = 0; i < 10; i++) {
-        if (auth.user != null) break;
-        await Future.delayed(const Duration(milliseconds: 200));
+      for (int i = 0; i < 40; i++) {
+        if (auth.isProfileFetched) break;
+        await Future.delayed(const Duration(milliseconds: 250));
       }
       if (!mounted) return;
 
@@ -89,7 +89,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       final status = auth.user?.verificationStatus ?? 'verified';
 
       if (role == 'seller') {
-        if (status == 'verified') {
+        if (status == 'verified' || status == 'approved') {
           Navigator.pushReplacementNamed(context, AppRoutes.sellerDashboard);
         } else if (status == 'pending' || status == 'rejected') {
           Navigator.pushReplacementNamed(context, AppRoutes.sellerPendingVerification);
@@ -97,7 +97,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           Navigator.pushReplacementNamed(context, AppRoutes.sellerKycUpload);
         }
       } else if (role == 'delivery_partner') {
-        if (status == 'verified') {
+        if (status == 'verified' || status == 'approved') {
           Navigator.pushReplacementNamed(context, AppRoutes.deliveryDashboard);
         } else if (status == 'pending' || status == 'rejected') {
           Navigator.pushReplacementNamed(context, AppRoutes.deliveryPendingVerification);

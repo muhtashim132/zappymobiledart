@@ -125,12 +125,16 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
       final allRoles = auth.user?.activeRoles ?? [];
 
 
-      // ── Case 1: User has multiple roles — ALWAYS let them pick ────────
-      if (allRoles.length > 1) {
-        setState(() {
-          _showRolePicker = true;
-          _availableRoles = allRoles;
-        });
+      // ── Case 1: They requested a new role they don't have yet ────────
+      if (_requestedRole != null && !allRoles.contains(_requestedRole)) {
+        Navigator.pushReplacementNamed(
+          context,
+          AppRoutes.completeProfile,
+          arguments: {
+            'role': _requestedRole,
+            'isAddingRole': true,
+          },
+        );
         return;
       }
 
@@ -140,8 +144,8 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
         return;
       }
 
-      // ── Case 3: They requested a new role, show picker with option to add ────────
-      if (allRoles.isNotEmpty) {
+      // ── Case 3: No specific role requested, but user has multiple roles ────────
+      if (allRoles.length > 1) {
         setState(() {
           _showRolePicker = true;
           _availableRoles = allRoles;
@@ -149,7 +153,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
         return;
       }
 
-      // Fallback (shouldn't be reached if they are 'existing' and have at least one role)
+      // Fallback: No specific role requested, user has exactly 1 role
       final role = auth.user?.activeSessionRole ?? 'customer';
       _goToWelcomeThenDashboard(role);
     } else if (result == 'new') {
@@ -205,7 +209,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
     final status = auth.user?.verificationStatus ?? 'verified';
 
     if (role == 'seller') {
-      if (status == 'verified') {
+      if (status == 'verified' || status == 'approved') {
         Navigator.pushNamedAndRemoveUntil(
             context, AppRoutes.sellerDashboard, (_) => false);
       } else if (status == 'pending' || status == 'rejected') {
@@ -216,7 +220,7 @@ class _OtpVerifyPageState extends State<OtpVerifyPage>
             context, AppRoutes.sellerKycUpload, (_) => false);
       }
     } else if (role == 'delivery_partner') {
-      if (status == 'verified') {
+      if (status == 'verified' || status == 'approved') {
         Navigator.pushNamedAndRemoveUntil(
             context, AppRoutes.deliveryDashboard, (_) => false);
       } else if (status == 'pending' || status == 'rejected') {

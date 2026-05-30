@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 
 class AuthProvider extends ChangeNotifier {
   final _supabase = Supabase.instance.client;
   UserModel? _user;
   bool _isLoading = false;
+  bool _isProfileFetched = false;
   String? _error;
   String? _pendingPhone; // Phone waiting for OTP verification
   String? _mockUserId; // ID used for magic numbers
@@ -18,6 +20,7 @@ class AuthProvider extends ChangeNotifier {
 
   UserModel? get user => _user;
   bool get isLoading => _isLoading;
+  bool get isProfileFetched => _isProfileFetched;
   String? get error => _error;
   bool get isAuthenticated => _user != null;
   String? get currentUserId => _supabase.auth.currentUser?.id ?? _mockUserId;
@@ -45,6 +48,7 @@ class AuthProvider extends ChangeNotifier {
         _user = null;
         _mockUserId = null;
         _pendingPhone = null;
+        _isProfileFetched = false;
         notifyListeners();
       }
     });
@@ -188,7 +192,11 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _fetchProfile({String? preferredRole}) async {
     try {
       final userId = _supabase.auth.currentUser?.id ?? _mockUserId;
-      if (userId == null) return;
+      if (userId == null) {
+        _isProfileFetched = true;
+        notifyListeners();
+        return;
+      }
 
       // Detect all roles across role-specific tables FIRST
       final allRoles = await _detectUserRoles(userId);
@@ -210,6 +218,7 @@ class AuthProvider extends ChangeNotifier {
         } else {
           // User verified OTP but never completed profile setup!
           _user = null;
+          _isProfileFetched = true;
           notifyListeners();
           return;
         }
@@ -225,11 +234,23 @@ class AuthProvider extends ChangeNotifier {
         allRoles.add(primaryRole);
       }
       
-      // Prefer the requested role if valid, otherwise use primary
+      // Load last active role from SharedPreferences to persist role switching across reboots
+      final prefs = await SharedPreferences.getInstance();
+      final lastActiveRole = prefs.getString('last_active_role');
+      
+      String? targetRole = preferredRole;
+      if (targetRole == null && lastActiveRole != null && allRoles.contains(lastActiveRole)) {
+        targetRole = lastActiveRole;
+      }
+      
+      // Prefer the requested/saved role if valid, otherwise use primary
       final sessionRole =
-          (preferredRole != null && allRoles.contains(preferredRole))
-              ? preferredRole
+          (targetRole != null && allRoles.contains(targetRole))
+              ? targetRole
               : primaryRole;
+
+      // Save it immediately so it's fresh
+      await prefs.setString('last_active_role', sessionRole);
 
       // ── Detect verification status for the session role ──
       String verificationStatus = 'verified'; // Default for customer
@@ -249,9 +270,12 @@ class AuthProvider extends ChangeNotifier {
         'activeSessionRole': sessionRole,
         'verification_status': verificationStatus,
       });
+      _isProfileFetched = true;
       notifyListeners();
     } catch (e) {
       debugPrint('Profile fetch error: $e');
+      _isProfileFetched = true;
+      notifyListeners();
     }
   }
 
@@ -274,6 +298,11 @@ class AuthProvider extends ChangeNotifier {
     }
 
     _user = _user!.copyWith(activeSessionRole: role, verificationStatus: verificationStatus);
+    
+    // Persist the switched role so it survives an app restart
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('last_active_role', role);
+    
     notifyListeners();
   }
 
@@ -657,6 +686,8 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     try {
       await _supabase.auth.signOut();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('last_active_role');
     } catch (_) {}
     _user = null;
     _pendingPhone = null;

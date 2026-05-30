@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/location_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Helper dialogs for Profile Settings Page
 
@@ -322,11 +323,9 @@ void showPayoutSettingsDialog(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     builder: (ctx) {
       return FutureBuilder(
-          future: Supabase.instance.client
-              .from(table)
-              .select('bank_account_holder, bank_account_number, bank_ifsc')
-              .eq(idField, auth.currentUserId!)
-              .maybeSingle(),
+          future: table == 'shops'
+              ? Supabase.instance.client.rpc('get_my_shop_kyc').maybeSingle()
+              : Supabase.instance.client.rpc('get_my_rider_kyc').maybeSingle(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Padding(
@@ -472,5 +471,99 @@ void showGenericInfoDialog(BuildContext context, String title, String content) {
         TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))
       ],
     ),
+  );
+}
+
+void showNotificationSettingsDialog(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+    builder: (ctx) {
+      bool isLoading = true;
+      bool orderUpdates = true;
+      bool promoOffers = true;
+      bool sysAlerts = true;
+
+      return StatefulBuilder(builder: (context, setState) {
+        if (isLoading) {
+          SharedPreferences.getInstance().then((prefs) {
+            if (context.mounted) {
+              setState(() {
+                orderUpdates = prefs.getBool('notif_orders') ?? true;
+                promoOffers = prefs.getBool('notif_promo') ?? true;
+                sysAlerts = prefs.getBool('notif_sys') ?? true;
+                isLoading = false;
+              });
+            }
+          });
+          return const SizedBox(
+              height: 200, child: Center(child: CircularProgressIndicator()));
+        }
+
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+              24, 24, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Push Notification Settings',
+                  style: GoogleFonts.outfit(
+                      fontSize: 20, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 8),
+              Text('Choose which alerts you want to receive on this device.',
+                  style: GoogleFonts.outfit(color: Colors.grey.shade600, fontSize: 14)),
+              const SizedBox(height: 24),
+              
+              SwitchListTile(
+                title: Text('Order Updates', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                subtitle: Text('Status changes, rider assignments, tracking', style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade500)),
+                value: orderUpdates,
+                activeThumbColor: Theme.of(context).primaryColor,
+                onChanged: (val) async {
+                  setState(() => orderUpdates = val);
+                  final prefs = await SharedPreferences.getInstance();
+                  prefs.setBool('notif_orders', val);
+                },
+              ),
+              SwitchListTile(
+                title: Text('Promotions & Offers', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                subtitle: Text('Discounts, coupons, and marketing alerts', style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade500)),
+                value: promoOffers,
+                activeThumbColor: Theme.of(context).primaryColor,
+                onChanged: (val) async {
+                  setState(() => promoOffers = val);
+                  final prefs = await SharedPreferences.getInstance();
+                  prefs.setBool('notif_promo', val);
+                },
+              ),
+              SwitchListTile(
+                title: Text('System Alerts', style: GoogleFonts.outfit(fontWeight: FontWeight.w600)),
+                subtitle: Text('App updates, security notices, maintenance', style: GoogleFonts.outfit(fontSize: 12, color: Colors.grey.shade500)),
+                value: sysAlerts,
+                activeThumbColor: Theme.of(context).primaryColor,
+                onChanged: (val) async {
+                  setState(() => sysAlerts = val);
+                  final prefs = await SharedPreferences.getInstance();
+                  prefs.setBool('notif_sys', val);
+                },
+              ),
+              
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 56),
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white),
+                child: const Text('Done'),
+              ),
+            ],
+          ),
+        );
+      });
+    },
   );
 }

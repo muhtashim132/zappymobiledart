@@ -54,7 +54,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
   @override
   void initState() {
     super.initState();
-    _phoneNumber = Supabase.instance.client.auth.currentUser?.phone;
+    final auth = context.read<AuthProvider>();
+    _phoneNumber = Supabase.instance.client.auth.currentUser?.phone ?? auth.pendingPhone ?? auth.user?.phone;
     _animCtrl = AnimationController(
         duration: const Duration(milliseconds: 400), vsync: this)
       ..forward();
@@ -84,6 +85,12 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
       }
       // Skip the role-picker step — role was already chosen on RoleSelectionPage
       _step = 1;
+
+      // If the user already has a profile (adding a new role), pre-fill their name
+      final auth = context.read<AuthProvider>();
+      if (auth.user != null && auth.user!.fullName.isNotEmpty) {
+        _nameCtrl.text = auth.user!.fullName;
+      }
     }
   }
 
@@ -165,6 +172,18 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
     Map<String, dynamic>? extra;
     String roleName;
 
+    // Grab location if available (from tapping 📍 or auto-fetching)
+    final locProv = context.read<LocationProvider>();
+    String? locationPoint;
+    if (locProv.currentLocation != null) {
+      locationPoint =
+          'POINT(${locProv.currentLocation!.longitude} ${locProv.currentLocation!.latitude})';
+    } else {
+      _showSnack('Please tap the 📍 icon in the address field to set your exact location', isError: true);
+      setState(() => _loading = false);
+      return;
+    }
+
     switch (_role) {
       case _Role.customer:
         roleName = 'customer';
@@ -172,6 +191,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           'default_address': _addressCtrl.text.trim(),
           'pincode': _pincodeCtrl.text.trim(),
           'landmark': _landmarkCtrl.text.trim(),
+          'location': locationPoint,
         };
         break;
       case _Role.seller:
@@ -196,6 +216,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           'is_active': false,
           'verification_status': 'unverified',
           'gst_number': _gstCtrl.text.trim(),
+          'location': locationPoint,
           // Merge the group-specific fields directly into the shops row.
           // Supabase ignores keys that don't exist as columns, so unknown
           // fields will be silently dropped unless you add a `metadata` JSONB
@@ -217,6 +238,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage>
           'insurance_number': _insuranceCtrl.text.trim(),
           'pincode': _pincodeCtrl.text.trim(),
           'landmark': _landmarkCtrl.text.trim(),
+          'location': locationPoint,
           'is_available': false,
           'verification_status': 'unverified',
         };

@@ -7,9 +7,11 @@ import '../../providers/auth_provider.dart';
 import '../../config/app_categories.dart';
 import '../../theme/app_colors.dart';
 import '../../utils/validators.dart';
+import '../../models/product_model.dart';
 
 class AddProductPage extends StatefulWidget {
-  const AddProductPage({super.key});
+  final ProductModel? existingProduct;
+  const AddProductPage({super.key, this.existingProduct});
 
   @override
   State<AddProductPage> createState() => _AddProductPageState();
@@ -35,6 +37,7 @@ class _AddProductPageState extends State<AddProductPage> {
   String _medicineType = 'General';
   String? _shopId;
   List<XFile> _images = [];
+  List<String> _existingImageUrls = [];
 
   List<String> get _availableUnitTypes {
     if (_productCategory == 'Clothing' ||
@@ -50,6 +53,22 @@ class _AddProductPageState extends State<AddProductPage> {
   void initState() {
     super.initState();
     _fetchShopId();
+    if (widget.existingProduct != null) {
+      final p = widget.existingProduct!;
+      _nameController.text = p.name;
+      _priceController.text = p.price.toString();
+      _descriptionController.text = p.description ?? '';
+      _productCategory = p.category;
+      _menuCategoryController.text = p.menuCategory ?? '';
+      _isVeg = p.isVeg ?? false;
+      _isAvailable = p.isAvailable;
+      if (p.weightPerUnit != null) _weightController.text = p.weightPerUnit.toString();
+      _unitType = p.unitType;
+      if (p.totalQuantity != null) _inventoryController.text = p.totalQuantity.toString();
+      _requiresPrescription = p.requiresPrescription;
+      _medicineType = p.medicineType;
+      _existingImageUrls = List.from(p.images);
+    }
   }
 
   Future<void> _fetchShopId() async {
@@ -97,6 +116,10 @@ class _AddProductPageState extends State<AddProductPage> {
     setState(() => _images.removeAt(index));
   }
 
+  void _removeExistingImage(int index) {
+    setState(() => _existingImageUrls.removeAt(index));
+  }
+
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
     if (_shopId == null) {
@@ -119,7 +142,9 @@ class _AddProductPageState extends State<AddProductPage> {
         uploadedUrls.add(_supabase.storage.from('products').getPublicUrl(path));
       }
 
-      await _supabase.from('products').insert({
+      uploadedUrls.addAll(_existingImageUrls);
+
+      final data = {
         'shop_id': _shopId,
         'name': _nameController.text.trim(),
         'price': double.parse(_priceController.text),
@@ -142,12 +167,18 @@ class _AddProductPageState extends State<AddProductPage> {
             _productCategory == 'Pharmacy' ? _requiresPrescription : false,
         'medicine_type':
             _productCategory == 'Pharmacy' ? _medicineType : 'General',
-      });
+      };
+
+      if (widget.existingProduct == null) {
+        await _supabase.from('products').insert(data);
+      } else {
+        await _supabase.from('products').update(data).eq('id', widget.existingProduct!.id);
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Product added successfully! 🎉'),
+            content: Text('Product saved successfully! 🎉'),
             backgroundColor: AppColors.success,
           ),
         );
@@ -171,7 +202,7 @@ class _AddProductPageState extends State<AddProductPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Add Product')),
+      appBar: AppBar(title: Text(widget.existingProduct != null ? 'Edit Product' : 'Add Product')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -180,7 +211,7 @@ class _AddProductPageState extends State<AddProductPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Image Picker
-              if (_images.isEmpty)
+              if (_images.isEmpty && _existingImageUrls.isEmpty)
                 GestureDetector(
                   onTap: _pickImage,
                   child: Container(
@@ -223,11 +254,11 @@ class _AddProductPageState extends State<AddProductPage> {
                       height: 120,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
-                        itemCount: _images.length < 3
-                            ? _images.length + 1
-                            : _images.length,
+                        itemCount: _images.length + _existingImageUrls.length < 3
+                            ? _images.length + _existingImageUrls.length + 1
+                            : _images.length + _existingImageUrls.length,
                         itemBuilder: (context, index) {
-                          if (index == _images.length) {
+                          if (index == _images.length + _existingImageUrls.length) {
                             return GestureDetector(
                               onTap: _pickImage,
                               child: Container(
@@ -255,7 +286,9 @@ class _AddProductPageState extends State<AddProductPage> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
                                   image: DecorationImage(
-                                    image: FileImage(File(_images[index].path)),
+                                    image: index < _existingImageUrls.length
+                                        ? NetworkImage(_existingImageUrls[index])
+                                        : FileImage(File(_images[index - _existingImageUrls.length].path)) as ImageProvider,
                                     fit: BoxFit.cover,
                                   ),
                                 ),
@@ -264,7 +297,13 @@ class _AddProductPageState extends State<AddProductPage> {
                                 top: 4,
                                 right: 16,
                                 child: GestureDetector(
-                                  onTap: () => _removeImage(index),
+                                  onTap: () {
+                                    if (index < _existingImageUrls.length) {
+                                      _removeExistingImage(index);
+                                    } else {
+                                      _removeImage(index - _existingImageUrls.length);
+                                    }
+                                  },
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: const BoxDecoration(
@@ -528,8 +567,8 @@ class _AddProductPageState extends State<AddProductPage> {
                           child: CircularProgressIndicator(
                               color: Colors.white, strokeWidth: 2.5),
                         )
-                      : const Text('Add Product',
-                          style: TextStyle(
+                      : Text(widget.existingProduct != null ? 'Save Changes' : 'Add Product',
+                          style: const TextStyle(
                               fontSize: 16, fontWeight: FontWeight.w700)),
                 ),
               ),

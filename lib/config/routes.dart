@@ -19,6 +19,7 @@ import '../pages/customer/track_order_page.dart';
 import '../pages/customer/order_history_page.dart';
 import '../pages/seller/dashboard_page.dart';
 import '../pages/seller/add_product_page.dart';
+import '../models/product_model.dart';
 import '../pages/seller/manage_products_page.dart';
 import '../pages/seller/seller_orders_page.dart';
 import '../pages/seller/analytics_page.dart';
@@ -117,7 +118,8 @@ class AppRoutes {
       case sellerDashboard:
         return _build(const SellerDashboardPage(), routeSettings);
       case addProduct:
-        return _build(const AddProductPage(), routeSettings);
+        final a = routeSettings.arguments as Map<String, dynamic>?;
+        return _build(AddProductPage(existingProduct: a?['product'] as ProductModel?), routeSettings);
       case manageProducts:
         return _build(const ManageProductsPage(), routeSettings);
       case sellerOrders:

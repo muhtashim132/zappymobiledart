@@ -170,6 +170,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
       final shopsResponse = await _supabase
           .from('shops')
           .select()
+          .eq('is_active', true)
           .or('category.eq.$category,categories.cs.{"$category"}');
 
       final productsResponse = await _supabase

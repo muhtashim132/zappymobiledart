@@ -88,14 +88,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
               title: 'Notifications',
               subtitle: 'Manage push notifications',
               isDark: isDark,
-              onTap: () => showGenericInfoDialog(context, 'Notifications', 'Push notification settings will appear here.'),
-            ),
-            _buildSettingTile(
-              icon: Icons.security_rounded,
-              title: 'Privacy & Security',
-              subtitle: 'Password, PIN, and biometrics',
-              isDark: isDark,
-              onTap: () => showGenericInfoDialog(context, 'Privacy & Security', 'Biometrics and PIN lock are active.'),
+              onTap: () => showNotificationSettingsDialog(context),
             ),
             _buildSettingTile(
               icon: Icons.help_outline_rounded,
@@ -167,13 +160,6 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
           isDark: isDark,
           onTap: () => showSavedAddressesDialog(context),
         ),
-        _buildSettingTile(
-          icon: Icons.payment_outlined,
-          title: 'Payment Methods',
-          subtitle: 'Manage saved cards and UPI',
-          isDark: isDark,
-          onTap: () => showGenericInfoDialog(context, 'Payment Methods', 'UPI and Cards are managed securely via Razorpay during checkout.'),
-        ),
         const SizedBox(height: 24),
       ],
     );
@@ -194,7 +180,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         ),
         _buildSettingTile(
           icon: Icons.account_balance_outlined,
-          title: 'Payout Settings',
+          title: 'Payout Bank Account',
           subtitle: 'Bank accounts for settlements',
           isDark: isDark,
           onTap: () => showPayoutSettingsDialog(context, 'shops', 'seller_id'),
@@ -226,7 +212,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
         ),
         _buildSettingTile(
           icon: Icons.account_balance_outlined,
-          title: 'Bank Details',
+          title: 'Payout Bank Account',
           subtitle: 'Manage weekly payout account',
           isDark: isDark,
           onTap: () => showPayoutSettingsDialog(context, 'delivery_partners', 'id'),
@@ -325,7 +311,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     if (auth.user == null) return;
     showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
     try {
-      final res = await Supabase.instance.client.from('shops').select().eq('seller_id', auth.currentUserId ?? '').maybeSingle();
+      final res = await Supabase.instance.client.from('shops').select('id, name, address').eq('seller_id', auth.currentUserId ?? '').maybeSingle();
       if (mounted) Navigator.pop(context); // close loader
       if (res != null) {
         final nameCtrl = TextEditingController(text: res['name']);
@@ -373,7 +359,7 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
     if (auth.user == null) return;
     showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
     try {
-      final res = await Supabase.instance.client.from('delivery_partners').select().eq('id', auth.currentUserId ?? '').maybeSingle();
+      final res = await Supabase.instance.client.from('delivery_partners').select('id, vehicle_type, vehicle_reg_number').eq('id', auth.currentUserId ?? '').maybeSingle();
       if (mounted) Navigator.pop(context); // close loader
       if (res != null) {
         final typeCtrl = TextEditingController(text: res['vehicle_type'] ?? '');

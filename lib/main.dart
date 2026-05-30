@@ -73,7 +73,7 @@ class EnythingApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider(), lazy: false),
         // Bug #20: use the pre-loaded cartProvider instance
         ChangeNotifierProvider<CartProvider>.value(value: cartProvider),
         ChangeNotifierProvider(create: (_) => LocationProvider()),

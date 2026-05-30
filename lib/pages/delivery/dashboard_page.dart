@@ -150,6 +150,18 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
       final hasLocation = await _fetchRiderLocation();
       setState(() => _locationUnavailable = !hasLocation);
 
+      if (auth.currentUserId != null) {
+        final partnerResp = await _supabase
+            .from('delivery_partners')
+            .select('is_active')
+            .eq('id', auth.currentUserId!)
+            .maybeSingle();
+        if (partnerResp != null && partnerResp['is_active'] != null) {
+          _isOnline = partnerResp['is_active'] as bool;
+        }
+      }
+
+
       final available = await _supabase
           .from('orders')
           .select('*, order_items(*)')
@@ -161,8 +173,10 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
           .from('orders')
           .select('*, order_items(*)')
           .eq('delivery_partner_id', auth.currentUserId ?? '')
-          .not('status', 'in',
-              '("delivered","cancelled","seller_rejected","partner_rejected")');
+          .neq('status', 'delivered')
+          .neq('status', 'cancelled')
+          .neq('status', 'seller_rejected')
+          .neq('status', 'partner_rejected');
 
       final allAvailable = (available as List).map((o) {
         final model = OrderModel.fromMap(o);
@@ -412,7 +426,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
           slivers: [
             // ── Animated Header ───────────────────────────────────────────
             SliverAppBar(
-              expandedHeight: 220,
+              expandedHeight: 240,
               pinned: true,
               elevation: 0,
               backgroundColor: const Color(0xFF0D2137),
@@ -448,7 +462,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                             child: _blob(180, const Color(0xFF51CF66), 0.10)),
                         // Stars
                         CustomPaint(
-                            size: Size(size.width, 220),
+                            size: Size(size.width, 240),
                             painter: _MiniStarPainter(_bgCtrl.value)),
                         // Content
                         SafeArea(
@@ -497,11 +511,6 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
 
                                 // Stats row
                                 Row(children: [
-                                  _miniCard('${_myOrders.length}', 'Active',
-                                      const Color(0xFF4C6EF5)),
-                                  const SizedBox(width: 10),
-                                  _miniCard('${_availableOrders.length}',
-                                      'Available', const Color(0xFFFF8C42)),
                                   const Spacer(),
                                   GestureDetector(
                                     onTap: () => Navigator.pushNamed(
@@ -1119,26 +1128,6 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         onPressed: onTap,
         splashRadius: 20,
       );
-
-  Widget _miniCard(String value, String label, Color color) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withValues(alpha: 0.4))),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(value,
-              style: GoogleFonts.outfit(
-                  color: color, fontSize: 18, fontWeight: FontWeight.w900)),
-          const SizedBox(width: 6),
-          Text(label,
-              style: GoogleFonts.outfit(
-                  color: color.withValues(alpha: 0.8),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600)),
-        ]),
-      );
-
   Widget _blob(double size, Color color, double opacity) => Opacity(
         opacity: opacity.clamp(0.0, 1.0),
         child: Container(
@@ -1280,9 +1269,20 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                   activeThumbColor: AppColors.success,
                   secondary: Icon(Icons.power_settings_new_rounded,
                       color: _isOnline ? AppColors.success : Colors.grey),
-                  onChanged: (val) {
+                  onChanged: (val) async {
                     setSheetState(() => _isOnline = val);
                     setState(() => _isOnline = val);
+                    final auth = context.read<AuthProvider>();
+                    if (auth.currentUserId != null) {
+                      try {
+                        await _supabase
+                            .from('delivery_partners')
+                            .update({'is_active': val})
+                            .eq('id', auth.currentUserId!);
+                      } catch (e) {
+                        debugPrint('Error updating duty status: $e');
+                      }
+                    }
                     if (val) _loadOrders();
                   },
                 ),

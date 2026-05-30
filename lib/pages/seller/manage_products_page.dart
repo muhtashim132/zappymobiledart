@@ -146,10 +146,17 @@ class _ManageProductsPageState extends State<ManageProductsPage> {
                             decoration: BoxDecoration(
                               color: AppColors.primary.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(14),
+                              image: product.images.isNotEmpty
+                                  ? DecorationImage(
+                                      image: NetworkImage(product.images.first),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
                             ),
-                            child: const Icon(
-                                Icons.shopping_bag_outlined,
-                                color: AppColors.primary),
+                            child: product.images.isEmpty
+                                ? const Icon(Icons.shopping_bag_outlined,
+                                    color: AppColors.primary)
+                                : null,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -211,6 +218,18 @@ class _ManageProductsPageState extends State<ManageProductsPage> {
                                 onChanged: (_) =>
                                     _toggleAvailability(product),
                                 activeThumbColor: AppColors.primary,
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined,
+                                    color: AppColors.primary),
+                                onPressed: () async {
+                                  await Navigator.pushNamed(
+                                    context,
+                                    '/seller/add-product',
+                                    arguments: {'product': product},
+                                  );
+                                  _loadProducts();
+                                },
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline,
