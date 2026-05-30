@@ -190,13 +190,12 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     try {
       final locationProvider = context.read<LocationProvider>();
 
-      // BUG FIX: column is 'rating' not 'average_rating'; total_orders may not exist
-      // — use nullsLast to gracefully handle new shops with no rating yet.
+      // DB column is 'average_rating' (see migration add_all_missing_schema_columns.sql line 62)
       final shopsResponse = await _supabase
           .from('shops')
           .select()
           .eq('is_active', true)
-          .order('rating', ascending: false);
+          .order('average_rating', ascending: false);
 
       // BUG FIX: products table may not have sortable 'rating' index — fetch all
       // available products; sort client-side so no server-side column error.
@@ -643,11 +642,12 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                                           arguments: {'shopId': shop.id},
                                         ),
                                       ),
-                              );
-                            }),
-                          ] else if (!_isLoading &&
-                              locationProvider.hasLocation) ...[
-                            _buildNoShopsNearby(),
+                                );
+                              }),
+                          ] else if (!_isLoading) ...[
+                            locationProvider.hasLocation
+                                ? _buildNoShopsNearby()
+                                : _buildLocationRequired(),
                           ],
 
                           // Products Section
