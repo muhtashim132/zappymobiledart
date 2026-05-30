@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:convert';
 
 class LocationProvider extends ChangeNotifier {
@@ -156,5 +157,42 @@ class LocationProvider extends ChangeNotifier {
       debugPrint('getAddressForLocation error: $e');
     }
     return '${location.latitude.toStringAsFixed(5)}, ${location.longitude.toStringAsFixed(5)}';
+  }
+
+  /// Writes the current in-memory GPS coordinates back to the correct Supabase
+  /// table so that the stored location is always fresh.
+  ///
+  /// [role] must be one of: 'customer', 'seller', 'delivery_partner'
+  /// [userId] is the authenticated user's UUID.
+  Future<void> syncLocationToDatabase(String role, String userId) async {
+    if (_currentLocation == null) return;
+    final db = Supabase.instance.client;
+    final point =
+        'POINT(${_currentLocation!.longitude} ${_currentLocation!.latitude})';
+    try {
+      switch (role) {
+        case 'customer':
+          await db.from('customers').update({
+            'location': point,
+            if (_currentAddress.isNotEmpty && _currentAddress != 'Fetching address...')
+              'address': _currentAddress,
+          }).eq('id', userId);
+          break;
+        case 'seller':
+          // For sellers we update the shop location via seller_id
+          await db.from('shops').update({
+            'location': point,
+          }).eq('seller_id', userId);
+          break;
+        case 'delivery_partner':
+          await db.from('delivery_partners').update({
+            'location': point,
+          }).eq('id', userId);
+          break;
+      }
+      debugPrint('✅ Location synced to DB for role=$role');
+    } catch (e) {
+      debugPrint('syncLocationToDatabase error: $e');
+    }
   }
 }

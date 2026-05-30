@@ -190,9 +190,12 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           for (final shop in allShops) {
             shop.distanceKm = locationProvider.distanceTo(shop.location);
           }
-          // Keep only shops within max radius, sorted nearest-first
+          // Keep shops within max radius OR shops with no stored GPS location
+          // (brand-new / unlocated shops should still be visible rather than silently hidden).
           nearby = allShops
-              .where((s) => DeliveryCalculator.isWithinRange(s.distanceKm!))
+              .where((s) =>
+                  s.location.latitude == 0 && s.location.longitude == 0 ||
+                  DeliveryCalculator.isWithinRange(s.distanceKm!))
               .toList()
             ..sort((a, b) => a.distanceKm!.compareTo(b.distanceKm!));
         } else {

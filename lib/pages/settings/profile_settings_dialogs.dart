@@ -176,10 +176,17 @@ void showSavedAddressesDialog(BuildContext context) {
                             setState(() => fetchingLocation = true);
                             try {
                               final locProv = context.read<LocationProvider>();
+                              final authProv = context.read<AuthProvider>();
                               bool granted = await locProv.requestLocation();
                               if (granted && context.mounted) {
                                 currentCtrls['address']!.text =
                                     locProv.currentAddress;
+                                // Sync the fresh GPS coordinates to the database
+                                // so distance-based filtering always uses the latest location.
+                                final uid = authProv.currentUserId;
+                                if (uid != null) {
+                                  await locProv.syncLocationToDatabase('customer', uid);
+                                }
                               }
                             } finally {
                               if (context.mounted) {
