@@ -124,7 +124,7 @@ class ProductSearchCard extends StatelessWidget {
                             const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
                             const SizedBox(width: 4),
                             Text(
-                              product.rating.toStringAsFixed(1),
+                              product.rating > 0 ? product.rating.toStringAsFixed(1) : 'New',
                               style: GoogleFonts.outfit(
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13,
@@ -136,15 +136,29 @@ class ProductSearchCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      shop.name,
-                      style: GoogleFonts.outfit(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        if (shop.bannerImage != null && shop.bannerImage!.isNotEmpty) ...[
+                          CircleAvatar(
+                            radius: 8,
+                            backgroundImage: CachedNetworkImageProvider(shop.bannerImage!),
+                            backgroundColor: Colors.grey.shade200,
+                          ),
+                          const SizedBox(width: 6),
+                        ],
+                        Expanded(
+                          child: Text(
+                            shop.name,
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w500,
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                     const Spacer(),
                     Row(

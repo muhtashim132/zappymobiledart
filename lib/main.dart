@@ -13,6 +13,7 @@ import 'config/routes.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/location_provider.dart';
+import 'providers/favorites_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/rbac_provider.dart';
@@ -77,6 +78,7 @@ class EnythingApp extends StatelessWidget {
         // Bug #20: use the pre-loaded cartProvider instance
         ChangeNotifierProvider<CartProvider>.value(value: cartProvider),
         ChangeNotifierProvider(create: (_) => LocationProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritesProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => RbacProvider()),

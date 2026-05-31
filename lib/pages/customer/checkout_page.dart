@@ -452,15 +452,30 @@ class _CheckoutPageState extends State<CheckoutPage> {
                         ),
                       ),
                     ),
-                  OutlinedButton.icon(
-                    onPressed: () =>
-                        context.read<LocationProvider>().requestLocation(),
-                    icon: const Icon(Icons.my_location, size: 16),
-                    label: const Text('Update Location'),
-                    style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        textStyle: const TextStyle(fontSize: 12)),
+                  Row(
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () =>
+                            context.read<LocationProvider>().requestLocation(),
+                        icon: const Icon(Icons.my_location, size: 16),
+                        label: const Text('Update Location'),
+                        style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            textStyle: const TextStyle(fontSize: 12)),
+                      ),
+                      const SizedBox(width: 8),
+                      if (location.hasLocation)
+                        OutlinedButton.icon(
+                          onPressed: () => _showEditAddressSheet(context, location),
+                          icon: const Icon(Icons.edit_location_alt_outlined, size: 16),
+                          label: const Text('Add/Edit Details'),
+                          style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
+                              textStyle: const TextStyle(fontSize: 12)),
+                        ),
+                    ],
                   ),
                 ],
               ),
@@ -854,7 +869,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -864,16 +880,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
           Row(
             children: [
               Icon(icon, size: 18, color: iconColor),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
+                  const SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (title == 'Delivery Address')
+                    TextButton(
+                      onPressed: () => _showEditAddressSheet(context, context.read<LocationProvider>()),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: const Text('Edit', style: TextStyle(fontSize: 12)),
+                    ),
+                ],
               ),
-            ],
-          ),
           const SizedBox(height: 12),
           child,
         ],
@@ -983,6 +1010,84 @@ class _CheckoutPageState extends State<CheckoutPage> {
               fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
             )),
       ],
+    );
+  }
+
+  void _showEditAddressSheet(BuildContext context, LocationProvider location) {
+    final houseCtrl = TextEditingController(text: location.houseNumber);
+    final landmarkCtrl = TextEditingController(text: location.landmark);
+    final pincodeCtrl = TextEditingController(text: location.pincode);
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          left: 20,
+          right: 20,
+          top: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Address Details',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: houseCtrl,
+              decoration: const InputDecoration(
+                labelText: 'House / Flat / Block No.',
+                prefixIcon: Icon(Icons.home_outlined),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: landmarkCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Landmark (Optional)',
+                prefixIcon: Icon(Icons.flag_outlined),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: pincodeCtrl,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Pincode',
+                prefixIcon: Icon(Icons.pin_drop_outlined),
+              ),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () async {
+                  final auth = context.read<AuthProvider>();
+                  if (auth.currentUserId != null) {
+                    await location.updateAddressDetails(
+                      auth.currentUserId!,
+                      house: houseCtrl.text.trim(),
+                      mark: landmarkCtrl.text.trim(),
+                      pin: pincodeCtrl.text.trim(),
+                    );
+                  }
+                  if (ctx.mounted) Navigator.pop(ctx);
+                },
+                child: const Text('Save Details'),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
     );
   }
 }

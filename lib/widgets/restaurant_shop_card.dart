@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../models/shop_model.dart';
+import '../providers/favorites_provider.dart';
+import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
 import '../utils/delivery_calculator.dart';
 
@@ -19,6 +22,10 @@ class RestaurantShopCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final favs = context.watch<FavoritesProvider>();
+    final auth = context.watch<AuthProvider>();
+    final isFav = favs.isShopFavorite(shop.id);
+    
     final deliveryCharge =
         DeliveryCalculator.calculateDeliveryCharges(shop.distanceKm ?? 3.0, 0);
     final isFreeDelivery = deliveryCharge == 0;
@@ -98,16 +105,43 @@ class RestaurantShopCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(Icons.eco, color: Colors.white, size: 12),
-                          const SizedBox(width: 3),
-                          Text('Pure Veg',
+                          const SizedBox(width: 4),
+                          Text('PURE VEG',
                               style: GoogleFonts.outfit(
                                   color: Colors.white,
-                                  fontSize: 10,
+                                  fontSize: 9,
                                   fontWeight: FontWeight.w700)),
                         ],
                       ),
                     ),
                   ),
+                // Favorite Button
+                Positioned(
+                  top: 10,
+                  right: shop.isVegOnly ? 90 : 10, // Adjust position if Pure Veg badge is present
+                  child: GestureDetector(
+                    onTap: () {
+                      if (auth.currentUserId != null) {
+                        favs.toggleShopFavorite(auth.currentUserId!, shop.id);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4)
+                        ],
+                      ),
+                      child: Icon(
+                        isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        size: 16,
+                        color: isFav ? Colors.red : AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
                 // Free delivery tag
                 if (isFreeDelivery)
                   Positioned(

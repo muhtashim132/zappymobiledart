@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/product_model.dart';
 import '../../models/shop_model.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/favorites_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
 
@@ -65,7 +67,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     }
 
     final cart = context.watch<CartProvider>();
+    final favs = context.watch<FavoritesProvider>();
+    final auth = context.watch<AuthProvider>();
     final quantity = cart.getItemQuantity(_product!.id);
+    final isFav = favs.isProductFavorite(_product!.id);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -86,6 +91,27 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               ),
             ),
             actions: [
+              GestureDetector(
+                onTap: () {
+                  if (auth.currentUserId != null) {
+                    favs.toggleProductFavorite(auth.currentUserId!, _product!.id);
+                  }
+                },
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      color: isFav ? Colors.red : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
               GestureDetector(
                 onTap: () => Navigator.pushNamed(context, AppRoutes.cart),
                 child: Container(
@@ -169,13 +195,33 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(
-                          _product!.name,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            fontFamily: 'Poppins',
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _product!.name,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                fontFamily: 'Poppins',
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _product!.rating > 0 ? _product!.rating.toStringAsFixed(1) : 'New',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                       if (_product!.isVeg == true)
@@ -356,7 +402,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               )
             : SizedBox(
                 width: double.infinity,
-                height: 52,
                 child: ElevatedButton(
                   onPressed: () {
                     if (_shop != null) {

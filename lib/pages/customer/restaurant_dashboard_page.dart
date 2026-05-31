@@ -7,6 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../models/shop_model.dart';
 import '../../models/product_model.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/favorites_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
 
@@ -87,16 +89,24 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
   }
 
   List<String> get _menuCategories {
-    final cats = {'All'};
+    final Map<String, String> catsMap = {'all': 'All'};
     for (final p in _products) {
-      if (p.category.isNotEmpty) cats.add(p.category);
+      if (p.menuCategory != null && p.menuCategory!.trim().isNotEmpty) {
+        final lower = p.menuCategory!.trim().toLowerCase();
+        if (!catsMap.containsKey(lower)) {
+          catsMap[lower] = p.menuCategory!.trim();
+        }
+      }
     }
-    return cats.toList();
+    return catsMap.values.toList();
   }
 
   List<ProductModel> get _filteredProducts => _selectedCategory == 'All'
       ? _products
-      : _products.where((p) => p.category == _selectedCategory).toList();
+      : _products.where((p) => 
+          p.menuCategory != null && 
+          p.menuCategory!.trim().toLowerCase() == _selectedCategory.toLowerCase()
+        ).toList();
 
   @override
   Widget build(BuildContext context) {
@@ -149,6 +159,10 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
   // Hero SliverAppBar
   // ─────────────────────────────────────────────────────────────────────────
   Widget _buildHeroAppBar() {
+    final favs = context.watch<FavoritesProvider>();
+    final auth = context.watch<AuthProvider>();
+    final isFav = _shop != null ? favs.isShopFavorite(_shop!.id) : false;
+
     return SliverAppBar(
       expandedHeight: 260,
       pinned: true,
@@ -168,6 +182,28 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
         ),
       ),
       actions: [
+        GestureDetector(
+          onTap: () {
+            if (auth.currentUserId != null && _shop != null) {
+              favs.toggleShopFavorite(auth.currentUserId!, _shop!.id);
+            }
+          },
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Icon(
+                isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                color: isFav ? Colors.red : AppColors.textSecondary,
+                size: 20,
+              ),
+            ),
+          ),
+        ),
         GestureDetector(
           onTap: () => Navigator.pushNamed(context, AppRoutes.cart),
           child: Container(

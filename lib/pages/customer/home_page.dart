@@ -5,8 +5,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../providers/theme_provider.dart';
-import '../../providers/location_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/location_provider.dart';
+import '../../providers/favorites_provider.dart';
 import '../../providers/notification_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
@@ -90,6 +92,14 @@ class _CustomerHomePageState extends State<CustomerHomePage>
     _startNotifications();
     // Subscribe to live GPS updates so distance filter stays accurate
     _startLiveLocationUpdates();
+    
+    // Fetch favorites
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthProvider>();
+      if (auth.currentUserId != null) {
+        context.read<FavoritesProvider>().fetchFavorites(auth.currentUserId!);
+      }
+    });
   }
 
   void _startLiveLocationUpdates() {
@@ -188,9 +198,25 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         }
       }
 
+      // Ensure that if a shop matches because of a product, we don't accidentally
+      // have it in `shopResults` unless its name actually matches the query.
+      // But the Supabase query `ilike('name', '%$query%')` on `shops` already guarantees 
+      // it only matches by name.
+
       if (mounted) {
+        // Prevent race condition: if the user typed something else while this
+        // async request was flying, discard these results.
+        if (_searchQuery != query) return;
+
+        // Enforce extra client-side check to guarantee we only show shops that match
+        // the search query by name. (This fixes an issue where shops could appear
+        // when searching for a product name that doesn't match the shop name).
+        final finalShopResults = shopResults
+            .where((s) => s.name.toLowerCase().contains(query.toLowerCase()))
+            .toList();
+
         setState(() {
-          _searchResults = shopResults;
+          _searchResults = finalShopResults;
           _searchProductResults = prodResults;
           _searchProductShops = prodShops;
           _isSearching = false;
@@ -390,7 +416,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         slivers: [
           // ── Premium Modern AppBar ──────────────────────────────────────
           SliverAppBar(
-            expandedHeight: 170,
+            expandedHeight: 135,
             floating: true,
             pinned: true,
             elevation: 0,
@@ -990,6 +1016,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         setState(() => _navIndex = index);
         if (index == 1) Navigator.pushNamed(context, AppRoutes.cart);
         if (index == 2) Navigator.pushNamed(context, AppRoutes.orderHistory);
+        if (index == 3) Navigator.pushNamed(context, AppRoutes.favorites);
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),

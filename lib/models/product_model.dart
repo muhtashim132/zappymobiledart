@@ -40,7 +40,7 @@ class ProductModel {
     this.prepTimeMinutes,
     this.specialTags = const [],
     this.isAvailable = true,
-    this.rating = 4.0,
+    this.rating = 0.0,
     this.requiresPrescription = false,
     this.medicineType = 'General',
   });
@@ -74,7 +74,7 @@ class ProductModel {
       prepTimeMinutes: map['prep_time_minutes'],
       specialTags: List<String>.from(map['special_tags'] ?? []),
       isAvailable: map['is_available'] ?? true,
-      rating: (map['rating'] ?? 4.0).toDouble(),
+      rating: (map['rating'] ?? 0.0).toDouble(),
       requiresPrescription: map['requires_prescription'] ?? false,
       medicineType: map['medicine_type'] ?? 'General',
     );

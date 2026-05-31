@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
 import '../../models/shop_model.dart';
 import '../../models/product_model.dart';
+import '../../providers/favorites_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/common/zappy_map.dart';
@@ -64,6 +67,10 @@ class _RestaurantPageState extends State<RestaurantPage> {
           body: Center(child: Text('Shop not found')));
     }
 
+    final favs = context.watch<FavoritesProvider>();
+    final auth = context.watch<AuthProvider>();
+    final isFav = favs.isShopFavorite(_shop!.id);
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -82,6 +89,29 @@ class _RestaurantPageState extends State<RestaurantPage> {
                 child: const Icon(Icons.arrow_back, color: Colors.white),
               ),
             ),
+            actions: [
+              GestureDetector(
+                onTap: () {
+                  if (auth.currentUserId != null) {
+                    favs.toggleShopFavorite(auth.currentUserId!, _shop!.id);
+                  }
+                },
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      color: isFav ? Colors.red : AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 _shop!.name,
@@ -100,7 +130,7 @@ class _RestaurantPageState extends State<RestaurantPage> {
                         decoration: const BoxDecoration(
                             gradient: AppColors.foodGradient),
                         child: const Center(
-                            child: Text('🍽️',
+                            child: Text('🛍️',
                                 style: TextStyle(fontSize: 64))),
                       ),
                     )
@@ -109,7 +139,7 @@ class _RestaurantPageState extends State<RestaurantPage> {
                           const BoxDecoration(gradient: AppColors.foodGradient),
                       child: const Center(
                           child:
-                              Text('🍽️', style: TextStyle(fontSize: 64))),
+                              Text('🛍️', style: TextStyle(fontSize: 64))),
                     ),
             ),
           ),
@@ -227,7 +257,7 @@ class _RestaurantPageState extends State<RestaurantPage> {
               child: Row(
                 children: [
                   const Text(
-                    'Menu',
+                    'Products',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -261,9 +291,9 @@ class _RestaurantPageState extends State<RestaurantPage> {
                   padding: EdgeInsets.all(40),
                   child: Column(
                     children: [
-                      Text('🍽️', style: TextStyle(fontSize: 48)),
+                      Text('🛍️', style: TextStyle(fontSize: 48)),
                       SizedBox(height: 12),
-                      Text('No menu items available',
+                      Text('No products available',
                           style: TextStyle(color: AppColors.textSecondary)),
                     ],
                   ),

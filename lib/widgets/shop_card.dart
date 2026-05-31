@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../models/shop_model.dart';
+import '../providers/favorites_provider.dart';
+import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
 import '../utils/delivery_calculator.dart';
 
@@ -13,6 +16,10 @@ class ShopCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final favs = context.watch<FavoritesProvider>();
+    final auth = context.watch<AuthProvider>();
+    final isFav = favs.isShopFavorite(shop.id);
+    
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -83,6 +90,34 @@ class ShopCard extends StatelessWidget {
                           ),
                         ],
                       ],
+                    ),
+                  ),
+                ),
+                
+                // Favorite Button
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (auth.currentUserId != null) {
+                        favs.toggleShopFavorite(auth.currentUserId!, shop.id);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4)
+                        ],
+                      ),
+                      child: Icon(
+                        isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        size: 14,
+                        color: isFav ? Colors.red : AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 ),

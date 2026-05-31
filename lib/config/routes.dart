@@ -17,6 +17,7 @@ import '../pages/customer/cart_page.dart';
 import '../pages/customer/checkout_page.dart';
 import '../pages/customer/track_order_page.dart';
 import '../pages/customer/order_history_page.dart';
+import '../pages/customer/favorites_page.dart';
 import '../pages/seller/dashboard_page.dart';
 import '../pages/seller/add_product_page.dart';
 import '../models/product_model.dart';
@@ -53,6 +54,7 @@ class AppRoutes {
   static const String checkout = '/customer/checkout';
   static const String trackOrder = '/customer/track';
   static const String orderHistory = '/customer/orders';
+  static const String favorites = '/customer/favorites';
   static const String sellerDashboard = '/seller/dashboard';
   static const String addProduct = '/seller/add-product';
   static const String manageProducts = '/seller/products';
@@ -115,6 +117,8 @@ class AppRoutes {
             TrackOrderPage(orderId: a?['orderId'] ?? ''), routeSettings);
       case orderHistory:
         return _build(const OrderHistoryPage(), routeSettings);
+      case favorites:
+        return _build(const FavoritesPage(), routeSettings);
       case sellerDashboard:
         return _build(const SellerDashboardPage(), routeSettings);
       case addProduct:

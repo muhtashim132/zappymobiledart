@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/product_model.dart';
 import '../models/shop_model.dart';
 import '../providers/cart_provider.dart';
+import '../providers/favorites_provider.dart';
+import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
 import '../config/routes.dart';
 
@@ -17,7 +19,10 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
+    final favs = context.watch<FavoritesProvider>();
+    final auth = context.watch<AuthProvider>();
     final quantity = cart.getItemQuantity(product.id);
+    final isFav = favs.isProductFavorite(product.id);
 
     return GestureDetector(
       onTap: () => Navigator.pushNamed(
@@ -69,6 +74,34 @@ class ProductCard extends StatelessWidget {
                           ),
                   ),
                   
+                  // Favorite Button
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: GestureDetector(
+                      onTap: () {
+                        if (auth.currentUserId != null) {
+                          favs.toggleProductFavorite(auth.currentUserId!, product.id);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 8)
+                          ],
+                        ),
+                        child: Icon(
+                          isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                          size: 16,
+                          color: isFav ? Colors.red : AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
                   // Veg/NonVeg indicator
                   if (product.isVeg != null)
                     Positioned(
@@ -104,15 +137,37 @@ class ProductCard extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          product.name,
-                          style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: AppColors.textPrimary,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                product.name,
+                                style: GoogleFonts.outfit(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: AppColors.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.star_rounded, color: Colors.amber, size: 14),
+                                const SizedBox(width: 2),
+                                Text(
+                                  product.rating > 0 ? product.rating.toStringAsFixed(1) : 'New',
+                                  style: GoogleFonts.outfit(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 4),
                         Row(

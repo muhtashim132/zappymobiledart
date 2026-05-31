@@ -8,11 +8,28 @@ import 'dart:convert';
 class LocationProvider extends ChangeNotifier {
   LatLng? _currentLocation;
   String _currentAddress = '';
+  String _houseNumber = '';
+  String _landmark = '';
+  String _pincode = '';
   bool _isLoading = false;
   bool _permissionGranted = false;
 
   LatLng? get currentLocation => _currentLocation;
-  String get currentAddress => _currentAddress;
+  String get currentAddress {
+    if (_houseNumber.isEmpty && _landmark.isEmpty && _pincode.isEmpty) return _currentAddress;
+    final parts = <String>[];
+    if (_houseNumber.isNotEmpty) parts.add(_houseNumber);
+    if (_currentAddress.isNotEmpty && _currentAddress != 'Fetching address...') parts.add(_currentAddress);
+    if (_landmark.isNotEmpty) parts.add(_landmark);
+    if (_pincode.isNotEmpty) parts.add(_pincode);
+    return parts.isNotEmpty ? parts.join(', ') : _currentAddress;
+  }
+  
+  String get rawAddress => _currentAddress;
+  String get houseNumber => _houseNumber;
+  String get landmark => _landmark;
+  String get pincode => _pincode;
+
   bool get isLoading => _isLoading;
   bool get permissionGranted => _permissionGranted;
   bool get hasLocation => _currentLocation != null;
@@ -88,6 +105,25 @@ class LocationProvider extends ChangeNotifier {
     _currentAddress = address;
     _permissionGranted = true;
     notifyListeners();
+  }
+
+  Future<void> updateAddressDetails(String userId, {String? house, String? mark, String? pin}) async {
+    if (house != null) _houseNumber = house;
+    if (mark != null) _landmark = mark;
+    if (pin != null) _pincode = pin;
+    notifyListeners();
+    
+    try {
+      final db = Supabase.instance.client;
+      await db.from('customers').update({
+        if (house != null) 'address_home': {'house': house},
+        if (mark != null) 'landmark': mark,
+        if (pin != null) 'pincode': pin,
+        'address': currentAddress,
+      }).eq('id', userId);
+    } catch (e) {
+      debugPrint('updateAddressDetails error: $e');
+    }
   }
 
   double distanceTo(LatLng target) {
@@ -174,8 +210,8 @@ class LocationProvider extends ChangeNotifier {
         case 'customer':
           await db.from('customers').update({
             'location': point,
-            if (_currentAddress.isNotEmpty && _currentAddress != 'Fetching address...')
-              'address': _currentAddress,
+            if (currentAddress.isNotEmpty && currentAddress != 'Fetching address...')
+              'address': currentAddress,
           }).eq('id', userId);
           break;
         case 'seller':
