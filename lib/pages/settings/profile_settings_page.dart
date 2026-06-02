@@ -377,16 +377,16 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
                 children: [
                   Text('Vehicle Information', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 24),
-                  _buildReadOnlyField('Vehicle Type', res['vehicle_type'] ?? 'Not provided', isDark),
+                  _buildReadOnlyField('Vehicle Type', res['vehicle_type'] ?? 'Not specified', isDark),
                   const SizedBox(height: 16),
-                  _buildReadOnlyField('Registration Number', res['vehicle_reg_number'] ?? 'Not provided', isDark),
+                  _buildReadOnlyField('Registration Number', res['vehicle_reg_number'] ?? 'Not specified', isDark),
                   const SizedBox(height: 32),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(ctx),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -399,9 +399,14 @@ class _ProfileSettingsPageState extends State<ProfileSettingsPage> {
             );
           },
         );
+      } else {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vehicle details not found.')));
       }
     } catch (e) {
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Permission denied: Ask admin to grant SELECT on vehicle columns.')));
+      }
     }
   }
 

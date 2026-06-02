@@ -464,9 +464,14 @@ void showDocumentsDialog(BuildContext context) {
           );
         },
       );
+    } else {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Document details not found.')));
     }
   }).catchError((_) {
-    if (context.mounted) Navigator.pop(context);
+    if (context.mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Permission denied: Ask admin to grant SELECT on KYC columns.')));
+    }
   });
 }
 
