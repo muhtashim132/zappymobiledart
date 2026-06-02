@@ -188,7 +188,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
           slivers: [
             // ── Animated Hero Header ──────────────────────────────────────
             SliverAppBar(
-              expandedHeight: 270,
+              expandedHeight: 225,
               pinned: true,
               elevation: 0,
               backgroundColor: const Color(0xFF0A1260),
@@ -225,12 +225,12 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                 0.10 + (1 - _bgAnim.value) * 0.06)),
                         // Stars
                         CustomPaint(
-                            size: Size(size.width, 270),
+                            size: Size(size.width, 225),
                             painter: _StarPainter(_bgCtrl.value)),
                         // Content
                         SafeArea(
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                            padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -266,7 +266,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                              'Hi, ${auth.user?.fullName.split(' ').first ?? 'Seller'}! 👋',
+                                              'Hi, ${auth.user?.fullName.split(' ').first ?? 'Seller'}!',
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: GoogleFonts.outfit(
@@ -287,7 +287,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 20),
+                                const SizedBox(height: 12),
                                 // Revenue hero number
                                 if (!_isLoading)
                                   Row(
