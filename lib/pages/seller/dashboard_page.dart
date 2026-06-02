@@ -188,7 +188,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
           slivers: [
             // ── Animated Hero Header ──────────────────────────────────────
             SliverAppBar(
-              expandedHeight: 240,
+              expandedHeight: 270,
               pinned: true,
               elevation: 0,
               backgroundColor: const Color(0xFF0A1260),
@@ -225,7 +225,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                 0.10 + (1 - _bgAnim.value) * 0.06)),
                         // Stars
                         CustomPaint(
-                            size: Size(size.width, 240),
+                            size: Size(size.width, 270),
                             painter: _StarPainter(_bgCtrl.value)),
                         // Content
                         SafeArea(
