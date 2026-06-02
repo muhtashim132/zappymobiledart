@@ -20,6 +20,7 @@ import 'providers/rbac_provider.dart';
 import 'providers/team_provider.dart';
 import 'providers/audit_provider.dart';
 import 'providers/platform_config_provider.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,6 +61,9 @@ void main() async {
   final configProvider = PlatformConfigProvider();
   await configProvider.load();
 
+  // Initialize Notification Service
+  await NotificationService().init();
+
   runApp(EnythingApp(
     cartProvider: cartProvider,
     configProvider: configProvider,
@@ -70,6 +74,15 @@ void main() async {
 @pragma('vm:entry-point')
 Future<void> _fcmBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
+  await NotificationService().init();
+  
+  if (message.data.containsKey('type') && message.data['type'] == 'order_status_update') {
+    final status = message.data['status'];
+    if (status != null) {
+      NotificationService().updateOrderNotificationFromStatus(status);
+    }
+  }
+
   // No UI work here — just log or store the notification if needed
   debugPrint('FCM background: ${message.notification?.title}');
 }

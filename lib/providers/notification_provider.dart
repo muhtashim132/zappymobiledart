@@ -121,6 +121,20 @@ class NotificationProvider extends ChangeNotifier {
             final newStatus = payload.newRecord['status'] as String?;
             final oldStatus = payload.oldRecord['status'] as String?;
             final orderId = payload.newRecord['id'] as String?;
+            
+            final sellerAcceptedNow = payload.newRecord['seller_accepted'] == true;
+            final sellerAcceptedBefore = payload.oldRecord['seller_accepted'] == true;
+
+            // Notify customer when the shop accepts the order (before rider assignment)
+            if (sellerAcceptedNow && !sellerAcceptedBefore && newStatus == 'pending') {
+              _add(AppNotification(
+                id: '${orderId}_shop_accepted',
+                title: '🏪 Shop Accepted!',
+                body: 'The shop has accepted your order and is verifying the details. Waiting for a rider.',
+                orderId: orderId,
+              ));
+            }
+
             if (newStatus == null || newStatus == oldStatus) return;
 
             final (title, body) = _customerStatusMessage(newStatus, orderId);
@@ -447,6 +461,28 @@ class NotificationProvider extends ChangeNotifier {
         );
       default:
         return (null, null);
+    }
+  }
+
+  // ── Edge Function Push Notification Helper ────────────────────────────────
+  
+  /// Invokes the `send-push` Edge Function to deliver a Firebase Cloud Message
+  /// to the target user, so they get notified even when the app is closed.
+  Future<void> sendBackgroundPush({
+    required String targetUserId,
+    required String title,
+    required String body,
+    Map<String, String>? data,
+  }) async {
+    try {
+      await _supabase.functions.invoke('send-push', body: {
+        'user_id': targetUserId,
+        'title': title,
+        'body': body,
+        if (data != null) 'data': data,
+      });
+    } catch (e) {
+      debugPrint('Error sending background push: $e');
     }
   }
 

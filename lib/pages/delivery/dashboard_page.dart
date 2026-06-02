@@ -298,6 +298,31 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
             ? '✅ Order confirmed! Both shop & rider accepted.'
             : '✅ Saved. Waiting for shop to confirm.';
         _showSnack(msg);
+        
+        // Notify customer
+        final notifProv = context.read<NotificationProvider>();
+        if (order.sellerAccepted) {
+          notifProv.sendBackgroundPush(
+            targetUserId: order.customerId,
+            title: '✅ Order Confirmed!',
+            body: 'Both the shop and rider have accepted your order.',
+          );
+        }
+        
+        // Notify shop
+        if (order.shopId != null && shopLat != null) {
+          // We need to fetch shop's seller ID if we can, but since we don't have it directly in OrderModel, 
+          // we'll fetch it from the database quickly
+          _supabase.from('shops').select('seller_id').eq('id', order.shopId!).maybeSingle().then((shopData) {
+            if (shopData != null && shopData['seller_id'] != null) {
+              notifProv.sendBackgroundPush(
+                targetUserId: shopData['seller_id'],
+                title: '✅ Rider Assigned',
+                body: 'A rider has accepted the order and will pick it up soon.',
+              );
+            }
+          });
+        }
       }
       _loadOrders();
     } catch (e) {
@@ -344,6 +369,15 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         await _supabase.from('orders').update({
           'status': status,
         }).eq('id', order.id);
+        
+        if (mounted) {
+          context.read<NotificationProvider>().sendBackgroundPush(
+            targetUserId: order.customerId,
+            title: '🎉 Order Delivered!',
+            body: 'Your order has been delivered. Enjoy!',
+          );
+        }
+
         _stopLocationBroadcast();
         _loadOrders();
         // Show rating prompt after delivering
@@ -356,6 +390,23 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         await _supabase
             .from('orders')
             .update({'status': status}).eq('id', order.id);
+            
+        if (mounted) {
+          final notifProv = context.read<NotificationProvider>();
+          if (status == 'picked_up') {
+            notifProv.sendBackgroundPush(
+              targetUserId: order.customerId,
+              title: '🛵 Rider Picked Up',
+              body: 'Your order is on its way!',
+            );
+          } else if (status == 'out_for_delivery') {
+            notifProv.sendBackgroundPush(
+              targetUserId: order.customerId,
+              title: '🚀 Out for Delivery!',
+              body: 'Your order is almost there. Get ready!',
+            );
+          }
+        }
       }
       // Start broadcasting location when rider is out for delivery
       if (status == 'out_for_delivery') {

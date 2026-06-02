@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../models/order_model.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/common/rating_bottom_sheet.dart';
@@ -106,6 +107,21 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
             ? '✅ Order confirmed! Both shop & rider accepted.'
             : '✅ Your acceptance saved. Waiting for a delivery partner.';
         _showSnack(msg, isError: false);
+        
+        final notifProv = context.read<NotificationProvider>();
+        if (newStatus == 'confirmed') {
+          notifProv.sendBackgroundPush(
+            targetUserId: order.customerId,
+            title: '✅ Order Confirmed!',
+            body: 'Both the shop and rider have accepted your order.',
+          );
+        } else {
+          notifProv.sendBackgroundPush(
+            targetUserId: order.customerId,
+            title: '🏪 Shop Accepted!',
+            body: 'The shop has accepted your order and is verifying the details. Waiting for a rider.',
+          );
+        }
       }
       _loadOrders();
     } catch (e) {
@@ -119,6 +135,17 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
         'status': order.prescriptionUrls.isNotEmpty ? 'verification_failed' : 'seller_rejected',
         'seller_accepted': false,
       }).eq('id', order.id);
+      
+      if (mounted) {
+        context.read<NotificationProvider>().sendBackgroundPush(
+          targetUserId: order.customerId,
+          title: '😔 Order Rejected',
+          body: order.prescriptionUrls.isNotEmpty 
+            ? 'The medical store rejected your prescription. Order cancelled.'
+            : 'The shop could not accept your order.',
+        );
+      }
+      
       _loadOrders();
       _showSnack('Order rejected.', isError: true);
     } catch (e) {
@@ -173,14 +200,46 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
     );
   }
 
-  Future<void> _updateOrderStatus(String orderId, String status) async {
+  Future<void> _updateOrderStatus(OrderModel order, String status) async {
     try {
       final updateData = <String, dynamic>{'status': status};
       if (status == 'ready_for_pickup') {
         updateData['order_ready_time'] = DateTime.now().toIso8601String();
       }
 
-      await _supabase.from('orders').update(updateData).eq('id', orderId);
+      await _supabase.from('orders').update(updateData).eq('id', order.id);
+      
+      if (mounted) {
+        final notifProv = context.read<NotificationProvider>();
+        if (status == 'preparing') {
+          notifProv.sendBackgroundPush(
+            targetUserId: order.customerId,
+            title: '👨‍🍳 Order Being Prepared',
+            body: 'The shop is now preparing your order.',
+          );
+          if (order.deliveryPartnerId != null) {
+            notifProv.sendBackgroundPush(
+              targetUserId: order.deliveryPartnerId!,
+              title: '👨‍🍳 Shop Preparing',
+              body: 'The shop has started preparing the order. Head over!',
+            );
+          }
+        } else if (status == 'ready_for_pickup') {
+          notifProv.sendBackgroundPush(
+            targetUserId: order.customerId,
+            title: '📦 Ready for Pickup',
+            body: 'Your order is packed and waiting for the rider.',
+          );
+          if (order.deliveryPartnerId != null) {
+            notifProv.sendBackgroundPush(
+              targetUserId: order.deliveryPartnerId!,
+              title: '📦 Ready for Pickup!',
+              body: 'The order is ready. Go pick it up now!',
+            );
+          }
+        }
+      }
+      
       _loadOrders();
       _showSnack('Status → ${status.replaceAll('_', ' ')}', isError: false);
     } catch (e) {
@@ -778,7 +837,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => _updateOrderStatus(order.id, 'preparing'),
+                onPressed: () => _updateOrderStatus(order, 'preparing'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   shape: RoundedRectangleBorder(
@@ -795,7 +854,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () =>
-                    _updateOrderStatus(order.id, 'ready_for_pickup'),
+                    _updateOrderStatus(order, 'ready_for_pickup'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.accent,
                   shape: RoundedRectangleBorder(

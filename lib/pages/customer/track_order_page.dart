@@ -11,6 +11,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../services/notification_service.dart';
 
 class TrackOrderPage extends StatefulWidget {
   final String orderId;
@@ -110,6 +111,9 @@ class _TrackOrderPageState extends State<TrackOrderPage>
             _riderLatLng = LatLng(order.riderLat!, order.riderLng!);
           }
         });
+        
+        NotificationService().updateOrderNotificationFromStatus(order.status);
+        
         // If already delivered and not yet rated, show rating prompt
         if (order.status == 'delivered' && !order.hasCustomerRated) {
           WidgetsBinding.instance.addPostFrameCallback((_) => _showRatingFlow());
@@ -146,6 +150,9 @@ class _TrackOrderPageState extends State<TrackOrderPage>
                 // Clear rider marker once delivered
                 if (updatedOrder.status == 'delivered') _riderLatLng = null;
               });
+              
+              NotificationService().updateOrderNotificationFromStatus(updatedOrder.status);
+
               // Trigger rating prompt the moment delivery is confirmed
               if (wasDelivered && !updatedOrder.hasCustomerRated) {
                 Future.delayed(

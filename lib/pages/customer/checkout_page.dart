@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/location_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/notification_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../config/routes.dart';
 import '../../widgets/common/enything_map.dart';
@@ -428,6 +429,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
             .toList();
 
         await supabase.from('order_items').insert(itemsToInsert);
+
+        if (mounted) {
+          context.read<NotificationProvider>().sendBackgroundPush(
+            targetUserId: shop.sellerId,
+            title: '🔔 New Order!',
+            body: 'You have a new order of ₹${shopBaseSubtotal.toStringAsFixed(0)} waiting for your acceptance.',
+          );
+        }
       }
 
       cart.clear();

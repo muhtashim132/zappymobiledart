@@ -510,6 +510,10 @@ void showGenericInfoDialog(BuildContext context, String title, String content) {
 }
 
 void showNotificationSettingsDialog(BuildContext context) {
+  final auth = context.read<AuthProvider>();
+  final userId = auth.currentUserId;
+  if (userId == null) return;
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -523,14 +527,25 @@ void showNotificationSettingsDialog(BuildContext context) {
 
       return StatefulBuilder(builder: (context, setState) {
         if (isLoading) {
-          SharedPreferences.getInstance().then((prefs) {
+          Supabase.instance.client
+              .from('profiles')
+              .select('notif_orders, notif_promos, notif_system')
+              .eq('id', userId)
+              .maybeSingle()
+              .then((res) {
             if (context.mounted) {
               setState(() {
-                orderUpdates = prefs.getBool('notif_orders') ?? true;
-                promoOffers = prefs.getBool('notif_promo') ?? true;
-                sysAlerts = prefs.getBool('notif_sys') ?? true;
+                if (res != null) {
+                  orderUpdates = res['notif_orders'] ?? true;
+                  promoOffers = res['notif_promos'] ?? true;
+                  sysAlerts = res['notif_system'] ?? true;
+                }
                 isLoading = false;
               });
+            }
+          }).catchError((e) {
+            if (context.mounted) {
+              setState(() => isLoading = false);
             }
           });
           return const SizedBox(
@@ -559,8 +574,7 @@ void showNotificationSettingsDialog(BuildContext context) {
                 activeThumbColor: Theme.of(context).primaryColor,
                 onChanged: (val) async {
                   setState(() => orderUpdates = val);
-                  final prefs = await SharedPreferences.getInstance();
-                  prefs.setBool('notif_orders', val);
+                  await Supabase.instance.client.from('profiles').update({'notif_orders': val}).eq('id', userId);
                 },
               ),
               SwitchListTile(
@@ -570,8 +584,7 @@ void showNotificationSettingsDialog(BuildContext context) {
                 activeThumbColor: Theme.of(context).primaryColor,
                 onChanged: (val) async {
                   setState(() => promoOffers = val);
-                  final prefs = await SharedPreferences.getInstance();
-                  prefs.setBool('notif_promo', val);
+                  await Supabase.instance.client.from('profiles').update({'notif_promos': val}).eq('id', userId);
                 },
               ),
               SwitchListTile(
@@ -581,8 +594,7 @@ void showNotificationSettingsDialog(BuildContext context) {
                 activeThumbColor: Theme.of(context).primaryColor,
                 onChanged: (val) async {
                   setState(() => sysAlerts = val);
-                  final prefs = await SharedPreferences.getInstance();
-                  prefs.setBool('notif_sys', val);
+                  await Supabase.instance.client.from('profiles').update({'notif_system': val}).eq('id', userId);
                 },
               ),
               
