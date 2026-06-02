@@ -188,7 +188,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
           slivers: [
             // ── Animated Hero Header ──────────────────────────────────────
             SliverAppBar(
-              expandedHeight: 225,
+              expandedHeight: 200,
               pinned: true,
               elevation: 0,
               backgroundColor: const Color(0xFF0A1260),
@@ -225,7 +225,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                 0.10 + (1 - _bgAnim.value) * 0.06)),
                         // Stars
                         CustomPaint(
-                            size: Size(size.width, 225),
+                            size: Size(size.width, 200),
                             painter: _StarPainter(_bgCtrl.value)),
                         // Content
                         SafeArea(
@@ -234,30 +234,9 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Top bar (Icons at top right)
+                                // Top bar
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    _headerIcon(
-                                        isDark
-                                            ? Icons.light_mode_outlined
-                                            : Icons.dark_mode_outlined,
-                                        () => themeProvider.toggleTheme()),
-                                    const NotificationBell(
-                                      iconColor: Colors.white70,
-                                      containerColor: Colors.transparent,
-                                      badgeColor: Color(0xFFFF6B6B),
-                                    ),
-                                    _headerIcon(
-                                        Icons.settings_outlined,
-                                        () => Navigator.pushNamed(
-                                            context, AppRoutes.settings)),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                // Avatar and Profile Info
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _avatar(auth.user?.initials ?? 'S'),
                                     const SizedBox(width: 14),
@@ -265,14 +244,35 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                              'Hi, ${auth.user?.fullName.split(' ').first ?? 'Seller'}!',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: GoogleFonts.outfit(
-                                                  color: Colors.white,
-                                                  fontSize: 20,
-                                                  fontWeight: FontWeight.w800)),
+                                          Row(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                    'Hi, ${auth.user?.fullName.split(' ').first ?? 'Seller'}!',
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: GoogleFonts.outfit(
+                                                        color: Colors.white,
+                                                        fontSize: 20,
+                                                        fontWeight: FontWeight.w800)),
+                                              ),
+                                              _headerIcon(
+                                                  isDark
+                                                      ? Icons.light_mode_outlined
+                                                      : Icons.dark_mode_outlined,
+                                                  () => themeProvider.toggleTheme()),
+                                              const NotificationBell(
+                                                iconColor: Colors.white70,
+                                                containerColor: Colors.transparent,
+                                                badgeColor: Color(0xFFFF6B6B),
+                                              ),
+                                              _headerIcon(
+                                                  Icons.settings_outlined,
+                                                  () => Navigator.pushNamed(
+                                                      context, AppRoutes.settings)),
+                                            ],
+                                          ),
                                           const SizedBox(height: 4),
                                           Row(
                                             children: [
