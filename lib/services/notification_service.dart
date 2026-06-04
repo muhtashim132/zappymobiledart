@@ -13,7 +13,7 @@ class NotificationService {
 
   Future<void> init() async {
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('ic_launcher');
+        AndroidInitializationSettings('ic_notification');
 
     const InitializationSettings initializationSettings =
         InitializationSettings(android: initializationSettingsAndroid);
@@ -63,7 +63,7 @@ class NotificationService {
       ongoing: true, // This makes it persistent
       autoCancel: false,
       color: const Color(0xFF9C27B0), // Purple color to match theme
-      icon: 'ic_launcher',
+      icon: 'ic_notification',
     );
 
     final NotificationDetails platformChannelSpecifics =
