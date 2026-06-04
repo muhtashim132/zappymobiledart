@@ -122,6 +122,7 @@ serve(async (req) => {
 
     if (dbErr) throw dbErr;
     if (!rows || rows.length === 0) {
+      console.log(`No device tokens found for user_id: ${user_id}`);
       return new Response(
         JSON.stringify({ message: 'No device tokens for user', sent: 0 }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
@@ -177,12 +178,14 @@ serve(async (req) => {
       }
     }
 
+    console.log(`FCM Push Results: Sent ${sent}/${rows.length} tokens. Errors:`, errors);
     return new Response(
       JSON.stringify({ sent, total: rows.length, errors }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
 
   } catch (error) {
+    console.log(`Edge function crashed:`, error);
     return new Response(
       JSON.stringify({ error: String(error) }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
