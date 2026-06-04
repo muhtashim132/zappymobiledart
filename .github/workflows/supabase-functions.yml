@@ -29,3 +29,6 @@ jobs:
         
       - name: Deploy process-refund function
         run: supabase functions deploy process-refund --project-ref $PROJECT_ID
+        
+      - name: Deploy send-push function
+        run: supabase functions deploy send-push --project-ref $PROJECT_ID
