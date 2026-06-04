@@ -15,11 +15,8 @@ class NotificationService {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // We only care about Android for this specific feature right now
     const InitializationSettings initializationSettings =
-        InitializationSettings(
-      android: initializationSettingsAndroid,
-    );
+        InitializationSettings(android: initializationSettingsAndroid);
 
     await _flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
@@ -27,7 +24,26 @@ class NotificationService {
         // Handle notification tap if needed
       },
     );
+
+    // CRITICAL: Create the notification channel that FCM uses when app is killed.
+    // Must match the channel ID in AndroidManifest.xml and in the Edge Function.
+    // Without this channel created with HIGH importance, Android shows notifications silently.
+    final androidPlugin = _flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+    await androidPlugin?.createNotificationChannel(
+      const AndroidNotificationChannel(
+        'zappy_push_channel',         // must match AndroidManifest.xml
+        'Zappy Notifications',
+        description: 'Push notifications for orders and updates',
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+        showBadge: true,
+      ),
+    );
   }
+
 
   Future<void> showOrderProgressNotification({
     required String title,

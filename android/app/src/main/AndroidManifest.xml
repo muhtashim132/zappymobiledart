@@ -43,6 +43,17 @@
         <meta-data
             android:name="firebase_app_check_debug_secret"
             android:value="PASTE_YOUR_DEBUG_TOKEN_HERE"/>
+
+        <!-- Default FCM notification channel — required for Android 8+ to buzz/sound -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="zappy_push_channel"/>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher"/>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notification_color"/>
     </application>
     <queries>
         <intent>
