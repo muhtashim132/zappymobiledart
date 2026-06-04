@@ -142,7 +142,11 @@ serve(async (req) => {
         const message = {
           message: {
             token,
-            // DATA-ONLY message: forces Android to wake up _fcmBackgroundHandler
+            // CRITICAL FOR SAMSUNG/ANDROID 12: Swiping the app away force-stops it.
+            // If the app is force-stopped, data-only messages are blocked by the OS.
+            // Including 'notification' forces Google Play Services to draw it 
+            // on the system tray regardless of the app's background state.
+            notification: { title, body },
             data: {
               title,
               body,
@@ -150,6 +154,14 @@ serve(async (req) => {
             },
             android: {
               priority: 'high',
+              notification: {
+                channel_id: 'zappy_push_channel',
+                icon: 'ic_notification',
+                default_sound: true,
+                default_vibrate_timings: true,
+                notification_priority: 'PRIORITY_MAX',
+                visibility: 'PUBLIC',
+              },
             },
           },
         };
