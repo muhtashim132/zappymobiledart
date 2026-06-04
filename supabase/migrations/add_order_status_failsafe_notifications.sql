@@ -10,6 +10,7 @@ DECLARE
   v_title TEXT;
   v_body TEXT;
   v_notif_key TEXT;
+  v_seller_id UUID;
 BEGIN
   -- We only care about UPDATEs where the status changed
   IF TG_OP = 'UPDATE' AND NEW.status != OLD.status THEN
@@ -45,15 +46,20 @@ BEGIN
 
     -- 2. Seller Notifications
     IF NEW.shop_id IS NOT NULL THEN
-      IF NEW.status = 'awaiting_payment' THEN
-        INSERT INTO public.notifications (user_id, notif_key, title, body, order_id)
-        VALUES (NEW.shop_id, NEW.id || '_awaiting_payment', '⌛ Waiting for Customer Payment', 'Both you and the rider accepted. Customer is completing payment now.', NEW.id)
-        ON CONFLICT (user_id, notif_key) DO NOTHING;
-        
-      ELSIF NEW.status = 'cancelled' THEN
-        INSERT INTO public.notifications (user_id, notif_key, title, body, order_id)
-        VALUES (NEW.shop_id, NEW.id || '_cancelled', '❌ Order Cancelled', 'This order has been cancelled.', NEW.id)
-        ON CONFLICT (user_id, notif_key) DO NOTHING;
+      -- Get the actual User ID of the shop owner
+      SELECT seller_id INTO v_seller_id FROM public.shops WHERE id = NEW.shop_id;
+      
+      IF v_seller_id IS NOT NULL THEN
+        IF NEW.status = 'awaiting_payment' THEN
+          INSERT INTO public.notifications (user_id, notif_key, title, body, order_id)
+          VALUES (v_seller_id, NEW.id || '_awaiting_payment', '⌛ Waiting for Customer Payment', 'Both you and the rider accepted. Customer is completing payment now.', NEW.id)
+          ON CONFLICT (user_id, notif_key) DO NOTHING;
+          
+        ELSIF NEW.status = 'cancelled' THEN
+          INSERT INTO public.notifications (user_id, notif_key, title, body, order_id)
+          VALUES (v_seller_id, NEW.id || '_cancelled', '❌ Order Cancelled', 'This order has been cancelled.', NEW.id)
+          ON CONFLICT (user_id, notif_key) DO NOTHING;
+        END IF;
       END IF;
     END IF;
 
