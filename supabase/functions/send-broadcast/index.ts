@@ -153,8 +153,17 @@ serve(async (req: Request) => {
             ...(data ? { data } : {}),
             android: {
               notification: {
+                channel_id:   'enything_push_channel',
                 sound:        'default',
                 click_action: 'FLUTTER_NOTIFICATION_CLICK',
+              },
+            },
+            apns: {
+              payload: {
+                aps: {
+                  sound: 'default',
+                  badge: 1,
+                },
               },
             },
           },

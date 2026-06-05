@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -68,7 +69,7 @@ class NotificationProvider extends ChangeNotifier {
       final response = await _supabase.from('device_tokens').upsert({
         'user_id': userId,
         'token': token,
-        'platform': 'android',
+        'platform': Platform.isIOS ? 'ios' : 'android',
         'role': role,
         'updated_at': DateTime.now().toIso8601String(),
       }, onConflict: 'user_id,token');
@@ -88,7 +89,7 @@ class NotificationProvider extends ChangeNotifier {
         final insertRes = await _supabase.from('device_tokens').insert({
           'user_id': userId,
           'token': token,
-          'platform': 'android',
+          'platform': Platform.isIOS ? 'ios' : 'android',
           'role': role,
         });
         debugPrint('FCM plain INSERT result: $insertRes');
@@ -102,7 +103,7 @@ class NotificationProvider extends ChangeNotifier {
         await _supabase.from('device_tokens').upsert({
           'user_id': userId,
           'token': newToken,
-          'platform': 'android',
+          'platform': Platform.isIOS ? 'ios' : 'android',
           'role': role,
           'updated_at': DateTime.now().toIso8601String(),
         }, onConflict: 'user_id,token');

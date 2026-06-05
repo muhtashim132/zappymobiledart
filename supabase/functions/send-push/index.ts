@@ -163,6 +163,14 @@ serve(async (req) => {
                 visibility: 'PUBLIC',
               },
             },
+            apns: {
+              payload: {
+                aps: {
+                  sound: 'default',
+                  badge: 1,
+                },
+              },
+            },
           },
         };
 

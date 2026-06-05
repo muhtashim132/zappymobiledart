@@ -33,8 +33,8 @@ class NotificationService {
             AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.createNotificationChannel(
       const AndroidNotificationChannel(
-        'zappy_push_channel',         // must match AndroidManifest.xml
-        'Zappy Notifications',
+        'enything_push_channel',         // must match AndroidManifest.xml
+        'Enything Notifications',
         description: 'Push notifications for orders and updates',
         importance: Importance.max,
         playSound: true,
