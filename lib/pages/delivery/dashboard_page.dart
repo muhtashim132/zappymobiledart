@@ -56,6 +56,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
 
   // FCM foreground message subscription — triggers _loadOrders() on push
   StreamSubscription? _fcmForegroundSub;
+  RealtimeChannel? _realtimeChannel;
 
   @override
   void initState() {
@@ -84,6 +85,19 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
       _fcmForegroundSub = FirebaseMessaging.onMessage.listen((_) {
         if (mounted) _loadOrders();
       });
+
+      // Also listen to realtime postgres changes so we don't miss anything (like cancellations)
+      _realtimeChannel = _supabase
+          .channel('delivery-orders-$userId')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'orders',
+            callback: (_) {
+              if (mounted) _loadOrders();
+            },
+          )
+          .subscribe();
     });
   }
 
@@ -91,6 +105,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
   void dispose() {
     _locationBroadcastTimer?.cancel();
     _fcmForegroundSub?.cancel();
+    _realtimeChannel?.unsubscribe();
     _bgCtrl.dispose();
     super.dispose();
   }
