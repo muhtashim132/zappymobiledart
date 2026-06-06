@@ -257,8 +257,9 @@ class OrderModel {
   bool get isFullyConfirmed => sellerAccepted && partnerAccepted;
 
   /// Grand total as displayed to customer at checkout.
-  double get grandTotal =>
-      totalAmount + deliveryCharges + multiShopSurcharge + platformFee;
+  double get grandTotal => grandTotalCollected > 0
+      ? grandTotalCollected
+      : totalAmount + gstItemTotal + deliveryCharges + multiShopSurcharge + platformFee;
 
   /// Total GST across the entire order (items + delivery + platform).
   double get totalGstInOrder => gstItemTotal + gstDelivery + gstPlatform;
@@ -289,6 +290,11 @@ class OrderModel {
     double? shopLat,
     double? shopLng,
     String? cancelledReason,
+    double? waitTimePenalty,
+    bool? waitTimeDisputed,
+    List<String>? prescriptionUrls,
+    String? rejectionMessage,
+    double? gstItemTotal,
   }) {
     return OrderModel(
       id: id,
@@ -310,7 +316,7 @@ class OrderModel {
       riderPhone: riderPhone ?? this.riderPhone,
       paymentMethod: paymentMethod,
       cancelledReason: cancelledReason ?? this.cancelledReason,
-      rejectionMessage: rejectionMessage,
+      rejectionMessage: rejectionMessage ?? this.rejectionMessage,
       cartGroupId: cartGroupId,
       acceptanceDeadline: acceptanceDeadline,
       paymentDeadline: paymentDeadline,
@@ -318,8 +324,8 @@ class OrderModel {
       partnerAccepted: partnerAccepted ?? this.partnerAccepted,
       arrivedAtShopTime: arrivedAtShopTime,
       orderReadyTime: orderReadyTime,
-      waitTimePenalty: waitTimePenalty,
-      waitTimeDisputed: waitTimeDisputed,
+      waitTimePenalty: waitTimePenalty ?? this.waitTimePenalty,
+      waitTimeDisputed: waitTimeDisputed ?? this.waitTimeDisputed,
       hasCustomerRated: hasCustomerRated ?? this.hasCustomerRated,
       hasSellerRated: hasSellerRated ?? this.hasSellerRated,
       hasDeliveryRated: hasDeliveryRated ?? this.hasDeliveryRated,
@@ -331,7 +337,7 @@ class OrderModel {
       shopLat: shopLat ?? this.shopLat,
       shopLng: shopLng ?? this.shopLng,
       // Preserve frozen financial fields unchanged
-      gstItemTotal: gstItemTotal,
+      gstItemTotal: gstItemTotal ?? this.gstItemTotal,
       s9_5GstAmount: s9_5GstAmount,
       nonFoodGstAmount: nonFoodGstAmount,
       gstDelivery: gstDelivery,
@@ -342,7 +348,7 @@ class OrderModel {
       gatewayDeduction: gatewayDeduction,
       grandTotalCollected: grandTotalCollected,
       gstRateSnapshot: gstRateSnapshot,
-      prescriptionUrls: prescriptionUrls,
+      prescriptionUrls: prescriptionUrls ?? this.prescriptionUrls,
       estimatedDistanceKm: estimatedDistanceKm,
       shopPrepTimeSnapshot: shopPrepTimeSnapshot,
     );

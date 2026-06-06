@@ -44,7 +44,7 @@ class _FinanceAdminPageState extends State<FinanceAdminPage>
   Future<void> _fetch() async {
     try {
       final orders = await _db.from('orders').select(
-          'grand_total_collected, seller_payout, rider_payout, created_at, status, id, refund_id, refund_status, gst_item_total, gst_delivery, gst_platform');
+          'grand_total_collected, seller_payout, rider_earnings, enything_commission, created_at, status, id, refund_id, refund_status, gst_item_total, gst_delivery, gst_platform');
       
       final wList = await _db.from('withdrawals').select('*, profiles:user_id(full_name)').order('requested_at', ascending: false);
       _withdrawals = List<Map<String, dynamic>>.from(wList);
@@ -52,11 +52,12 @@ class _FinanceAdminPageState extends State<FinanceAdminPage>
         ..sort((a, b) => (b['created_at'] ?? '').compareTo(a['created_at'] ?? ''));
       _gmv = orders.fold<double>(
           0, (s, o) => s + ((o['grand_total_collected'] as num?)?.toDouble() ?? 0));
-      _commission = _gmv * 0.05;
+      _commission = orders.fold<double>(
+          0, (s, o) => s + ((o['enything_commission'] as num?)?.toDouble() ?? 0));
       _sellerPayouts = orders.fold<double>(
           0, (s, o) => s + ((o['seller_payout'] as num?)?.toDouble() ?? 0));
       _riderEarnings = orders.fold<double>(
-          0, (s, o) => s + ((o['rider_payout'] as num?)?.toDouble() ?? 0));
+          0, (s, o) => s + ((o['rider_earnings'] as num?)?.toDouble() ?? 0));
       _pendingSettlements = orders.where((o) => o['status'] == 'delivered').length;
     } catch (e) {
       debugPrint('Finance load error: $e');

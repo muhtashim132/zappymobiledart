@@ -75,6 +75,10 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       // Wait for profile to load after session restore
       for (int i = 0; i < 40; i++) {
         if (auth.isProfileFetched) break;
+        if (auth.error != null) {
+          if (mounted) _showNetworkErrorRetry();
+          return;
+        }
         await Future.delayed(const Duration(milliseconds: 250));
       }
       if (!mounted) return;
@@ -114,6 +118,29 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       // No active session — go to role selection first, then OTP
       Navigator.pushReplacementNamed(context, AppRoutes.roleSelect);
     }
+  }
+
+  void _showNetworkErrorRetry() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Connection Error', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Text('Failed to load profile data. Please check your internet connection.', style: GoogleFonts.outfit(color: Colors.white70)),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<AuthProvider>().retryProfileFetch();
+              _navigate();
+            },
+            child: Text('Retry', style: GoogleFonts.outfit(color: const Color(0xFF4C6EF5), fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

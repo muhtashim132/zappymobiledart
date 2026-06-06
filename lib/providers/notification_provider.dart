@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/notification_service.dart';
 
 /// A single in-app notification entry.
@@ -67,36 +68,43 @@ class NotificationProvider extends ChangeNotifier {
       debugPrint('FCM token obtained: ${token == null ? "NULL - FAILED" : token.substring(0, 20) + "..."}');
       if (token == null) return;
 
-      // Try upsert first, then plain insert as fallback
-      final response = await _supabase.from('device_tokens').upsert({
-        'user_id': userId,
-        'token': token,
-        'platform': Platform.isIOS ? 'ios' : 'android',
-        'role': role,
-        'updated_at': DateTime.now().toIso8601String(),
-      }, onConflict: 'user_id,token');
-
-      debugPrint('FCM token upsert done. Response: $response');
-
-      // Verify it was actually saved
-      final check = await _supabase
-          .from('device_tokens')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('token', token)
-          .maybeSingle();
-      if (check == null) {
-        // Upsert silently failed — try plain insert
-        debugPrint('FCM token NOT found after upsert - trying plain INSERT...');
-        final insertRes = await _supabase.from('device_tokens').insert({
+      final prefs = await SharedPreferences.getInstance();
+      final cachedToken = prefs.getString('fcm_token_$userId');
+      if (cachedToken == token) {
+        debugPrint('FCM token unchanged, skipping DB upsert');
+      } else {
+        // Try upsert first, then plain insert as fallback
+        final response = await _supabase.from('device_tokens').upsert({
           'user_id': userId,
           'token': token,
           'platform': Platform.isIOS ? 'ios' : 'android',
           'role': role,
-        });
-        debugPrint('FCM plain INSERT result: $insertRes');
-      } else {
-        debugPrint('FCM token confirmed saved in DB: ${check['id']}');
+          'updated_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'user_id,token');
+
+        debugPrint('FCM token upsert done. Response: $response');
+
+        // Verify it was actually saved
+        final check = await _supabase
+            .from('device_tokens')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('token', token)
+            .maybeSingle();
+        if (check == null) {
+          // Upsert silently failed — try plain insert
+          debugPrint('FCM token NOT found after upsert - trying plain INSERT...');
+          final insertRes = await _supabase.from('device_tokens').insert({
+            'user_id': userId,
+            'token': token,
+            'platform': Platform.isIOS ? 'ios' : 'android',
+            'role': role,
+          });
+          debugPrint('FCM plain INSERT result: $insertRes');
+        } else {
+          debugPrint('FCM token confirmed saved in DB: ${check['id']}');
+        }
+        await prefs.setString('fcm_token_$userId', token);
       }
 
       // Listen for token refresh and re-register
@@ -109,6 +117,8 @@ class NotificationProvider extends ChangeNotifier {
           'role': role,
           'updated_at': DateTime.now().toIso8601String(),
         }, onConflict: 'user_id,token');
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('fcm_token_$userId', newToken);
       });
 
       // Handle foreground messages by adding them as in-app notifications
@@ -124,11 +134,11 @@ class NotificationProvider extends ChangeNotifier {
         ));
         
         // Show a heads-up buzz notification even when app is open!
-        NotificationService().showNotification(
-          title: notif.title ?? 'Zappy',
-          body: notif.body ?? '',
-          payload: jsonEncode(message.data),
-        );
+        // NotificationService().showNotification(
+        //   title: notif.title ?? 'Zappy',
+        //   body: notif.body ?? '',
+        //   payload: jsonEncode(message.data),
+        // );
         
         notifyListeners();
       });

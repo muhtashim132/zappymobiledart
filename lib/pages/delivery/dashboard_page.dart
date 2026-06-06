@@ -90,9 +90,22 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
       _realtimeChannel = _supabase
           .channel('delivery-orders-$userId')
           .onPostgresChanges(
-            event: PostgresChangeEvent.all,
+            event: PostgresChangeEvent.insert,
             schema: 'public',
             table: 'orders',
+            callback: (_) {
+              if (mounted) _loadOrders();
+            },
+          )
+          .onPostgresChanges(
+            event: PostgresChangeEvent.update,
+            schema: 'public',
+            table: 'orders',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'delivery_partner_id',
+              value: userId,
+            ),
             callback: (_) {
               if (mounted) _loadOrders();
             },
@@ -423,7 +436,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
   Future<void> _updateStatus(OrderModel order, String status) async {
     try {
       if (status == 'arrived') {
-        if (order.shopLat == null || order.shopLng == null) {
+        if (order.shopLat == null || order.shopLng == null || order.shopLat == 0.0 || order.shopLng == 0.0) {
           _showSnack('⚠️ Shop location missing. Cannot verify arrival.', isError: true);
           return;
         }

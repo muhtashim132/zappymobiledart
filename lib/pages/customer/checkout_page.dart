@@ -128,7 +128,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final discount = cart.calculateDeliveryDiscount(distanceKm);
       final effectiveBase = baseDelivery >= 0 ? baseDelivery : 25.0;
       final riderEarnings = effectiveBase + surcharge + heavyFee;
-      final totalDelivery = riderEarnings + cart.smallCartFee - discount;
+      final totalDelivery = cart.totalDeliveryCharges(distanceKm);
 
       // Payment method is always 'upi' now (COD removed)
       const paymentMethod = 'upi';

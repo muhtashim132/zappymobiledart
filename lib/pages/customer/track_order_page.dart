@@ -41,6 +41,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
   late Animation<double> _pulseAnim;
   RealtimeChannel? _channel;
   LatLng? _riderLatLng;
+  bool _razorpayOpened = false;
 
   // Payment (Razorpay) — triggered when both seller & rider accept
   late Razorpay _razorpay;
@@ -139,12 +140,15 @@ class _TrackOrderPageState extends State<TrackOrderPage>
     try {
       final response = await _supabase
           .from('orders')
-          .select()
+          .select('*, order_items(*)')
           .eq('id', widget.orderId)
           .single();
 
       if (mounted) {
         final order = OrderModel.fromMap(response);
+        order.items = (response['order_items'] as List? ?? [])
+            .map((i) => OrderItem.fromMap(i))
+            .toList();
         setState(() {
           _order = order;
           _isLoading = false;
@@ -277,11 +281,18 @@ class _TrackOrderPageState extends State<TrackOrderPage>
   Future<void> _autoCancelOnTimeout(String expectedStatus) async {
     if (_order == null || _order!.status != expectedStatus) return;
     try {
-      await _supabase
+      final updateQuery = _supabase
           .from('orders')
-          .update({'status': 'cancelled', 'cancelled_reason': 'timeout'}).eq(
-              'id', widget.orderId);
-      if (mounted) {
+          .update({'status': 'cancelled', 'cancelled_reason': 'timeout'});
+          
+      if (_order!.cartGroupId != null) {
+        updateQuery.eq('cart_group_id', _order!.cartGroupId!);
+      } else {
+        updateQuery.eq('id', widget.orderId);
+      }
+      
+      final res = await updateQuery.eq('status', expectedStatus).select();
+      if (mounted && res.isNotEmpty) {
         setState(() {
           _order =
               _order!.copyWith(status: 'cancelled', cancelledReason: 'timeout');
@@ -373,14 +384,16 @@ class _TrackOrderPageState extends State<TrackOrderPage>
       if (mounted) {
         // BUG-6 FIX: Notify seller and broadcast to riders on retry
         final notifProv = context.read<NotificationProvider>();
-        notifProv.sendBackgroundPush(
-          targetUserId:
-              _order!.shopId!, // Will be translated to seller_id by function
-          title: '🔔 New Order! Accept now',
-          body:
-              'Order ₹${_order!.grandTotal.toStringAsFixed(0)} — Tap to accept. Customer pays AFTER you & rider accept. ⏱ 2 min window.',
-          data: {'order_id': response['id'], 'role': 'seller'},
-        );
+        final shopData = await _supabase.from('shops').select('seller_id').eq('id', _order!.shopId!).maybeSingle();
+        if (shopData != null && shopData['seller_id'] != null) {
+          notifProv.sendBackgroundPush(
+            targetUserId: shopData['seller_id'] as String,
+            title: '🔔 New Order! Accept now',
+            body:
+                'Order ₹${_order!.grandTotal.toStringAsFixed(0)} — Tap to accept. Customer pays AFTER you & rider accept. ⏱ 2 min window.',
+            data: {'order_id': response['id'], 'role': 'seller'},
+          );
+        }
         notifProv.sendBroadcastToAudience(
           audience: 'Riders',
           title: '🛵 New Order Nearby!',
@@ -760,6 +773,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
   }
 
   void _onPaymentError(PaymentFailureResponse response) {
+    _razorpayOpened = false;
     setState(() => _isProcessingPayment = false);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -772,6 +786,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
   }
 
   void _onExternalWallet(ExternalWalletResponse response) {
+    _razorpayOpened = false;
     setState(() => _isProcessingPayment = false);
   }
 
@@ -846,6 +861,10 @@ class _TrackOrderPageState extends State<TrackOrderPage>
 
       final auth = context.read<AuthProvider>();
       final razorpayKey = dotenv.maybeGet('RAZORPAY_KEY') ?? '';
+      
+      if (_razorpayOpened) return;
+      _razorpayOpened = true;
+      
       _razorpay.open(<String, dynamic>{
         'key': razorpayKey,
         'amount': amountInPaise,
@@ -901,6 +920,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
           ));
         }
         setState(() => _isProcessingPayment = false);
+        _razorpayOpened = false;
         return;
       }
 
@@ -914,6 +934,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
 
       _paymentCountdownTimer?.cancel();
       setState(() => _isProcessingPayment = false);
+      _razorpayOpened = false;
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

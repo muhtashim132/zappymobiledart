@@ -59,6 +59,10 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  void retryProfileFetch() {
+    _fetchProfile();
+  }
+
   // ─── Detect all roles for a given userId ────────────────────────────────
   /// Returns list of roles the user has already signed up for.
   Future<List<String>> _detectUserRoles(String userId) async {
@@ -90,38 +94,20 @@ class AuthProvider extends ChangeNotifier {
       if (delivery != null) roles.add('delivery_partner');
     } catch (_) {}
 
-    // â”€â”€ Admin / God Mode detection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    if (userId.endsWith('9999999996')) {
-      roles.add('admin');
-      _adminData = {
-        'id': userId,
-        'admin_level': 'superadmin',
-        'permissions': {
-          'view_financials': true,
-          'manage_shops': true,
-          'manage_riders': true,
-          'manage_admins': true,
-          'view_master_pnl': true,
-          'ban_users': true
-        },
-        'is_active': true,
-        'admin_password': 'admin',
-      };
-    } else {
-      try {
-        final admin = await _supabase
-            .from('admin_users')
-            .select('id, admin_level, is_active, admin_password')
-            .eq('id', userId)
-            .eq('is_active', true)
-            .maybeSingle();
-        if (admin != null) {
-          roles.add('admin');
-          _adminData = Map<String, dynamic>.from(admin);
-        }
-      } catch (e) {
-        debugPrint('Admin Check Error: $e');
+    // ── Admin detection ──────────────────────────────────────────────────
+    try {
+      final admin = await _supabase
+          .from('admin_users')
+          .select('id, admin_level, is_active')
+          .eq('id', userId)
+          .eq('is_active', true)
+          .maybeSingle();
+      if (admin != null) {
+        roles.add('admin');
+        _adminData = Map<String, dynamic>.from(admin);
       }
+    } catch (e) {
+      debugPrint('Admin Check Error: $e');
     }
 
     return roles;
@@ -134,47 +120,53 @@ class AuthProvider extends ChangeNotifier {
     final userId = currentUserId;
     if (userId == null || _adminData == null) return false;
 
-    final storedPassword = _adminData!['admin_password'] as String?;
-    if (storedPassword == null || storedPassword.isEmpty) return false;
+    try {
+      final isVerified = await _supabase.rpc(
+        'verify_admin_password',
+        params: {'p_admin_id': userId, 'p_password': password.trim()},
+      );
 
-    // Dev: plain-text comparison (swap with bcrypt Edge Function in prod)
-    if (password.trim() == storedPassword.trim()) {
-      _isAdminVerified = true;
+      if (isVerified == true) {
+        _isAdminVerified = true;
 
-      // ── Create admin session ──
-      try {
-        final sessionData = await _supabase.from('admin_sessions').insert({
-          'admin_id': userId,
-          'device_info': 'Enything Admin App', // You can use device_info package later
-        }).select('id').single();
+        // ── Create admin session ──
+        try {
+          final sessionData = await _supabase.from('admin_sessions').insert({
+            'admin_id': userId,
+            'device_info': 'Enything Admin App', // You can use device_info package later
+          }).select('id').single();
 
-        _currentSessionId = sessionData['id'];
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('admin_session_id', _currentSessionId!);
-      } catch (e) {
-        debugPrint('Failed to create admin session: $e');
+          _currentSessionId = sessionData['id'];
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('admin_session_id', _currentSessionId!);
+        } catch (e) {
+          debugPrint('Failed to create admin session: $e');
+        }
+
+        notifyListeners();
+
+        // Audit log: record login
+        try {
+          await _supabase.from('audit_logs').insert({
+            'actor_id': userId,
+            'actor_role': 'admin',
+            'action': 'admin_login',
+            'entity_type': 'system',
+            'metadata': {'timestamp': DateTime.now().toIso8601String()},
+          });
+          await _supabase
+              .from('admin_users')
+              .update({'last_login_at': DateTime.now().toIso8601String()}).eq(
+                  'id', userId);
+        } catch (_) {}
+
+        return true;
       }
-
-      notifyListeners();
-
-      // Audit log: record login
-      try {
-        await _supabase.from('audit_logs').insert({
-          'actor_id': userId,
-          'actor_role': 'admin',
-          'action': 'admin_login',
-          'entity_type': 'system',
-          'metadata': {'timestamp': DateTime.now().toIso8601String()},
-        });
-        await _supabase
-            .from('admin_users')
-            .update({'last_login_at': DateTime.now().toIso8601String()}).eq(
-                'id', userId);
-      } catch (_) {}
-
-      return true;
+      return false;
+    } catch (e) {
+      debugPrint('Admin password verification error: $e');
+      return false;
     }
-    return false;
   }
 
   /// Log an admin action to the activity log.

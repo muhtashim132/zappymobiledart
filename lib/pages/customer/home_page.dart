@@ -154,11 +154,11 @@ class _CustomerHomePageState extends State<CustomerHomePage>
 
   @override
   void dispose() {
+    _bannerTimer?.cancel();
     // Remove live location listener to avoid memory leaks
     context.read<LocationProvider>().removeListener(_onLocationChanged);
     _searchController.dispose();
     _bannerController.dispose();
-    _bannerTimer?.cancel();
     super.dispose();
   }
 
@@ -217,10 +217,19 @@ class _CustomerHomePageState extends State<CustomerHomePage>
 
       for (final p in productsResponse as List) {
         final product = ProductModel.fromMap(p);
-        prodResults.add(product);
-        if (p['shops'] != null) {
-          prodShops[product.id] = ShopModel.fromMap(p['shops']);
+        if (!product.isAvailable) continue;
+        if (p['shops'] == null) continue;
+        
+        final shop = ShopModel.fromMap(p['shops']);
+        if (!shop.isActive) continue;
+        
+        if (locationProvider.hasLocation && shop.location.latitude != 0) {
+          final d = locationProvider.distanceTo(shop.location);
+          if (!DeliveryCalculator.isWithinRange(d)) continue;
         }
+        
+        prodResults.add(product);
+        prodShops[product.id] = shop;
       }
 
       // Ensure that if a shop matches because of a product, we don't accidentally
@@ -403,7 +412,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
 
       final productsResponse = await _supabase
           .from('products')
-          .select()
+          .select('*, shops(*)')
           .inFilter('category', subcategories)
           .limit(100);
 
@@ -433,14 +442,24 @@ class _CustomerHomePageState extends State<CustomerHomePage>
           nearby = allShops..sort((a, b) => b.rating.compareTo(a.rating));
         }
 
-        final prods = (productsResponse as List)
-            .map((p) => ProductModel.fromMap(p))
-            .where((p) => p.isAvailable)
-            .toList()
-          ..sort((a, b) => b.rating.compareTo(a.rating));
+        final prods = <ProductModel>[];
+        final prodShops = <String, ShopModel>{};
+
+        for (final p in productsResponse as List) {
+          final product = ProductModel.fromMap(p);
+          if (product.isAvailable) {
+            prods.add(product);
+            if (p['shops'] != null) {
+              prodShops[product.id] = ShopModel.fromMap(p['shops']);
+            }
+          }
+        }
+        prods.sort((a, b) => b.rating.compareTo(a.rating));
+        
         setState(() {
           _shops = nearby;
           _products = prods;
+          _productShops = prodShops;
           _isLoading = false;
         });
       }

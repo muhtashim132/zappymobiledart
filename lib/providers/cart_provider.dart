@@ -304,10 +304,8 @@ class CartProvider extends ChangeNotifier {
   /// Combined total including base delivery + inter-shop surcharge + small cart fee - discount.
   double totalDeliveryCharges(double baseDistanceKm) {
     final base = calculateDeliveryCharges(baseDistanceKm);
-    final surcharge = multiShopSurcharge;
-    // If base is -1 (out of range) keep it as-is
-    if (base < 0) return base;
-    return base + surcharge + heavyOrderFee + smallCartFee - calculateDeliveryDiscount(baseDistanceKm);
+    final effectiveBase = base >= 0 ? base : 25.0;
+    return effectiveBase + multiShopSurcharge + heavyOrderFee + smallCartFee - calculateDeliveryDiscount(baseDistanceKm);
   }
 
   int getItemQuantity(String productId) {

@@ -33,7 +33,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
   final Set<String> _expandedOrderIds = {};
 
   // Realtime channel for live order updates
-  RealtimeChannel? _realtimeChannel;
+  final List<RealtimeChannel> _realtimeChannels = [];
   // FCM foreground message subscription
   StreamSubscription? _fcmSub;
 
@@ -47,7 +47,9 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
 
   @override
   void dispose() {
-    _realtimeChannel?.unsubscribe();
+    for (final channel in _realtimeChannels) {
+      channel.unsubscribe();
+    }
     _fcmSub?.cancel();
     _tabController.dispose();
     super.dispose();
@@ -71,34 +73,39 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
             .eq('seller_id', userId);
         final shops = shopsResp as List;
         if (shops.isEmpty) return;
-        final shopId = shops.first['id'] as String;
-
-        // Subscribe to INSERT and UPDATE on orders for this shop
-        _realtimeChannel = _supabase
-            .channel('seller-orders-$shopId')
-            .onPostgresChanges(
-              event: PostgresChangeEvent.insert,
-              schema: 'public',
-              table: 'orders',
-              filter: PostgresChangeFilter(
-                type: PostgresChangeFilterType.eq,
-                column: 'shop_id',
-                value: shopId,
-              ),
-              callback: (_) => _loadOrders(),
-            )
-            .onPostgresChanges(
-              event: PostgresChangeEvent.update,
-              schema: 'public',
-              table: 'orders',
-              filter: PostgresChangeFilter(
-                type: PostgresChangeFilterType.eq,
-                column: 'shop_id',
-                value: shopId,
-              ),
-              callback: (_) => _loadOrders(),
-            )
-            .subscribe();
+        final shopIds = shops.map((s) => s['id'] as String).toList();
+        
+        final notifProvider = context.read<NotificationProvider>();
+        
+        for (final shopId in shopIds) {
+          notifProvider.listenAsSeller(shopId);
+          final channel = _supabase
+              .channel('seller-orders-$shopId')
+              .onPostgresChanges(
+                event: PostgresChangeEvent.insert,
+                schema: 'public',
+                table: 'orders',
+                filter: PostgresChangeFilter(
+                  type: PostgresChangeFilterType.eq,
+                  column: 'shop_id',
+                  value: shopId,
+                ),
+                callback: (_) => _loadOrders(),
+              )
+              .onPostgresChanges(
+                event: PostgresChangeEvent.update,
+                schema: 'public',
+                table: 'orders',
+                filter: PostgresChangeFilter(
+                  type: PostgresChangeFilterType.eq,
+                  column: 'shop_id',
+                  value: shopId,
+                ),
+                callback: (_) => _loadOrders(),
+              )
+              .subscribe();
+          _realtimeChannels.add(channel);
+        }
       } catch (e) {
         debugPrint('Seller orders realtime setup error: $e');
       }
@@ -241,89 +248,112 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
 
   Future<void> _sellerReject(OrderModel order) async {
     final messageController = TextEditingController();
+    String rejectReason = order.prescriptionUrls.isNotEmpty ? 'prescription' : 'other';
+    
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF1A1A2E),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40, height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text('Decline Order',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                  )),
-              const SizedBox(height: 4),
-              Text('Send an optional message to the customer explaining why.',
-                  style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13)),
-              const SizedBox(height: 20),
-              TextField(
-                controller: messageController,
-                maxLines: 3,
-                style: GoogleFonts.outfit(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'e.g. "This item is currently out of stock"',
-                  hintStyle: GoogleFonts.outfit(color: Colors.white30, fontSize: 13),
-                  filled: true,
-                  fillColor: Colors.white.withValues(alpha: 0.07),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.all(14),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.white24),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: Text('Go Back',
-                          style: GoogleFonts.outfit(color: Colors.white70, fontWeight: FontWeight.w600)),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF1A1A2E),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.danger,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      child: Text('Send & Decline',
-                          style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w700)),
-                    ),
+                ),
+                const SizedBox(height: 20),
+                Text('Decline Order',
+                    style: GoogleFonts.outfit(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    )),
+                const SizedBox(height: 12),
+                if (order.prescriptionUrls.isNotEmpty) ...[
+                  RadioListTile<String>(
+                    title: Text('Prescription Issue', style: GoogleFonts.outfit(color: Colors.white)),
+                    value: 'prescription',
+                    groupValue: rejectReason,
+                    activeColor: AppColors.primary,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (val) => setState(() => rejectReason = val!),
                   ),
+                  RadioListTile<String>(
+                    title: Text('Other Reason (e.g. Out of stock)', style: GoogleFonts.outfit(color: Colors.white)),
+                    value: 'other',
+                    groupValue: rejectReason,
+                    activeColor: AppColors.primary,
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (val) => setState(() => rejectReason = val!),
+                  ),
+                  const SizedBox(height: 12),
                 ],
-              ),
-            ],
+                Text('Send an optional message to the customer explaining why.',
+                    style: GoogleFonts.outfit(color: Colors.white54, fontSize: 13)),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: messageController,
+                  maxLines: 3,
+                  style: GoogleFonts.outfit(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'e.g. "This item is currently out of stock"',
+                    hintStyle: GoogleFonts.outfit(color: Colors.white30, fontSize: 13),
+                    filled: true,
+                    fillColor: Colors.white.withValues(alpha: 0.07),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.all(14),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.white24),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: Text('Go Back',
+                            style: GoogleFonts.outfit(color: Colors.white70, fontWeight: FontWeight.w600)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.danger,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: Text('Send & Decline',
+                            style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w700)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -334,7 +364,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
     try {
       final msg = messageController.text.trim();
       await _supabase.from('orders').update({
-        'status': order.prescriptionUrls.isNotEmpty ? 'verification_failed' : 'seller_rejected',
+        'status': rejectReason == 'prescription' ? 'verification_failed' : 'seller_rejected',
         'seller_accepted': false,
         if (msg.isNotEmpty) 'rejection_message': msg,
       }).eq('id', order.id);
@@ -547,7 +577,9 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
             'delivered',
             'cancelled',
             'seller_rejected',
-            'partner_rejected'
+            'partner_rejected',
+            'verification_failed',
+            'pending_verification'
           ].contains(o.status))
       .toList();
 

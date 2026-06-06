@@ -142,8 +142,6 @@ class LocationProvider extends ChangeNotifier {
       if (response != null) {
         if (response['address_home'] != null && response['address_home'] is Map) {
           _houseNumber = response['address_home']['house'] ?? '';
-        } else if (response['address_home'] is String) {
-          _houseNumber = response['address_home'];
         }
         _landmark = response['landmark'] ?? '';
         _pincode = response['pincode'] ?? '';
