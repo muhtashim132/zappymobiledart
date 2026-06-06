@@ -1745,7 +1745,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                 ),
               ),
             ],
-            if (showWaitTimer) ...[
+            if (showWaitTimer || order.status == 'ready_for_pickup' || order.status == 'preparing') ...[
               const SizedBox(height: 8),
               TextButton.icon(
                 onPressed: () => _showDisputeDialog(order),

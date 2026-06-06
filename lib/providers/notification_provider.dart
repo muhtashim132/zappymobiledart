@@ -128,6 +128,14 @@ class NotificationProvider extends ChangeNotifier {
       _fcmMessageSub = FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         final notif = message.notification;
         if (notif == null) return;
+        
+        // Prevent duplicate notifications in the foreground:
+        // Order-related events are already handled instantly by our Postgres Realtime listeners.
+        // We only want to show non-order FCMs (like admin broadcasts or marketing pushes) here.
+        if (message.data['order_id'] != null) {
+          return;
+        }
+
         _notifications.add(AppNotification(
           id: message.messageId ?? DateTime.now().toIso8601String(),
           title: notif.title ?? 'Notification',

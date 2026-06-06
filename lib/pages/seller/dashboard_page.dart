@@ -120,11 +120,18 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
           (ordersResp as List).where((o) =>
               o['status'] == 'pending' ||
               o['status'] == 'awaiting_acceptance').length;
-      final revenue = ordersResp.fold<double>(
+      final now = DateTime.now();
+      final todayStart = DateTime(now.year, now.month, now.day);
+      final todaysEarning = ordersResp.fold<double>(
         0,
-        (s, o) => o['status'] == 'delivered'
-            ? s + (o['total_amount'] ?? 0.0)
-            : s,
+        (s, o) {
+          if (o['status'] != 'delivered') return s;
+          final createdAt = DateTime.tryParse(o['created_at'] ?? '')?.toLocal();
+          if (createdAt != null && createdAt.isAfter(todayStart) || createdAt?.isAtSameMomentAs(todayStart) == true) {
+            return s + (o['seller_payout'] ?? 0.0);
+          }
+          return s;
+        },
       );
 
       if (mounted) {
@@ -139,7 +146,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
           _stats = {
             'total_orders': ordersResp.length,
             'pending_orders': pending,
-            'revenue': revenue,
+            'todays_earning': todaysEarning,
             'products': (productsResp as List).length,
           };
           _shopIsActive = shopData['is_active'] ?? false;
@@ -305,30 +312,33 @@ class _SellerDashboardPageState extends State<SellerDashboardPage>
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Expanded(
-                                        child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text('Total Revenue',
-                                                  style: GoogleFonts.outfit(
-                                                      color: Colors.white
-                                                          .withValues(alpha: 0.65),
-                                                      fontSize: 13)),
-                                              Row(
-                                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                                textBaseline: TextBaseline.alphabetic,
-                                                children: [
-                                                  Text(
-                                                      '₹${(_stats['revenue'] as double).toStringAsFixed(0)}',
-                                                      style: GoogleFonts.outfit(
-                                                          color: Colors.white,
-                                                          fontSize: 36,
-                                                          fontWeight: FontWeight.w900,
-                                                          letterSpacing: -1)),
+                                        child: GestureDetector(
+                                          onTap: () => Navigator.pushNamed(context, AppRoutes.analytics),
+                                          child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text("Today's Earning",
+                                                    style: GoogleFonts.outfit(
+                                                        color: Colors.white
+                                                            .withValues(alpha: 0.65),
+                                                        fontSize: 13)),
+                                                Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                                                  textBaseline: TextBaseline.alphabetic,
+                                                  children: [
+                                                    Text(
+                                                        '₹${(_stats['todays_earning'] as double?)?.toStringAsFixed(0) ?? '0'}',
+                                                        style: GoogleFonts.outfit(
+                                                            color: Colors.white,
+                                                            fontSize: 36,
+                                                            fontWeight: FontWeight.w900,
+                                                            letterSpacing: -1)),
 
-                                                ],
-                                              ),
-                                            ]),
+                                                  ],
+                                                ),
+                                              ]),
+                                        ),
                                       ),
                                     ],
                                   ),
