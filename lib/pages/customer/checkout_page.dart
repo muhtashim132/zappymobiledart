@@ -132,12 +132,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
       // Payment method is always 'upi' now (COD removed)
       const paymentMethod = 'upi';
-      final breakdown = OrderTaxBreakdown.calculate(
-        items: cart.taxBreakdownItems,
-        deliveryCharge: totalDelivery,
-        platformFee: cart.platformFee,
-        paymentMethod: paymentMethod,
-      );
 
       final cartGroupId = const Uuid().v4();
       final numShops = cart.shops.length;
@@ -195,6 +189,19 @@ class _CheckoutPageState extends State<CheckoutPage> {
         final shopRiderEarnings = riderEarnings / numShops;
         final shopPlatformFee = cart.platformFee / numShops;
 
+        final shopTaxBreakdownItems = shopItems.map((i) => {
+          'category': i.product.category,
+          'price': i.product.price,
+          'quantity': i.quantity,
+        }).toList();
+
+        final shopBreakdown = OrderTaxBreakdown.calculate(
+          items: shopTaxBreakdownItems,
+          deliveryCharge: shopDelivery,
+          platformFee: shopPlatformFee,
+          paymentMethod: paymentMethod,
+        );
+
         final Map<String, dynamic> rateSnapshot = {};
         for (final item in shopItems) {
           final cat = item.product.category;
@@ -204,25 +211,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
           }
         }
 
-        double shopS9_5Gst = 0;
-        double shopNonFoodGst = 0;
-        for (final item in shopItems) {
-          final cat = item.product.category;
-          final rate =
-              TaxConfig.gstRateForCategory(cat, itemPrice: item.product.price);
-          final lineGst = item.totalPrice * rate;
-          if (TaxConfig.isEnythingDeemedSupplier(cat)) {
-            shopS9_5Gst += lineGst;
-          } else {
-            shopNonFoodGst += lineGst;
-          }
-        }
+        final shopS9_5Gst = shopBreakdown.s9_5GstToRemit;
+        final shopNonFoodGst = shopBreakdown.nonFoodGstPassThrough;
 
         final shopTcs = shopBaseSubtotal * 0.01;
-        final shopGrandTotal = shopBaseSubtotal +
-            (shopS9_5Gst + shopNonFoodGst) +
-            shopDelivery +
-            shopPlatformFee;
+        final shopGrandTotal = shopBreakdown.grandTotal;
 
         final orderResponse = await supabase
             .from('orders')
@@ -248,12 +241,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
               'razorpay_order_id': null,
               'customer_phone': customerPhone,
               'shop_phone': shopPhones[shop.id],
-              'gst_item_total': (breakdown.itemGstTotal / numShops),
-              'gst_delivery': (breakdown.deliveryGst / numShops),
-              'gst_platform': (breakdown.platformFeeGst / numShops),
-              'enything_commission': (breakdown.enythingGrossCommission / numShops),
-              'seller_payout': (breakdown.sellerPayout / numShops) - shopTcs,
-              'gateway_deduction': (breakdown.gatewayDeduction / numShops),
+              'gst_item_total': shopBreakdown.itemGstTotal,
+              'gst_delivery': shopBreakdown.deliveryGst,
+              'gst_platform': shopBreakdown.platformFeeGst,
+              'enything_commission': shopBreakdown.enythingGrossCommission,
+              'seller_payout': shopBreakdown.sellerPayout - shopTcs,
+              'gateway_deduction': shopBreakdown.gatewayDeduction,
               's9_5_gst_amount': shopS9_5Gst,
               'non_food_gst_amount': shopNonFoodGst,
               'tcs_amount': shopTcs,

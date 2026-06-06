@@ -38,12 +38,12 @@ class NotificationProvider extends ChangeNotifier {
   final _supabase = Supabase.instance.client;
 
   final List<AppNotification> _notifications = [];
-  RealtimeChannel? _channel;
-  String? _listeningUserId;
-  String? _listeningRole;
-  
-  StreamSubscription? _fcmTokenSub;
-  StreamSubscription? _fcmMessageSub;
+  StreamSubscription<PostgresChangePayload>? _channel;
+  StreamSubscription<PostgresChangePayload>? _chatChannel;
+  StreamSubscription<String>? _fcmTokenSub;
+  StreamSubscription<RemoteMessage>? _fcmMessageSub;
+
+  final Map<String, String> _lastProcessedStatus = {};
 
   List<AppNotification> get notifications =>
       List.unmodifiable(_notifications.reversed.toList());
@@ -186,7 +186,12 @@ class NotificationProvider extends ChangeNotifier {
               ));
             }
 
-            if (newStatus == null || newStatus == oldStatus) return;
+            final orderId = payload.newRecord['id'] as String?;
+            if (orderId == null || newStatus == null) return;
+
+            final lastStatus = _lastProcessedStatus[orderId];
+            if (newStatus == lastStatus) return;
+            _lastProcessedStatus[orderId] = newStatus;
 
             final (title, body) = _customerStatusMessage(newStatus, orderId);
             if (title != null) {
@@ -269,7 +274,11 @@ class NotificationProvider extends ChangeNotifier {
             final newStatus = payload.newRecord['status'] as String?;
             final oldStatus = payload.oldRecord['status'] as String?;
             final orderId = payload.newRecord['id'] as String?;
-            if (newStatus == null || newStatus == oldStatus) return;
+            if (orderId == null || newStatus == null) return;
+
+            final lastStatus = _lastProcessedStatus[orderId];
+            if (newStatus == lastStatus) return;
+            _lastProcessedStatus[orderId] = newStatus;
 
             final (title, body) = _sellerStatusMessage(newStatus, orderId);
             if (title != null) {
@@ -313,9 +322,12 @@ class NotificationProvider extends ChangeNotifier {
 
             final orderId = newRecord['id'] as String?;
             final newStatus = newRecord['status'] as String?;
-            final oldStatus = oldRecord['status'] as String?;
 
-            if (newStatus == null || newStatus == oldStatus) return;
+            if (orderId == null || newStatus == null) return;
+
+            final lastStatus = _lastProcessedStatus[orderId];
+            if (newStatus == lastStatus) return;
+            _lastProcessedStatus[orderId] = newStatus;
 
             final (title, body) = _deliveryStatusMessage(newStatus, orderId);
             if (title != null) {
@@ -403,6 +415,7 @@ class NotificationProvider extends ChangeNotifier {
     
     _listeningUserId = null;
     _listeningRole = null;
+    _lastProcessedStatus.clear();
     _clearMemory(); // Clear RAM only — DB history is preserved per user
   }
 
