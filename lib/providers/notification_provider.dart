@@ -38,8 +38,10 @@ class NotificationProvider extends ChangeNotifier {
   final _supabase = Supabase.instance.client;
 
   final List<AppNotification> _notifications = [];
-  StreamSubscription<PostgresChangePayload>? _channel;
-  StreamSubscription<PostgresChangePayload>? _chatChannel;
+  RealtimeChannel? _channel;
+  String? _listeningUserId;
+  String? _listeningRole;
+  
   StreamSubscription<String>? _fcmTokenSub;
   StreamSubscription<RemoteMessage>? _fcmMessageSub;
 
@@ -186,7 +188,6 @@ class NotificationProvider extends ChangeNotifier {
               ));
             }
 
-            final orderId = payload.newRecord['id'] as String?;
             if (orderId == null || newStatus == null) return;
 
             final lastStatus = _lastProcessedStatus[orderId];
