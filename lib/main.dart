@@ -27,9 +27,8 @@ import 'services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Disable runtime fetching to prevent ClientException when network is unstable
-  // or blocked. This avoids "Connection closed before full header was received" errors.
-  GoogleFonts.config.allowRuntimeFetching = false;
+  // Allow runtime fetching so fresh installs on new devices can download the fonts if needed.
+  GoogleFonts.config.allowRuntimeFetching = true;
 
   await dotenv.load(fileName: '.env');
 
