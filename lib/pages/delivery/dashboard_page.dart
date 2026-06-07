@@ -56,6 +56,10 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
   String _vehicleType = 'motorcycle';
   bool _isProcessingAutoAccept = false;
 
+  // Track collapsed state so it doesn't reset on timer/realtime updates
+  final Set<String> _collapsedAvailableGroups = {};
+  final Set<String> _collapsedActiveGroups = {};
+
   // FCM foreground message subscription — triggers _loadOrders() on push
   StreamSubscription? _fcmForegroundSub;
   RealtimeChannel? _realtimeChannel;
@@ -1281,10 +1285,10 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
 
   Widget _availableOrderGroupCard(OrderGroup group, bool isDark) {
     final totalEarnings = group.orders.fold(0.0, (sum, o) => sum + o.riderEarnings);
-    bool isExpanded = false;
+    bool isExpanded = !_collapsedAvailableGroups.contains(group.groupId);
 
     return StatefulBuilder(
-      builder: (context, setState) {
+      builder: (context, setStateBuilder) {
         return Container(
           margin: const EdgeInsets.only(bottom: 14),
           decoration: BoxDecoration(
@@ -1303,7 +1307,14 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
           ),
           child: Column(children: [
             GestureDetector(
-              onTap: () => setState(() => isExpanded = !isExpanded),
+              onTap: () {
+                setStateBuilder(() => isExpanded = !isExpanded);
+                if (isExpanded) {
+                  _collapsedAvailableGroups.remove(group.groupId);
+                } else {
+                  _collapsedAvailableGroups.add(group.groupId);
+                }
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 decoration: const BoxDecoration(
@@ -1378,17 +1389,16 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                       }),
                       const SizedBox(height: 14),
                       Row(children: [
-                        OutlinedButton(
+                        OutlinedButton.icon(
                           onPressed: () => _openRouteMapForGroup(group),
+                          icon: const Icon(Icons.map_rounded, size: 18),
+                          label: Text('See Route', style: GoogleFonts.outfit(fontWeight: FontWeight.w700)),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFF4C6EF5),
                             side: const BorderSide(color: Color(0xFF4C6EF5), width: 1.2),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           ),
-                          child: const Icon(Icons.map_rounded, size: 18),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -1422,13 +1432,10 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
             ? [const Color(0xFF51CF66), const Color(0xFF2F9E44)]
             : [const Color(0xFFFF8C42), const Color(0xFFE8590C)];
 
-    bool isExpanded = true; // active groups expanded by default makes sense, but we can make it false if there are many. Let's default to false if > 1 shop, otherwise true.
-    if (group.orders.length > 1) {
-      isExpanded = false;
-    }
+    bool isExpanded = !_collapsedActiveGroups.contains(group.groupId);
 
     return StatefulBuilder(
-      builder: (context, setState) {
+      builder: (context, setStateBuilder) {
         return Container(
           margin: const EdgeInsets.only(bottom: 14),
           decoration: BoxDecoration(
@@ -1440,7 +1447,14 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
           child: Column(children: [
             // Header
             GestureDetector(
-              onTap: () => setState(() => isExpanded = !isExpanded),
+              onTap: () {
+                setStateBuilder(() => isExpanded = !isExpanded);
+                if (isExpanded) {
+                  _collapsedActiveGroups.remove(group.groupId);
+                } else {
+                  _collapsedActiveGroups.add(group.groupId);
+                }
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 decoration: BoxDecoration(
@@ -1477,21 +1491,39 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                             maxLines: 1, overflow: TextOverflow.ellipsis)),
                   ]),
                   const SizedBox(height: 12),
-                  if (group.customerPhone != null)
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () => _callPhone(group.customerPhone!),
-                        icon: const Icon(Icons.phone_outlined, size: 16),
-                        label: Text('Call Customer', style: GoogleFonts.outfit(fontSize: 12)),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: const BorderSide(color: AppColors.primary),
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  Row(
+                    children: [
+                      if (group.customerPhone != null) ...[
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _callPhone(group.customerPhone!),
+                            icon: const Icon(Icons.phone_outlined, size: 16),
+                            label: Text('Call Customer', style: GoogleFonts.outfit(fontSize: 12)),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              side: const BorderSide(color: AppColors.primary),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => _openRouteMapForGroup(group),
+                          icon: const Icon(Icons.map_outlined, size: 16),
+                          label: Text('See Route', style: GoogleFonts.outfit(fontSize: 12)),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF4C6EF5),
+                            side: const BorderSide(color: Color(0xFF4C6EF5)),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
+                  ),
                   const SizedBox(height: 14),
                   
                   // Render individual shop pickup cards
