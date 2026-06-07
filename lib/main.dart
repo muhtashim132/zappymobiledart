@@ -24,11 +24,14 @@ import 'providers/audit_provider.dart';
 import 'providers/platform_config_provider.dart';
 import 'services/notification_service.dart';
 
+// Global Supabase client access
+late final SupabaseClient supabase;
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Disable runtime fetching. We have bundled the fonts locally in pubspec.yaml to prevent ANR.
-  GoogleFonts.config.allowRuntimeFetching = false;
+  // Always allow runtime fetching as a fallback to prevent UI crashes if local fonts fail to map.
+  GoogleFonts.config.allowRuntimeFetching = true;
 
   await dotenv.load(fileName: '.env');
 
@@ -44,6 +47,9 @@ void main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
   );
 
+  // Set Supabase instance locally
+  supabase = Supabase.instance.client;
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -54,16 +60,16 @@ void main() async {
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-  // Bug #20: load persisted cart before first frame
+  // Load cart async to prevent blocking startup
   final cartProvider = CartProvider();
-  await cartProvider.loadCart();
+  cartProvider.loadCart(); // DO NOT AWAIT
 
-  // Load platform config asynchronously to avoid blocking the Splash Screen (blank screen issue)
+  // Load platform config asynchronously to avoid blocking the Splash Screen
   final configProvider = PlatformConfigProvider();
-  configProvider.load();
+  configProvider.load(); // DO NOT AWAIT
 
-  // Initialize Notification Service
-  await NotificationService().init();
+  // Initialize Notification Service async to prevent Android channel creation deadlocks
+  NotificationService().init(); // DO NOT AWAIT
 
   // Deep linking: Handle notification tap when app is in background
   FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
