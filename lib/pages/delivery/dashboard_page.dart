@@ -124,18 +124,32 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
     super.dispose();
   }
 
-  // Starts pushing GPS location to DB every 15s while out_for_delivery.
+  // Starts pushing GPS location to DB every 15s while online.
   void _startLocationBroadcast() {
     _locationBroadcastTimer?.cancel();
     _locationBroadcastTimer = Timer.periodic(const Duration(seconds: 15), (_) async {
-      final outOrders = _myOrders.where((o) => o.status == 'out_for_delivery').toList();
-      if (outOrders.isEmpty) {
+      if (!_isOnline) {
         _stopLocationBroadcast();
         return;
       }
       await _fetchRiderLocation();
       if (_riderLat == null || _riderLng == null) return;
-      for (final order in outOrders) {
+      
+      // Update the delivery partner's current location via RPC
+      try {
+        await _supabase.rpc('update_rider_location', params: {
+          'p_lat': _riderLat,
+          'p_lng': _riderLng,
+        });
+      } catch (e) {
+        debugPrint('Failed to update delivery partner location: $e');
+      }
+
+      // Also update orders that the rider is actively handling
+      final activeStatuses = ['confirmed', 'preparing', 'ready_for_pickup', 'picked_up', 'out_for_delivery'];
+      final activeOrders = _myOrders.where((o) => activeStatuses.contains(o.status)).toList();
+      
+      for (final order in activeOrders) {
         try {
           await _supabase.from('orders').update({
             'rider_lat': _riderLat,
@@ -311,10 +325,8 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         _isProcessingAutoAccept = false;
       }
 
-      // Auto-start broadcast if rider already has an out_for_delivery order
-      final hasOutForDelivery =
-          _myOrders.any((o) => o.status == 'out_for_delivery');
-      if (hasOutForDelivery && _locationBroadcastTimer == null) {
+      // Auto-start broadcast if rider is online
+      if (_isOnline && _locationBroadcastTimer == null) {
         _startLocationBroadcast();
       }
     } catch (e, stacktrace) {
@@ -957,6 +969,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                     onTap: () async {
                       final newVal = !_isOnline;
                       setState(() => _isOnline = newVal);
+                      if (newVal) _startLocationBroadcast(); else _stopLocationBroadcast();
                       final auth = context.read<AuthProvider>();
                       if (auth.currentUserId != null) {
                         try {
@@ -1034,6 +1047,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                             value: _isOnline,
                             onChanged: (val) async {
                               setState(() => _isOnline = val);
+                              if (val) _startLocationBroadcast(); else _stopLocationBroadcast();
                               final auth = context.read<AuthProvider>();
                               if (auth.currentUserId != null) {
                                 try {
@@ -2040,6 +2054,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                   onChanged: (val) async {
                     setSheetState(() => _isOnline = val);
                     setState(() => _isOnline = val);
+                    if (val) _startLocationBroadcast(); else _stopLocationBroadcast();
                     final auth = context.read<AuthProvider>();
                     if (auth.currentUserId != null) {
                       try {
@@ -2187,10 +2202,13 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
   }
 
   Future<void> _launchNavigation(OrderModel order) async {
-    final lat = order.deliveryLat;
-    final lng = order.deliveryLng;
+    final isOutForDelivery = order.status == 'out_for_delivery';
+    final lat = isOutForDelivery ? order.deliveryLat : order.shopLat;
+    final lng = isOutForDelivery ? order.deliveryLng : order.shopLng;
+    final label = isOutForDelivery ? 'Customer' : 'Shop';
+
     if (lat == null || lng == null) {
-      _showSnack('Delivery coordinates not available', isError: true);
+      _showSnack('$label coordinates not available', isError: true);
       return;
     }
     final Uri uri = switch (_navApp) {

@@ -397,6 +397,7 @@ class _CustomerOrderMapPageState extends State<CustomerOrderMapPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final order = widget.order;
     final isOutForDelivery = order.status == 'out_for_delivery';
+    final showRiderLocation = ['awaiting_payment', 'confirmed', 'preparing', 'ready_for_pickup', 'picked_up', 'out_for_delivery'].contains(order.status) && _riderLatLng != null;
 
     final shopLat = order.shopLat;
     final shopLng = order.shopLng;
@@ -421,8 +422,8 @@ class _CustomerOrderMapPageState extends State<CustomerOrderMapPage>
           child: _mapMarker(
               _kCustomerMarkerColor, Icons.home_rounded, 'You'),
         ),
-      // Live rider marker (only when out_for_delivery and position is known)
-      if (isOutForDelivery && _riderLatLng != null)
+      // Live rider marker (when rider is assigned and position is known)
+      if (showRiderLocation)
         Marker(
           point: _riderLatLng!,
           width: 80,
@@ -686,7 +687,7 @@ class _CustomerOrderMapPageState extends State<CustomerOrderMapPage>
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            if (isOutForDelivery && _riderLatLng != null) ...[
+                            if (showRiderLocation) ...[
                               const SizedBox(width: 16),
                               Container(
                                 width: 10,

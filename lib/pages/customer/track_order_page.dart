@@ -438,6 +438,30 @@ class _TrackOrderPageState extends State<TrackOrderPage>
       }).eq('id', widget.orderId);
 
       if (mounted) {
+        final notifProv = context.read<NotificationProvider>();
+        
+        // Broadcast ALL riders that this order is available again
+        notifProv.sendBroadcastToAudience(
+          audience: 'Riders',
+          title: '🛵 Order Available Again!',
+          body: 'An order ₹${_order!.grandTotal.toStringAsFixed(0)} is looking for a rider. Shop has already accepted!',
+          data: {'action': 'new_order'},
+        );
+
+        // Notify the seller that customer is looking for a rider again
+        if (_order!.shopId != null) {
+          final shopData = await _supabase.from('shops').select('seller_id').eq('id', _order!.shopId!).maybeSingle();
+          if (shopData != null && shopData['seller_id'] != null) {
+            notifProv.sendBackgroundPush(
+              targetUserId: shopData['seller_id'] as String,
+              title: '🔄 Finding Rider',
+              body: 'The customer is searching for a new rider. Order is active again!',
+              data: {'order_id': widget.orderId, 'role': 'seller'},
+            );
+          }
+        }
+
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('🛵 Looking for a rider again…'),
           backgroundColor: AppColors.success,
