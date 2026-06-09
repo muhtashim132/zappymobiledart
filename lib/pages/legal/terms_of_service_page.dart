@@ -28,7 +28,7 @@ class TermsOfServicePage extends StatelessWidget {
         LegalSection(
           heading: '4. Pricing, Payments & GST',
           content:
-              'Enything charges a 5% platform commission on base prices. A fixed Handling/Platform Fee of ₹15 is charged per order. In accordance with Section 9(5) of the CGST Act, Enything collects and remits GST on behalf of restaurants for food deliveries. For non-food retail and pharmacy items, the seller is responsible for remitting GST, though Enything will collect 1% TCS as per Section 52.',
+              'Enything charges a 7.36% unified platform commission (inclusive of gateway fees) on base prices. A fixed Handling/Platform Fee of ₹15 is charged per order. In accordance with Section 9(5) of the CGST Act, Enything collects and remits GST on behalf of restaurants for food deliveries. For non-food retail and pharmacy items, the seller is responsible for remitting GST, though Enything will collect 1% TCS as per Section 52.',
         ),
         LegalSection(
           heading: '5. Cancellation & Refunds',

@@ -102,6 +102,11 @@ class TaxConfig {
   /// and absorbs the gateway fee itself (covered by the platform fee).
   static double get grossCommissionRateOnline => enythingTargetMarginPercent;
 
+  // ── Rider Payout ─────────────────────────────────────────────────────────────
+
+  /// Rider payout ratio: 80% means Rider gets 80% of the base delivery fee, Enything keeps 20%.
+  static const double riderPayoutRatio = 0.80;
+
   // ── GST on Enything's OWN services ───────────────────────────────────────────
 
   /// Delivery charge GST rate (SAC 9965/9967): 18%.
@@ -265,6 +270,11 @@ class OrderTaxBreakdown {
   /// GST embedded in platformFee — Enything remits to govt.
   final double platformFeeGst;
 
+  // ── Rider Payout ──────────────────────────────────────────────────────────
+
+  /// Amount paid to the rider.
+  final double riderEarnings;
+
   // ── Totals ────────────────────────────────────────────────────────────────
 
   /// Total GST across items + delivery + platform.
@@ -317,6 +327,7 @@ class OrderTaxBreakdown {
     required this.enythingGrossCommission,
     required this.enythingNetCommission,
     required this.sellerPayout,
+    required this.riderEarnings,
   });
 
   // ---------------------------------------------------------------------------
@@ -327,11 +338,13 @@ class OrderTaxBreakdown {
   ///
   /// [items] — List of maps with keys: 'category' (String), 'price' (num, BASE price), 'quantity' (num).
   /// [deliveryCharge] — Net delivery charged to customer (18% GST inside).
+  /// [riderEarnings] — The amount paid to the rider.
   /// [platformFee] — Platform/handling fee (18% GST inside).
   /// [paymentMethod] — 'upi' / 'card' for gateway deduction, 'cod' for no deduction.
   factory OrderTaxBreakdown.calculate({
     required List<Map<String, dynamic>> items,
     required double deliveryCharge,
+    required double riderEarnings,
     required double platformFee,
     required String paymentMethod,
   }) {
@@ -340,7 +353,7 @@ class OrderTaxBreakdown {
     double itemGst = 0;
     double s9_5Gst = 0; // food/restaurant GST — Enything remits
     double nonFoodGst = 0; // retail GST — passed to seller
-    double enythingGross = 0; // total commission calculated per item
+    double pureCommission = 0; // total pure commission calculated per item
 
     for (final item in items) {
       final category = (item['category'] as String?) ?? 'Other';
@@ -355,7 +368,7 @@ class OrderTaxBreakdown {
 
       // Category-specific commission
       final commissionRate = PlatformConfigProvider.instance?.getCommissionRateForCategory(category) ?? 0.05;
-      enythingGross += lineBase * commissionRate;
+      pureCommission += lineBase * commissionRate;
 
       if (TaxConfig.isEnythingDeemedSupplier(category)) {
         s9_5Gst += lineGst;
@@ -382,23 +395,23 @@ class OrderTaxBreakdown {
     // ── 5. Enything commission ───────────────────────────────────────────────────
     //   Commission is on BASE item subtotal only (delivery + platform are
     //   100% Enything's revenue — no commission formula needed there).
-    //   (Note: enythingGross is now calculated dynamically per-item in the loop above)
+    //   (Note: pureCommission is now calculated dynamically per-item in the loop above)
 
-    // ── 6. Gateway split (Enything absorbs 100%) ───────────────────────────────
-    //   Under the 5% plan, seller pays NO gateway fees.
-    //   Enything absorbs the entire gateway fee out of the higher platform fee.
-    final enythingGwShare = gwDeduct;
-    const sellerGwShare = 0.0;
+    // ── 6. Gateway split (Seller pays their share, Enything pays remainder) ──
+    //   Seller pays 2.36% on their payout portion.
+    final sellerBasePayout = baseSubtotal - pureCommission;
+    final sellerGwShare = isOnline ? (sellerBasePayout + nonFoodGst) * TaxConfig.effectiveGatewayDeductionPercent : 0.0;
+    final enythingGwShare = gwDeduct - sellerGwShare;
 
-    // ── 7. Enything's net commission ─────────────────────────────────────────────
-    //   Since gateway is entirely absorbed, commission remains pure 5%.
-    final enythingNet = enythingGross;
+    // ── 7. Unified Commission ────────────────────────────────────────────────────
+    //   Combine pure commission and gateway fee into one 'Total Commission' 
+    //   so the seller sees 7.36% everywhere instead of 5% + 2.36%.
+    final enythingGross = pureCommission + sellerGwShare;
+    final enythingNet = pureCommission;
 
     // ── 8. Seller payout ─────────────────────────────────────────────────────
-    //   Seller receives exactly 95% of base amount + their GST passthrough.
-    //   Zero gateway deductions.
-    final sellerBasePayout = baseSubtotal - enythingGross;
-    final sellerPayout = sellerBasePayout + nonFoodGst;
+    //   Seller receives exactly 95% of base amount + their GST passthrough minus gateway share.
+    final sellerPayout = baseSubtotal + nonFoodGst - enythingGross;
 
     return OrderTaxBreakdown(
       itemBaseSubtotal: baseSubtotal,
@@ -418,6 +431,7 @@ class OrderTaxBreakdown {
       enythingGrossCommission: enythingGross,
       enythingNetCommission: enythingNet,
       sellerPayout: sellerPayout,
+      riderEarnings: riderEarnings,
     );
   }
 
@@ -429,11 +443,9 @@ class OrderTaxBreakdown {
   /// Note: deliverySubsidy is included — if you gave a discount, you see it here.
   double get enythingNetProfit =>
       enythingNetCommission +
-      (deliveryCharge - deliveryGst) + // delivery net after GST remittance
+      (deliveryCharge - deliveryGst - riderEarnings) + // delivery net after GST remittance & rider payout
       (platformFee - platformFeeGst) - // platform net after GST remittance
-      enythingGatewayShare; // Enything's gateway share already absorbed above
-  // but deliveryCharge portion gateway share is
-  // included in enythingGatewayShare already
+      enythingGatewayShare; // Enything's gateway share
 
   @override
   String toString() => '''

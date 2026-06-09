@@ -34,6 +34,10 @@ class PlatformConfigProvider extends ChangeNotifier {
   double get commissionPercent => _commissionPercent;
   double get commissionRate => _commissionPercent / 100.0;
 
+  /// The unified commission rate that includes the gateway fee.
+  /// If base commission is 5% and gateway is 2.36%, this returns 7.36.
+  double get unifiedCommissionPercent => _commissionPercent + (0.0236 * 100);
+
   double getCommissionPercentForCategory(String category) {
     return _categoryCommissionOverrides[category] ?? _commissionPercent;
   }

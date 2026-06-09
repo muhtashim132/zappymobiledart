@@ -149,7 +149,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       final surcharge = cart.multiShopSurcharge;
       final heavyFee = cart.heavyOrderFee;
       final effectiveBase = baseDelivery >= 0 ? baseDelivery : 25.0;
-      final riderEarnings = effectiveBase + surcharge + heavyFee;
+      final riderBase = effectiveBase + surcharge + heavyFee;
+      final riderEarnings = riderBase * TaxConfig.riderPayoutRatio;
       final totalDelivery = cart.totalDeliveryCharges(maxDistanceKm);
 
       // Payment method is always 'upi' now (COD removed)
@@ -225,6 +226,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         final shopBreakdown = OrderTaxBreakdown.calculate(
           items: shopTaxBreakdownItems,
           deliveryCharge: shopDelivery,
+          riderEarnings: shopRiderEarnings,
           platformFee: shopPlatformFee,
           paymentMethod: paymentMethod,
         );
@@ -370,13 +372,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final heavyFee = cart.heavyOrderFee;
     final discount = cart.calculateDeliveryDiscount(distanceKm);
     final effectiveBase = baseCharge >= 0 ? baseCharge : 25.0;
-    final totalDelivery =
-        effectiveBase + surcharge + heavyFee + cart.smallCartFee - discount;
+    final totalDelivery = cart.totalDeliveryCharges(distanceKm);
+    final riderBase = effectiveBase + surcharge + heavyFee;
+    final riderEarnings = riderBase * TaxConfig.riderPayoutRatio;
 
     // ── ADD-ON GST model: GST is a real charge on top of base prices ─────────
     final gstBreakdown = OrderTaxBreakdown.calculate(
       items: cart.taxBreakdownItems,
       deliveryCharge: totalDelivery,
+      riderEarnings: riderEarnings,
       platformFee: cart.platformFee,
       paymentMethod: 'upi',
     );

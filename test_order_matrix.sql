@@ -163,11 +163,16 @@ BEGIN
     UPDATE public.orders SET delivery_partner_id = r1_id WHERE id = order3A;
     UPDATE public.orders SET delivery_partner_id = r1_id WHERE id = order3B;
 
-    -- Rider 2 claims C
+    -- Rider 2 attempts to claim C (SHOULD FAIL due to new trigger)
     PERFORM set_config('request.jwt.claims', format('{"sub":"%s", "role":"authenticated"}', r2_id), true);
-    UPDATE public.orders SET delivery_partner_id = r2_id WHERE id = order3C;
+    BEGIN
+      UPDATE public.orders SET delivery_partner_id = r2_id WHERE id = order3C;
+      RAISE EXCEPTION '❌ BUG: Rider 2 was able to claim part of a cart already claimed by Rider 1!';
+    EXCEPTION WHEN OTHERS THEN
+      RAISE NOTICE 'Caught expected exception for split rider cart claim: %', SQLERRM;
+    END;
 
-    RAISE NOTICE '✅ Scenario 3 Passed';
+    RAISE NOTICE '✅ Scenario 3 Passed (Split claim blocked)';
   END;
 
 

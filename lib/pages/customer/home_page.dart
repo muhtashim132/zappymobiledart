@@ -991,7 +991,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
         'tag': '⚡ FAST DELIVERY',
         'title': 'Delivered at the\nspeed of life!',
         'sub':
-            'Supporting local sellers · ${config.commissionPercent.toStringAsFixed(0)}% commission',
+            'Supporting local sellers · ${config.unifiedCommissionPercent.toStringAsFixed(2)}% commission',
         'icon': Icons.bolt_rounded,
         'colors': [
           const Color(0xFF0A1260),

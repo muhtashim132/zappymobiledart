@@ -304,10 +304,12 @@ class CartProvider extends ChangeNotifier {
       DeliveryCalculator.calculateMultiShopSurcharge(shops);
 
   /// Combined total including base delivery + inter-shop surcharge + small cart fee - discount.
+  /// Option 1: GST is added ON TOP of the delivery charge so the customer pays it.
   double totalDeliveryCharges(double baseDistanceKm) {
     final base = calculateDeliveryCharges(baseDistanceKm);
     final effectiveBase = base >= 0 ? base : 25.0;
-    return effectiveBase + multiShopSurcharge + heavyOrderFee + smallCartFee - calculateDeliveryDiscount(baseDistanceKm);
+    final totalWithoutGst = effectiveBase + multiShopSurcharge + heavyOrderFee + smallCartFee - calculateDeliveryDiscount(baseDistanceKm);
+    return totalWithoutGst * (1 + TaxConfig.deliveryGstRate);
   }
 
   int getItemQuantity(String productId) {
