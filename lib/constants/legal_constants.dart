@@ -6,24 +6,18 @@ class LegalConstants {
     LegalSection(heading: '1. Platform Role', content: 'Enything operates as an intermediary marketplace facilitating hyper-local logistics. The contract of sale is strictly between you and the respective Seller.'),
     LegalSection(heading: '2. Account Integrity', content: 'You must provide accurate delivery locations and valid contact details. You must be at least 18 years old to order restricted items (e.g., specific medicines).'),
     LegalSection(heading: '3. Prohibited Use', content: 'You agree not to order illegal, hazardous, or banned substances.'),
-    LegalSection(heading: '4. Limitation of Liability', content: 'Enything is not liable for the quality, safety, or legality of the products delivered, including food poisoning, allergic reactions, or adverse medical events.'),
-    LegalSection(heading: '5. Payments', content: 'All payments must be completed via approved gateways or Cash on Delivery (where applicable). Deliberate chargeback fraud will result in permanent account suspension.'),
+    LegalSection(heading: '4. Limitation of Liability', content: 'Enything is not liable for the quality, safety, or legality of the products delivered, including food items and medicines.'),
   ];
 
   static final List<LegalSection> customerPrivacy = [
-    LegalSection(heading: '1. Data Collection', content: 'We collect your name, phone number, real-time GPS location coordinates, delivery addresses, and order history.'),
-    LegalSection(heading: '2. Location Tracking', content: 'Precise GPS data is required to calculate delivery fees, show local sellers, and pinpoint exact delivery destinations.'),
-    LegalSection(heading: '3. Data Sharing', content: 'Your order details are shared with the Seller. Your name, masked phone number, and exact GPS delivery location are shared with the Delivery Partner solely for fulfillment.'),
-    LegalSection(heading: '4. Security', content: 'Data is encrypted and retained as per the Digital Personal Data Protection Act (DPDPA) and Information Technology Act of India.'),
+    LegalSection(heading: '1. Data Collection', content: 'We collect location data to facilitate hyper-local deliveries and contact information for account management.'),
+    LegalSection(heading: '2. Data Sharing', content: 'Your information is shared with Sellers and Delivery Partners solely for order fulfillment. We do not sell your data.'),
   ];
 
   static final List<LegalSection> customerRefund = [
-    LegalSection(heading: '1. Cancellation Window', content: 'You may cancel an order without penalty within 60 seconds of placement. After this window, a 100% cancellation fee applies if the Seller has accepted the order.'),
-    LegalSection(heading: '2. Fresh Food & Restaurants', content: 'Non-returnable. Refunds are only issued for spoiled food, foreign objects, or incorrect items, requiring photographic proof within 15 minutes of delivery.'),
-    LegalSection(heading: '3. Groceries', content: 'Packaged goods are returnable within 24 hours if damaged/expired. Perishables must be inspected and rejected at the doorstep.'),
-    LegalSection(heading: '4. Medicines & Pharmacy', content: 'Strictly non-returnable once delivered, per Indian regulations, unless the wrong medicine or an expired batch was delivered.'),
-    LegalSection(heading: '5. Hardware & Home Goods', content: '7-day return policy for structural defects or missing components in original packaging.'),
-    LegalSection(heading: '6. Jewelry', content: 'High-value items cannot be returned post-delivery. Doorstep inspection and secure OTP verification are mandatory; items must be rejected immediately if defective.'),
+    LegalSection(heading: '1. Eligibility', content: 'Refunds are applicable if an order is cancelled before seller acceptance or if a dispute regarding missing/damaged items is verified by Enything.'),
+    LegalSection(heading: '2. Non-Refundable', content: 'Once an order is prepared or out for delivery, cancellations are not permitted, and refunds are voided.'),
+    LegalSection(heading: '3. Processing Time', content: 'Approved refunds are processed back to the original payment method within 5–7 business days.'),
   ];
 
   // --- SELLER ---

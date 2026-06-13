@@ -8,16 +8,27 @@ import '../providers/cart_provider.dart';
 import '../theme/app_colors.dart';
 import '../config/routes.dart';
 
-class ProductSearchCard extends StatelessWidget {
+class ProductSearchCard extends StatefulWidget {
   final ProductModel product;
   final ShopModel shop;
 
   const ProductSearchCard({super.key, required this.product, required this.shop});
 
   @override
+  State<ProductSearchCard> createState() => _ProductSearchCardState();
+}
+
+class _ProductSearchCardState extends State<ProductSearchCard> {
+  bool _isPressed = false;
+
+  ProductModel get product => widget.product;
+  ShopModel get shop => widget.shop;
+
+  @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
     final quantity = cart.getItemQuantity(product.id);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () => Navigator.pushNamed(
@@ -25,16 +36,26 @@ class ProductSearchCard extends StatelessWidget {
         AppRoutes.productDetails,
         arguments: {'productId': product.id},
       ),
-      child: Container(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: Container(
         height: 120,
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
           borderRadius: BorderRadius.circular(24),
+          border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.06)) : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 15,
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.06),
+              blurRadius: 18,
               offset: const Offset(0, 8),
             ),
           ],
@@ -252,7 +273,7 @@ class ProductSearchCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 

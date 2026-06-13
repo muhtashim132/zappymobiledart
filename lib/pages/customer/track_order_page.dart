@@ -903,7 +903,7 @@ class _TrackOrderPageState extends State<TrackOrderPage>
 
   int _getCurrentStep() {
     if (_order == null) return 0;
-    switch (_order!.status) {
+    switch (_aggregateStatus) {
       case 'awaiting_acceptance':
         return 0;
       case 'awaiting_payment':

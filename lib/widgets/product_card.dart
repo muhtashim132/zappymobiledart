@@ -10,11 +10,21 @@ import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
 import '../config/routes.dart';
 
-class ProductCard extends StatelessWidget {
+class ProductCard extends StatefulWidget {
   final ProductModel product;
   final ShopModel? shop;
 
   const ProductCard({super.key, required this.product, this.shop});
+
+  @override
+  State<ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<ProductCard> {
+  bool _isPressed = false;
+
+  ProductModel get product => widget.product;
+  ShopModel? get shop => widget.shop;
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +33,7 @@ class ProductCard extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final quantity = cart.getItemQuantity(product.id);
     final isFav = favs.isProductFavorite(product.id);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () => Navigator.pushNamed(
@@ -30,14 +41,24 @@ class ProductCard extends StatelessWidget {
         AppRoutes.productDetails,
         arguments: {'productId': product.id},
       ),
-      child: Container(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
           borderRadius: BorderRadius.circular(24),
+          border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.06)) : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 15,
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.06),
+              blurRadius: 18,
               offset: const Offset(0, 8),
             ),
           ],
@@ -150,7 +171,7 @@ class ProductCard extends StatelessWidget {
                                     style: GoogleFonts.outfit(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 14,
-                                      color: AppColors.textPrimary,
+                                      color: isDark ? Colors.white : AppColors.textPrimary,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -162,7 +183,7 @@ class ProductCard extends StatelessWidget {
                                       style: GoogleFonts.outfit(
                                         fontWeight: FontWeight.w500,
                                         fontSize: 11,
-                                        color: AppColors.textSecondary,
+                                        color: isDark ? Colors.white38 : AppColors.textSecondary,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -178,11 +199,11 @@ class ProductCard extends StatelessWidget {
                                 const SizedBox(width: 2),
                                 Text(
                                   product.rating > 0 ? product.rating.toStringAsFixed(1) : 'New',
-                                  style: GoogleFonts.outfit(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                    color: AppColors.textPrimary,
-                                  ),
+                                    style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                      color: isDark ? Colors.white : AppColors.textPrimary,
+                                    ),
                                 ),
                               ],
                             ),
@@ -280,7 +301,7 @@ class ProductCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 

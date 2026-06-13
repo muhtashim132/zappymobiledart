@@ -10,7 +10,7 @@ import '../utils/delivery_calculator.dart';
 
 /// A full-width, Swiggy/Zomato-style restaurant card used exclusively
 /// when browsing the Food category.
-class RestaurantShopCard extends StatelessWidget {
+class RestaurantShopCard extends StatefulWidget {
   final ShopModel shop;
   final VoidCallback onTap;
 
@@ -21,10 +21,21 @@ class RestaurantShopCard extends StatelessWidget {
   });
 
   @override
+  State<RestaurantShopCard> createState() => _RestaurantShopCardState();
+}
+
+class _RestaurantShopCardState extends State<RestaurantShopCard> {
+  bool _isPressed = false;
+
+  ShopModel get shop => widget.shop;
+  VoidCallback get onTap => widget.onTap;
+
+  @override
   Widget build(BuildContext context) {
     final favs = context.watch<FavoritesProvider>();
     final auth = context.watch<AuthProvider>();
     final isFav = favs.isShopFavorite(shop.id);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     final deliveryCharge =
         DeliveryCalculator.calculateDeliveryCharges(shop.distanceKm ?? 3.0, 0);
@@ -33,16 +44,26 @@ class RestaurantShopCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: Container(
         margin: const EdgeInsets.only(bottom: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
           borderRadius: BorderRadius.circular(20),
+          border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.06)) : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -180,7 +201,7 @@ class RestaurantShopCard extends StatelessWidget {
                           style: GoogleFonts.outfit(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
+                            color: isDark ? Colors.white : AppColors.textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -193,13 +214,13 @@ class RestaurantShopCard extends StatelessWidget {
                     shop.cuisineType ?? 'Multi-cuisine',
                     style: GoogleFonts.outfit(
                       fontSize: 13,
-                      color: AppColors.textSecondary,
+                      color: isDark ? Colors.white54 : AppColors.textSecondary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 10),
-                  const Divider(height: 1, color: Color(0xFFF0F0F0)),
+                  const Divider(height: 1, color: Color(0x1A000000)),
                   const SizedBox(height: 10),
                   Row(
                     children: [
@@ -237,7 +258,7 @@ class RestaurantShopCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
+      )),
     );
   }
 

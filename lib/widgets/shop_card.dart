@@ -8,28 +8,49 @@ import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
 import '../utils/delivery_calculator.dart';
 
-class ShopCard extends StatelessWidget {
+class ShopCard extends StatefulWidget {
   final ShopModel shop;
   final VoidCallback onTap;
 
   const ShopCard({super.key, required this.shop, required this.onTap});
 
   @override
+  State<ShopCard> createState() => _ShopCardState();
+}
+
+class _ShopCardState extends State<ShopCard> {
+  bool _isPressed = false;
+
+  ShopModel get shop => widget.shop;
+  VoidCallback get onTap => widget.onTap;
+
+  @override
   Widget build(BuildContext context) {
     final favs = context.watch<FavoritesProvider>();
     final auth = context.watch<AuthProvider>();
     final isFav = favs.isShopFavorite(shop.id);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) => setState(() => _isPressed = false),
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.97 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
           borderRadius: BorderRadius.circular(24),
+          border: isDark ? Border.all(color: Colors.white.withValues(alpha: 0.06)) : null,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.3)
+                  : Colors.black.withValues(alpha: 0.06),
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),
@@ -136,7 +157,7 @@ class ShopCard extends StatelessWidget {
                     style: GoogleFonts.outfit(
                       fontWeight: FontWeight.w700,
                       fontSize: 17,
-                      color: AppColors.textPrimary,
+                      color: isDark ? Colors.white : AppColors.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -145,7 +166,7 @@ class ShopCard extends StatelessWidget {
                   Text(
                     shop.cuisineType ?? 'Various items',
                     style: GoogleFonts.outfit(
-                      color: AppColors.textSecondary,
+                      color: isDark ? Colors.white54 : AppColors.textSecondary,
                       fontSize: 13,
                     ),
                     maxLines: 1,
@@ -177,11 +198,11 @@ class ShopCard extends StatelessWidget {
               ),
             ),
 
-            const Icon(Icons.arrow_forward_ios_rounded,
-                size: 16, color: Colors.grey),
+            Icon(Icons.arrow_forward_ios_rounded,
+                size: 16, color: isDark ? Colors.white30 : Colors.grey),
           ],
         ),
-      ),
+      )),
     );
   }
 

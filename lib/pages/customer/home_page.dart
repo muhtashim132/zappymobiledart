@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
@@ -654,7 +655,15 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                                       CircularProgressIndicator(strokeWidth: 2),
                                 ),
                               )
-                            : null,
+                            : _searchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.close_rounded, size: 18),
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      _searchShops('');
+                                    },
+                                  )
+                                : null,
                         filled: true,
                         fillColor:
                             Theme.of(context).inputDecorationTheme.fillColor ??
@@ -665,8 +674,8 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(
-                              color: AppColors.primary, width: 1.5),
+                          borderSide: BorderSide(
+                              color: isDark ? AppColors.primaryLight : AppColors.primary, width: 1.5),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 12),
@@ -702,7 +711,7 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOutCubic,
+                      curve: Curves.elasticOut,
                       margin:
                           const EdgeInsets.only(right: 10, top: 8, bottom: 8),
                       padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -737,8 +746,12 @@ class _CustomerHomePageState extends State<CustomerHomePage>
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(cat['emoji'],
-                              style: TextStyle(fontSize: isSelected ? 18 : 16)),
+                          AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.elasticOut,
+                            style: TextStyle(fontSize: isSelected ? 20 : 16),
+                            child: Text(cat['emoji']),
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             cat['name'],
@@ -1126,6 +1139,13 @@ class _CustomerHomePageState extends State<CustomerHomePage>
               decoration: BoxDecoration(
                 color: active ? AppColors.primary : AppColors.textLight,
                 borderRadius: BorderRadius.circular(3),
+                boxShadow: active
+                    ? [
+                        BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                            blurRadius: 6)
+                      ]
+                    : [],
               ),
             );
           }),
@@ -1225,39 +1245,52 @@ class _CustomerHomePageState extends State<CustomerHomePage>
   Widget _buildFloatingBottomNav(CartProvider cart) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-      child: Container(
-        height: 70,
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF0A1260), Color(0xFF162AC4)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-                color: const Color(0xFF162AC4).withValues(alpha: 0.5),
-                blurRadius: 24,
-                offset: const Offset(0, 8)),
-          ],
-        ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            height: 70,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF0A1260).withValues(alpha: 0.85),
+                  const Color(0xFF162AC4).withValues(alpha: 0.85),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                    color: const Color(0xFF162AC4).withValues(alpha: 0.5),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8)),
+              ],
+            ),
         padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
-            _buildNavItem(1, Icons.shopping_cart_rounded,
-                Icons.shopping_cart_outlined, 'Cart',
-                badge: cart.totalItemCount),
-            _buildNavItem(2, Icons.receipt_long_rounded,
-                Icons.receipt_long_outlined, 'Orders'),
-            _buildNavItem(3, Icons.favorite_rounded,
-                Icons.favorite_border_rounded, 'Favs'),
-          ],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildNavItem(0, Icons.home_rounded, Icons.home_outlined, 'Home'),
+                _buildNavItem(1, Icons.shopping_cart_rounded,
+                    Icons.shopping_cart_outlined, 'Cart',
+                    badge: cart.totalItemCount),
+                _buildNavItem(2, Icons.receipt_long_rounded,
+                    Icons.receipt_long_outlined, 'Orders'),
+                _buildNavItem(3, Icons.favorite_rounded,
+                    Icons.favorite_border_rounded, 'Favs'),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
+
+  // Need to use dart:ui for blur. Instead of importing dart:ui globally, we can use 
+  // ImageFilter.blur by importing dart:ui inside the file, but we'll just use flutter's ImageFilter.
+  // We need to import 'dart:ui' at the top of the file. I will use a simple way:
+  // Actually, wait, ImageFilter is in dart:ui. Let's add the import or just use a helper.
 
   Widget _buildNavItem(
       int index, IconData activeIcon, IconData inactiveIcon, String label,
@@ -1386,58 +1419,48 @@ class _CustomerHomePageState extends State<CustomerHomePage>
       highlightColor: highlight,
       child: Column(
         children: List.generate(
-            3,
+            2,
             (_) => Container(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  height: 140,
+                  margin: const EdgeInsets.only(bottom: 20),
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Column(
                     children: [
-                      // Image placeholder
+                      // Banner skeleton
                       Container(
-                        width: 110,
-                        height: 140,
+                        height: 160,
                         decoration: BoxDecoration(
                           color: base,
-                          borderRadius: const BorderRadius.horizontal(
-                              left: Radius.circular(24)),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 20, horizontal: 4),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                  height: 14,
-                                  width: 120,
-                                  decoration: BoxDecoration(
-                                      color: base,
-                                      borderRadius: BorderRadius.circular(7))),
-                              const SizedBox(height: 10),
-                              Container(
-                                  height: 12,
-                                  width: 80,
-                                  decoration: BoxDecoration(
-                                      color: base,
-                                      borderRadius: BorderRadius.circular(6))),
-                              const SizedBox(height: 10),
-                              Container(
-                                  height: 12,
-                                  width: 60,
-                                  decoration: BoxDecoration(
-                                      color: base,
-                                      borderRadius: BorderRadius.circular(6))),
-                            ],
-                          ),
+                      Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Title bar
+                            Container(height: 16, width: 180, decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(8))),
+                            const SizedBox(height: 8),
+                            // Subtitle bar
+                            Container(height: 12, width: 120, decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(6))),
+                            const SizedBox(height: 10),
+                            const Divider(),
+                            const SizedBox(height: 10),
+                            // Chips row
+                            Row(
+                              children: [
+                                Container(height: 12, width: 40, decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(6))),
+                                const SizedBox(width: 10),
+                                Container(height: 12, width: 60, decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(6))),
+                                const SizedBox(width: 10),
+                                Container(height: 12, width: 40, decoration: BoxDecoration(color: base, borderRadius: BorderRadius.circular(6))),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ],
