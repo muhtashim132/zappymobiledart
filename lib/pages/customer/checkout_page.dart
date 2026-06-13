@@ -148,6 +148,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       }
       final surcharge = cart.multiShopSurcharge;
       final heavyFee = cart.heavyOrderFee;
+      final smallCartFee = cart.smallCartFee;
+      final deliveryDiscount = cart.calculateDeliveryDiscount(maxDistanceKm);
       final effectiveBase = baseDelivery >= 0 ? baseDelivery : 25.0;
       final riderBase = effectiveBase + surcharge + heavyFee;
       final riderEarnings = riderBase * TaxConfig.riderPayoutRatio;
@@ -258,7 +260,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
               'total_amount': shopBaseSubtotal,
               'delivery_charges': shopDelivery,
               'rider_earnings': shopRiderEarnings,
-              'multi_shop_surcharge': surcharge / numShops, // B2: was never written before
+              'multi_shop_surcharge': surcharge / numShops,
+              'small_cart_fee': smallCartFee / numShops,
+              'heavy_order_fee': heavyFee / numShops,
+              'delivery_discount': deliveryDiscount / numShops,
               'platform_fee': shopPlatformFee,
               'address': location.currentAddress,
               'delivery_lat': location.currentLocation?.latitude,

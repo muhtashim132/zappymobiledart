@@ -101,6 +101,15 @@ class OrderModel {
   /// Enything files GSTR-8 by 10th. Seller claims credit via GSTR-2B.
   final double tcsAmount;
 
+  /// Penalty fee applied for orders below the minimum cart threshold.
+  final double smallCartFee;
+
+  /// Surcharge applied for orders exceeding the maximum base weight limit.
+  final double heavyOrderFee;
+
+  /// Promotional delivery discount applied (absorbed by the platform).
+  final double deliveryDiscount;
+
   /// Gross commission Enything charged on base item subtotal (5% standard).
   final double enythingCommission;
 
@@ -181,6 +190,9 @@ class OrderModel {
     this.prescriptionUrls = const [],
     this.estimatedDistanceKm = 0.0,
     this.shopPrepTimeSnapshot = 30,
+    this.smallCartFee = 0.0,
+    this.heavyOrderFee = 0.0,
+    this.deliveryDiscount = 0.0,
   });
 
   factory OrderModel.fromMap(Map<String, dynamic> map) {
@@ -250,6 +262,9 @@ class OrderModel {
           : [],
       estimatedDistanceKm: (map['estimated_distance_km'] ?? 0.0).toDouble(),
       shopPrepTimeSnapshot: map['shop_prep_time_snapshot'] ?? 30,
+      smallCartFee: (map['small_cart_fee'] ?? 0.0).toDouble(),
+      heavyOrderFee: (map['heavy_order_fee'] ?? 0.0).toDouble(),
+      deliveryDiscount: (map['delivery_discount'] ?? 0.0).toDouble(),
     );
   }
 
