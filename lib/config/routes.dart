@@ -161,9 +161,11 @@ class AppRoutes {
       case settings:
         return _build(const ProfileSettingsPage(), routeSettings);
       case terms:
-        return _build(const TermsOfServicePage(), routeSettings);
+        final a = routeSettings.arguments as Map<String, dynamic>?;
+        return _build(TermsOfServicePage(role: a?['role'] as String?), routeSettings);
       case privacy:
-        return _build(const PrivacyPolicyPage(), routeSettings);
+        final a = routeSettings.arguments as Map<String, dynamic>?;
+        return _build(PrivacyPolicyPage(role: a?['role'] as String?), routeSettings);
       case adminPassword:
         return _build(const AdminPasswordPage(), routeSettings);
       case adminDashboard:
@@ -171,7 +173,8 @@ class AppRoutes {
       case faqSupport:
         return _build(const FaqSupportPage(), routeSettings);
       case refundPolicy:
-        return _build(const RefundPolicyPage(), routeSettings);
+        final a = routeSettings.arguments as Map<String, dynamic>?;
+        return _build(RefundPolicyPage(role: a?['role'] as String?), routeSettings);
       case sellerWithdrawals:
         return _build(const SellerWithdrawalsPage(), routeSettings);
       case riderWithdrawals:

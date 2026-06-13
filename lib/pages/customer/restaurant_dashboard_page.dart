@@ -322,7 +322,7 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage>
               child: Row(
                 children: [
                   _statBox(
-                    label: _shop!.rating.toStringAsFixed(1),
+                    label: _shop!.totalOrders > 0 ? _shop!.rating.toStringAsFixed(1) : 'New',
                     sub: 'Rating',
                     icon: Icons.star_rounded,
                     iconColor: const Color(0xFF48BB78),

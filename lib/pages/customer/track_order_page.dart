@@ -274,20 +274,20 @@ class _TrackOrderPageState extends State<TrackOrderPage>
     // Priority 3: pending
     if (activeOrders.any((o) => o.status == 'pending')) return 'pending';
 
-    // Priority 4: out_for_delivery
+    // Priority 4: delivered
+    if (activeOrders.every((o) => o.status == 'delivered')) return 'delivered';
+
+    // Priority 5: out_for_delivery
     if (activeOrders.every((o) => o.status == 'out_for_delivery' || o.status == 'delivered')) return 'out_for_delivery';
 
-    // Priority 5: picked_up
+    // Priority 6: picked_up
     if (activeOrders.any((o) => o.status == 'picked_up')) return 'picked_up';
 
-    // Priority 6: preparing / ready_for_pickup
+    // Priority 7: preparing / ready_for_pickup
     if (activeOrders.any((o) => o.status == 'preparing' || o.status == 'ready_for_pickup')) return 'preparing';
 
-    // Priority 7: confirmed
+    // Priority 8: confirmed
     if (activeOrders.any((o) => o.status == 'confirmed')) return 'confirmed';
-
-    // Priority 8: delivered
-    if (activeOrders.every((o) => o.status == 'delivered')) return 'delivered';
 
     return activeOrders.first.status;
   }

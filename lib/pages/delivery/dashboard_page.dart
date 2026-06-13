@@ -1624,7 +1624,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
-                    child: Text(group.groupStatus.toUpperCase(),
+                    child: Text(group.groupStatus == 'awaiting_payment' ? 'PAYMENT IN PROGRESS' : group.groupStatus.toUpperCase().replaceAll('_', ' '),
                         style: GoogleFonts.outfit(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                   ),
                   const SizedBox(width: 8),
@@ -1785,7 +1785,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
                   border: Border.all(color: getStatusColor().withValues(alpha: 0.3)),
                 ),
                 child: Text(
-                  order.statusDisplay.toUpperCase(),
+                  order.status == 'awaiting_payment' ? 'PAYMENT IN PROGRESS' : order.statusDisplay.toUpperCase(),
                   style: GoogleFonts.outfit(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,

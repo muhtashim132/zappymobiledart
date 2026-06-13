@@ -141,15 +141,34 @@ class ProductCard extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: Text(
-                                product.name,
-                                style: GoogleFonts.outfit(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                  color: AppColors.textPrimary,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    product.name,
+                                    style: GoogleFonts.outfit(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (shop != null && shop!.name.isNotEmpty) ...[
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      shop!.name,
+                                      style: GoogleFonts.outfit(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 11,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
                             const SizedBox(width: 4),

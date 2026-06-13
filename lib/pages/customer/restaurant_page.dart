@@ -164,14 +164,15 @@ class _RestaurantPageState extends State<RestaurantPage> {
                         child: Row(
                           children: [
                             Text(
-                              _shop!.rating.toStringAsFixed(1),
+                              _shop!.totalOrders > 0 ? _shop!.rating.toStringAsFixed(1) : 'New',
                               style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 13),
                             ),
-                            const Icon(Icons.star,
-                                color: Colors.white, size: 12),
+                            if (_shop!.totalOrders > 0)
+                              const Icon(Icons.star,
+                                  color: Colors.white, size: 12),
                           ],
                         ),
                       ),

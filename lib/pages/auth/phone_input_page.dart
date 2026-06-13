@@ -17,6 +17,7 @@ class _PhoneAuthPageState extends State<PhoneAuthPage>
   final _phoneCtrl = TextEditingController();
   String _countryCode = '+91';
   bool _loading = false;
+  bool _agreedToTerms = false;
   String? _selectedRole; // passed from RoleSelectionPage args
 
   late AnimationController _animCtrl;
@@ -255,27 +256,33 @@ class _PhoneAuthPageState extends State<PhoneAuthPage>
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: TextField(
-                                  controller: _phoneCtrl,
-                                  keyboardType: TextInputType.phone,
-                                  maxLength: 10,
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.digitsOnly
-                                  ],
-                                  style: GoogleFonts.outfit(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 2,
-                                  ),
-                                  decoration: InputDecoration(
-                                    hintText: '9876543210',
-                                    hintStyle: GoogleFonts.outfit(
-                                        color: Colors.white24,
-                                        fontSize: 18),
-                                    counterText: '',
-                                    border: InputBorder.none,
-                                    filled: false,
+                                child: IgnorePointer(
+                                  ignoring: !_agreedToTerms,
+                                  child: Opacity(
+                                    opacity: _agreedToTerms ? 1.0 : 0.3,
+                                    child: TextField(
+                                      controller: _phoneCtrl,
+                                      keyboardType: TextInputType.phone,
+                                      maxLength: 10,
+                                      inputFormatters: [
+                                        FilteringTextInputFormatter.digitsOnly
+                                      ],
+                                      style: GoogleFonts.outfit(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 2,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: '9876543210',
+                                        hintStyle: GoogleFonts.outfit(
+                                            color: Colors.white24,
+                                            fontSize: 18),
+                                        counterText: '',
+                                        border: InputBorder.none,
+                                        filled: false,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -289,23 +296,25 @@ class _PhoneAuthPageState extends State<PhoneAuthPage>
 
                     // CTA Button
                     GestureDetector(
-                      onTap: _loading ? null : _sendOtp,
+                      onTap: (_loading || !_agreedToTerms) ? null : _sendOtp,
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         width: double.infinity,
                         height: 58,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFFFD700), Color(0xFFF4A800)],
+                          gradient: LinearGradient(
+                            colors: _agreedToTerms
+                                ? [const Color(0xFFFFD700), const Color(0xFFF4A800)]
+                                : [Colors.grey.shade700, Colors.grey.shade800],
                           ),
                           borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
+                          boxShadow: _agreedToTerms ? [
                             BoxShadow(
                                 color: const Color(0xFFF4C542)
                                     .withValues(alpha: 0.40),
                                 blurRadius: 20,
                                 offset: const Offset(0, 8))
-                          ],
+                          ] : [],
                         ),
                         child: Center(
                           child: _loading
@@ -335,47 +344,90 @@ class _PhoneAuthPageState extends State<PhoneAuthPage>
                     ),
 
                     const SizedBox(height: 28),
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: GoogleFonts.outfit(
-                          color: Colors.white54,
-                          fontSize: 12,
-                          height: 1.5,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Checkbox(
+                            value: _agreedToTerms,
+                            onChanged: (val) => setState(() => _agreedToTerms = val ?? false),
+                            activeColor: const Color(0xFFF4C542),
+                            checkColor: Colors.black,
+                            side: const BorderSide(color: Colors.white54, width: 1.5),
+                          ),
                         ),
-                        children: [
-                          const TextSpan(text: 'By continuing, you agree to our '),
-                          WidgetSpan(
-                            child: GestureDetector(
-                              onTap: () => Navigator.pushNamed(context, AppRoutes.terms),
-                              child: Text(
-                                'Terms of Service',
-                                style: GoogleFonts.outfit(
-                                  color: const Color(0xFFF4C542),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  decoration: TextDecoration.underline,
-                                ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: RichText(
+                            text: TextSpan(
+                              style: GoogleFonts.outfit(
+                                color: Colors.white54,
+                                fontSize: 13,
+                                height: 1.5,
                               ),
+                              children: [
+                                const TextSpan(text: 'I agree to the '),
+                                if (_selectedRole == 'seller')
+                                  const TextSpan(text: 'Seller ')
+                                else if (_selectedRole == 'delivery_partner')
+                                  const TextSpan(text: 'Delivery Partner ')
+                                else
+                                  const TextSpan(text: 'Customer '),
+                                WidgetSpan(
+                                  child: GestureDetector(
+                                    onTap: () => Navigator.pushNamed(context, AppRoutes.terms, arguments: {'role': _selectedRole}),
+                                    child: Text(
+                                      'Terms & Conditions',
+                                      style: GoogleFonts.outfit(
+                                        color: const Color(0xFFF4C542),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const TextSpan(text: ', '),
+                                WidgetSpan(
+                                  child: GestureDetector(
+                                    onTap: () => Navigator.pushNamed(context, AppRoutes.privacy, arguments: {'role': _selectedRole}),
+                                    child: Text(
+                                      'Privacy Policy',
+                                      style: GoogleFonts.outfit(
+                                        color: const Color(0xFFF4C542),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const TextSpan(text: ', and '),
+                                WidgetSpan(
+                                  child: GestureDetector(
+                                    onTap: () => Navigator.pushNamed(context, AppRoutes.refundPolicy, arguments: {'role': _selectedRole}),
+                                    child: Text(
+                                      _selectedRole == 'seller' 
+                                          ? 'Fulfillment Policy'
+                                          : (_selectedRole == 'delivery_partner' 
+                                              ? 'Conduct Rules'
+                                              : 'Refund Policy'),
+                                      style: GoogleFonts.outfit(
+                                        color: const Color(0xFFF4C542),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const TextSpan(text: '\nand '),
-                          WidgetSpan(
-                            child: GestureDetector(
-                              onTap: () => Navigator.pushNamed(context, AppRoutes.privacy),
-                              child: Text(
-                                'Privacy Policy',
-                                style: GoogleFonts.outfit(
-                                  color: const Color(0xFFF4C542),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 24),
 

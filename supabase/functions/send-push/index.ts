@@ -102,8 +102,16 @@ serve(async (req) => {
       user_id = rawBody.record.user_id;
       title = rawBody.record.title;
       body = rawBody.record.body;
+      data = {};
       if (rawBody.record.order_id) {
-        data = { order_id: String(rawBody.record.order_id) };
+        data.order_id = String(rawBody.record.order_id);
+      }
+      if (rawBody.record.notif_key && typeof rawBody.record.notif_key === 'string') {
+        const key = rawBody.record.notif_key;
+        if (key.includes('_new_available') || key.includes('_reassigned_') || key.includes('_distance_')) {
+          data.role = 'delivery';
+          data.action = 'new_order';
+        }
       }
     } else {
       // It's a direct API call (from Dart)

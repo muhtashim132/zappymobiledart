@@ -33,7 +33,7 @@ class NotificationService {
             if (role == 'seller') {
               navigatorKey.currentState?.pushNamedAndRemoveUntil(
                   AppRoutes.sellerDashboard, (route) => false);
-            } else if (role == 'rider' || action == 'new_order') {
+            } else if (role == 'rider' || role == 'delivery' || action == 'new_order') {
               navigatorKey.currentState?.pushNamedAndRemoveUntil(
                   AppRoutes.deliveryDashboard, (route) => false);
             } else if (data['order_id'] != null) {

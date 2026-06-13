@@ -71,7 +71,7 @@ class ShopCard extends StatelessWidget {
                             color: AppColors.accent, size: 14),
                         const SizedBox(width: 2),
                         Text(
-                          shop.rating.toStringAsFixed(1),
+                          shop.totalOrders > 0 ? shop.rating.toStringAsFixed(1) : 'New',
                           style: GoogleFonts.outfit(
                             color: Colors.white,
                             fontSize: 10,

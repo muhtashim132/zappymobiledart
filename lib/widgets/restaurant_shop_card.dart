@@ -266,7 +266,7 @@ class RestaurantShopCard extends StatelessWidget {
             const Icon(Icons.star_rounded, color: Color(0xFF48BB78), size: 14),
             const SizedBox(width: 3),
             Text(
-              shop.rating.toStringAsFixed(1),
+              shop.totalOrders > 0 ? shop.rating.toStringAsFixed(1) : 'New',
               style: GoogleFonts.outfit(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,

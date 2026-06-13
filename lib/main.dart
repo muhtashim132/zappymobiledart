@@ -115,7 +115,7 @@ void _handleNotificationClick(Map<String, dynamic> data) {
     Future.microtask(() {
       navigatorKey.currentState?.pushNamed(AppRoutes.sellerOrders);
     });
-  } else if (role == 'rider' || action == 'new_order') {
+  } else if (role == 'rider' || role == 'delivery' || action == 'new_order') {
     // Go to Delivery Dashboard — Available Orders section shows new orders
     navigatorKey.currentState?.pushNamedAndRemoveUntil(
         AppRoutes.deliveryDashboard, (route) => false);
