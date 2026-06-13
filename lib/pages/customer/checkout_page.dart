@@ -258,6 +258,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               'total_amount': shopBaseSubtotal,
               'delivery_charges': shopDelivery,
               'rider_earnings': shopRiderEarnings,
+              'multi_shop_surcharge': surcharge / numShops, // B2: was never written before
               'platform_fee': shopPlatformFee,
               'address': location.currentAddress,
               'delivery_lat': location.currentLocation?.latitude,

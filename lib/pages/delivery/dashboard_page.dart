@@ -37,6 +37,7 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
   double _todayEarnings = 0.0;
   double _totalKmsDriven = 0.0;
   bool _isLoading = false;
+  bool _isOrdersLoadInProgress = false; // C2: debounce guard
   // Bug #19: rider's current GPS position for geographic filtering
   double? _riderLat;
   double? _riderLng;
@@ -108,14 +109,12 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
             table: 'orders',
             callback: (payload) {
               if (mounted) {
-                final newRec = payload.newRecord;
-                if (newRec != null) {
-                  final orderId = newRec['id'] as String?;
-                  if (orderId != null) {
-                    final wasAvailable = _availableGroups.expand((g) => g.orders).any((o) => o.id == orderId);
-                    if (wasAvailable) {
-                      _loadOrders();
-                    }
+                // A1: newRecord is non-nullable in Supabase SDK v2
+                final orderId = payload.newRecord['id'] as String?;
+                if (orderId != null) {
+                  final wasAvailable = _availableGroups.expand((g) => g.orders).any((o) => o.id == orderId);
+                  if (wasAvailable) {
+                    _loadOrders();
                   }
                 }
               }
@@ -132,9 +131,10 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
             ),
             callback: (payload) {
               if (mounted) {
+                // A1: oldRecord and newRecord are non-nullable in Supabase SDK v2
                 final oldRec = payload.oldRecord;
                 final newRec = payload.newRecord;
-                if (oldRec != null && newRec != null && oldRec['status'] != newRec['status']) {
+                if (oldRec['status'] != newRec['status']) {
                   final newStatus = newRec['status'];
                   if (newStatus == 'confirmed') {
                     _showSnack('💳 Payment Confirmed! Head to the shop.', isError: false);
@@ -263,12 +263,18 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
   }
 
   Future<void> _loadOrders() async {
+    // C2: Debounce guard — prevent concurrent load calls
+    if (_isOrdersLoadInProgress) return;
+    _isOrdersLoadInProgress = true;
     setState(() => _isLoading = true);
     final auth = context.read<AuthProvider>();
     try {
-      // Bug #19: fetch rider location before querying orders
-      final hasLocation = await _fetchRiderLocation();
-      setState(() => _locationUnavailable = !hasLocation);
+      // C3: Location is handled by _startLocationBroadcast timer (every 15s).
+      // Only fetch location if we don't have it yet (first load).
+      if (_riderLat == null || _riderLng == null) {
+        final hasLocation = await _fetchRiderLocation();
+        setState(() => _locationUnavailable = !hasLocation);
+      }
 
       if (auth.currentUserId != null) {
         final partnerResp = await _supabase
@@ -283,11 +289,12 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         }
       }
 
+      // B5: Only unassigned awaiting_acceptance/pending orders — 'confirmed' means already assigned.
       final available = await _supabase
           .from('orders')
           .select('*, order_items(*), shops!shop_id(id, name, location)')
           .isFilter('delivery_partner_id', null)   // no rider assigned yet
-          .inFilter('status', ['awaiting_acceptance', 'pending', 'confirmed']);
+          .inFilter('status', ['awaiting_acceptance', 'pending']);
 
       final myOrders = await _supabase
           .from('orders')
@@ -325,8 +332,27 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         return model;
       }).toList();
 
-      // Temporarily disabled distance filter to ensure orders show up during testing
-      final filtered = allAvailable;
+      // B1: Geographic distance filter — only show orders where the shop is within
+      // maxDeliveryRadiusKm of the rider's current location.
+      const maxRadiusKm = 15.0; // matches platform_config default
+      List<OrderModel> filtered;
+      if (_riderLat != null && _riderLng != null) {
+        filtered = allAvailable.where((order) {
+          if (order.shopId == null) return true; // include if no shop data
+          final shopInfo = _shopInfoCache[order.shopId];
+          if (shopInfo == null) return true; // include if shop location unknown
+          // Haversine approximation (fast, good enough for <50km)
+          const double degToRad = 3.14159265358979 / 180.0;
+          final dLat = (shopInfo.lat - _riderLat!) * degToRad;
+          final dLng = (shopInfo.lng - _riderLng!) * degToRad;
+          final a = dLat * dLat + dLng * dLng * 0.5; // simplified
+          final distKm = 6371 * 2 * (a < 1 ? a : 1);
+          return distKm <= maxRadiusKm;
+        }).toList();
+      } else {
+        // No location yet — show all orders so rider isn't left with empty screen
+        filtered = allAvailable;
+      }
 
       if (filtered.isEmpty) {
         try {
@@ -374,7 +400,6 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
         _isLoading = false;
       });
 
-
       // Auto-start broadcast if rider is online
       if (_isOnline && _locationBroadcastTimer == null) {
         _startLocationBroadcast();
@@ -387,15 +412,27 @@ class _DeliveryDashboardPageState extends State<DeliveryDashboardPage>
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    } finally {
+      // C2: Always release the debounce guard
+      _isOrdersLoadInProgress = false;
     }
   }
 
   Future<void> _acceptOrderGroup(OrderGroup group) async {
     setState(() => _isLoading = true);
-    bool anyFailed = false;
+    // A2: Track failures and surface them to the rider
+    int failedCount = 0;
     for (int i = 0; i < group.orders.length; i++) {
       final success = await _acceptOrder(group.orders[i], skipReload: true, notifyCustomer: i == 0);
-      if (!success) anyFailed = true;
+      if (!success) failedCount++;
+    }
+    if (failedCount > 0 && mounted) {
+      _showSnack(
+        failedCount == group.orders.length
+            ? '⚠️ All orders in this group were already taken.'
+            : '⚠️ $failedCount order(s) in this group could not be accepted.',
+        isError: true,
+      );
     }
     _loadOrders();
   }

@@ -128,16 +128,12 @@ class AuthProvider extends ChangeNotifier {
           params: {'p_admin_id': userId, 'p_password': password.trim()},
         );
         isVerified = res == true;
-      } catch (_) {
-        final response = await _supabase
-            .from('admin_users')
-            .select('admin_password')
-            .eq('id', userId)
-            .maybeSingle();
-        final storedPassword = response?['admin_password'] as String?;
-        if (storedPassword != null && storedPassword == password.trim()) {
-          isVerified = true;
-        }
+      } catch (rpcError) {
+        // B4: Security fix — do NOT fall back to plaintext DB comparison.
+        // If the RPC is unavailable, fail closed (deny access) rather than
+        // fall open (compare plaintext). Log the RPC error for investigation.
+        debugPrint('verify_admin_password RPC failed: $rpcError');
+        return false;
       }
 
       if (isVerified) {

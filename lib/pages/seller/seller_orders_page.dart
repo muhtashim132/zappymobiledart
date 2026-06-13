@@ -162,7 +162,8 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
           .from('orders')
           .select('*, order_items(*)')
           .inFilter('shop_id', shopIds)
-          .order('created_at', ascending: false);
+          .order('created_at', ascending: false)
+          .limit(150); // C1: Prevent OOM for high-volume sellers; 150 covers ~2 weeks at 10 orders/day
 
       if (mounted) {
         setState(() {
@@ -387,6 +388,7 @@ class _SellerOrdersPageState extends State<SellerOrdersPage>
       await _supabase.from('orders').update({
         'status': rejectReason == 'prescription' ? 'verification_failed' : 'seller_rejected',
         'seller_accepted': false,
+        // D1: Always reset rider assignment so the rider isn't tied to a dead order
         'delivery_partner_id': null,
         'partner_accepted': false,
         if (msg.isNotEmpty) 'rejection_message': msg,
